@@ -213,3 +213,91 @@ span.flatpickr-weekday,
 [x-cloak] {
   display: none !important;
 }
+.login-container {
+    font-family: 'Lato', sans-serif;
+}
+
+/* Force all child elements to inherit the font */
+.login-container * {
+    font-family: 'Lato', sans-serif !important;
+}
+
+/* Specific overrides for form elements */
+.login-container input::placeholder {
+    font-family: 'Lato', sans-serif;
+    opacity: 0.6;
+}
+
+.login-container button {
+    letter-spacing: 0.5px;
+    font-weight: 700;
+}
+
+
+/* Brand Variables */
+:root {
+  --brand-brown: #7A330F;
+  --brand-cream: #faf7f2;
+  --font-lato: 'Lato', sans-serif;
+}
+
+/* 1. Base Toast Styling */
+.custom-toast {
+  background-color: var(--brand-cream) !important;
+  border-radius: 12px !important;
+  border: 1px solid #E5D5C5 !important;
+  box-shadow: 0 10px 15px -3px rgba(122, 51, 15, 0.1) !important;
+  font-family: var(--font-lato) !important;
+}
+
+/* 2. Success Style (Branded Brown) */
+.custom-toast-success {
+  border-left: 6px solid var(--brand-brown) !important; 
+}
+
+.custom-toast-success .Toastify__toast-body {
+  color: var(--brand-brown) !important; 
+  font-weight: 700;
+}
+
+/* Success Progress Bar */
+.Toastify__progress-bar--success {
+  background: var(--brand-brown) !important; 
+}
+
+/* 3. Error Style (Red/Black) */
+.custom-toast-error {
+  border-left: 6px solid #b32b2b !important;
+  background-color: #cca974 !important; /* Slightly red-white for readability */
+}
+
+.custom-toast-error .Toastify__toast-body {
+  color: #b32b2b !important;
+  font-weight: 700;
+}
+
+/* Error Progress Bar */
+.Toastify__progress-bar--error {
+  background: #b32b2b !important;
+}
+
+/* Ensure the text inside matches Lato */
+.Toastify__toast-body {
+  font-family: var(--font-lato) !important;
+  font-size: 14px;
+}
+/* In your CSS file */
+.custom-toast-error {
+  border-left: 6px solid #b32b2b !important;
+  background-color: #fff5f5 !important; /* Light red background */
+}
+
+.custom-toast-error .Toastify__toast-body {
+  color: #b32b2b !important; /* Deep red text */
+  font-weight: 700;
+  font-family: 'Lato', sans-serif;
+}
+
+.Toastify__progress-bar--error {
+  background: #b32b2b !important;
+}
