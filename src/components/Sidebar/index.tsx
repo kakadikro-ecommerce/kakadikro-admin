@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
-
+ 
 interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (arg: boolean) => void;
 }
-
+ 
 interface MenuItem {
   id: string;
   path?: string;
@@ -15,23 +15,23 @@ interface MenuItem {
   badge?: string;
   subItems?: { path: string; name: string }[];
 }
-
+ 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { pathname } = location;
-
+ 
   const trigger = useRef<any>(null);
   const sidebar = useRef<any>(null);
   const toggleButton = useRef<any>(null);
-
+ 
   const storedSidebarExpanded = localStorage.getItem('sidebar-expanded');
   const [sidebarExpanded] = useState(
     storedSidebarExpanded === null ? false : storedSidebarExpanded === 'true',
   );
-  
+ 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  
+ 
   // Safe user data parsing - FIXED
   const userData = (() => {
     try {
@@ -42,11 +42,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       return {};
     }
   })();
-  
+ 
   const userName = userData.name || userData.email?.split('@')[0] || 'Admin';
   const userEmail = userData.email || 'admin@example.com';
   const userInitial = userName.charAt(0).toUpperCase();
-
+ 
   useEffect(() => {
     const clickHandler = ({ target }: MouseEvent) => {
       if (!sidebar.current || !trigger.current) return;
@@ -62,7 +62,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     document.addEventListener('click', clickHandler);
     return () => document.removeEventListener('click', clickHandler);
   }, [sidebarOpen]);
-
+ 
   useEffect(() => {
     const keyHandler = ({ keyCode }: KeyboardEvent) => {
       if (!sidebarOpen || keyCode !== 27) return;
@@ -71,7 +71,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     document.addEventListener('keydown', keyHandler);
     return () => document.removeEventListener('keydown', keyHandler);
   }, [sidebarOpen]);
-
+ 
   useEffect(() => {
     localStorage.setItem('sidebar-expanded', sidebarExpanded.toString());
     if (sidebarExpanded) {
@@ -80,27 +80,27 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       document.querySelector('body')?.classList.remove('sidebar-expanded');
     }
   }, [sidebarExpanded]);
-
+ 
   const handleToggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
-
+ 
   const closeSidebarOnMobile = () => {
     if (window.innerWidth < 1024) {
       setSidebarOpen(false);
     }
   };
-
+ 
   const toggleDropdown = (dropdownName: string) => {
     setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
   };
-
+ 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
     authService.logout();
     navigate('/login', { replace: true });
   };
-
+ 
   const menuItems: MenuItem[] = [
     {
       id: 'dashboard',
@@ -172,7 +172,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       ],
     },
   ];
-
+ 
   const Dropdown = ({ open, items }: { open: boolean; items: { path: string; name: string }[] }) => {
     if (!open) return null;
     return (
@@ -198,7 +198,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       </ul>
     );
   };
-
+ 
   return (
     <>
       <button
@@ -212,7 +212,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
-
+ 
       <aside
         ref={sidebar}
         className={`fixed left-0 top-0 z-9999 flex h-screen w-80 flex-col overflow-y-hidden bg-gradient-to-br from-[#faf7f0] to-[#f5efe3] shadow-2xl duration-300 ease-in-out lg:static lg:translate-x-0 ${
@@ -220,21 +220,21 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         }`}
       >
         <div className="flex items-center justify-between px-8 py-6 border-b border-amber-200/50">
-          <NavLink 
-            to="/dashboard" 
+          <NavLink
+            to="/dashboard"
             className="transition-transform duration-300 hover:scale-105"
             onClick={closeSidebarOnMobile}
           >
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-amber-600 rounded-2xl blur-xl opacity-60"></div>
-              <img 
-                src="/src/images/logo/logo2.png" 
-                alt="Logo" 
+              <img
+                src="/src/images/logo/logo2.png"
+                alt="Logo"
                 className="relative w-20 h-20 object-contain rounded-xl"
               />
             </div>
           </NavLink>
-
+ 
           <button
             ref={trigger}
             onClick={handleToggleSidebar}
@@ -252,7 +252,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
             </svg>
           </button>
-
+ 
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-amber-100/50 hover:bg-amber-200/50 transition-all duration-300"
@@ -262,7 +262,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
             </svg>
           </button>
         </div>
-
+ 
         <div className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-4">
           <div className="mb-8">
             <h3 className="mb-3 px-4 text-xs font-semibold uppercase tracking-wider text-amber-600/70">
@@ -272,7 +272,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
               {menuItems.map((item, idx) => {
                 const hasSubItems = item.subItems && item.subItems.length > 0;
                 const isOpen = openDropdown === item.id;
-                
+               
                 if (hasSubItems) {
                   return (
                     <li key={idx}>
@@ -307,7 +307,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                     </li>
                   );
                 }
-                
+               
                 return (
                   <li key={idx}>
                     <NavLink
@@ -344,7 +344,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
               })}
             </ul>
           </div>
-
+ 
           <div className="pt-4 border-t border-amber-200/50">
             <h3 className="mb-3 px-4 text-xs font-semibold uppercase tracking-wider text-amber-600/70">
               Account
@@ -366,7 +366,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
             </ul>
           </div>
         </div>
-
+ 
         <div className="p-4 border-t border-amber-200/50 bg-gradient-to-r from-amber-50/50 to-transparent">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-white/60 backdrop-blur-sm shadow-sm">
             <div className="relative">
@@ -385,5 +385,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     </>
   );
 };
-
+ 
 export default Sidebar;
+ 
