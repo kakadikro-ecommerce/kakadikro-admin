@@ -1,27 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react'; 
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 import woodBg from '../../images/brand/login bg image.jpg';
 import Logo from '../../images/logo/kde-logo-1.png';
-import { authService } from '../../services/authService';
+import { login } from '../../store/modules/auth/auth.slice';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 
 import 'react-toastify/dist/ReactToastify.css';
-import '../../css/style.css'; 
+import '../../css/style.css';
 
 export default function Login() {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { isAuthenticated, status } = useAppSelector((state) => state.auth);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const isLoading = status === 'loading';
+
   useEffect(() => {
-    if (authService.isAuthenticated()) {
+    if (isAuthenticated) {
       navigate('/dashboard', { replace: true });
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,29 +34,16 @@ export default function Login() {
       return;
     }
 
-    setIsLoading(true);
     try {
-      const axiosInstance = (await import('../../services/axiosInstance')).default;
-      const response = await axiosInstance.post('/auth/login', { email, password });
-      let token = response.data.token || response.data.data?.token || response.data.accessToken;
-
-      if (!token) throw new Error('Token not found');
-
-      localStorage.setItem('token', token);
-      const userToSave = response.data.user || { email, name: response.data.name };
-      localStorage.setItem('user', JSON.stringify(userToSave));
-
-      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      await dispatch(login({ email, password })).unwrap();
       toast.success(`Welcome back! Login successful`, { className: 'custom-toast custom-toast-success' });
       setTimeout(() => navigate('/dashboard', { replace: true }), 500);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Login failed', { className: 'custom-toast custom-toast-error' });
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      toast.error(String(error) || 'Login failed', { className: 'custom-toast custom-toast-error' });
     }
   };
 
-  if (authService.isAuthenticated()) return null;
+  if (isAuthenticated) return null;
 
   return (
     <div className="login-container min-h-screen w-full flex items-center justify-center bg-stone-50 p-4">
@@ -60,7 +51,6 @@ export default function Login() {
 
       <div className="w-full max-w-6xl md:h-[85vh] bg-white rounded-[40px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-stone-100">
         
-        {/* LEFT: FORM */}
         <div className="w-full md:w-1/2 flex items-center justify-center p-8 lg:p-12 bg-white">
           <div className="w-full max-w-sm">
             <h1 className="text-4xl font-black text-stone-900 mb-2">Login</h1>
@@ -70,7 +60,6 @@ export default function Login() {
 
             <form onSubmit={handleLogin} className="space-y-5">
               
-              {/* EMAIL INPUT */}
               <div>
                 <label className="block text-xs font-bold text-stone-500 mb-2 ml-1">Email Address</label>
                 <div className="relative flex items-center group">
@@ -88,7 +77,6 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* PASSWORD INPUT */}
               <div>
                 <label className="block text-xs font-bold text-stone-500 mb-2 ml-1">Password</label>
                 <div className="relative flex items-center group">
@@ -103,7 +91,6 @@ export default function Login() {
                     className="w-full pl-12 pr-14 py-4 bg-stone-50 border border-stone-200 rounded-2xl outline-none focus:border-[#7A330F] focus:bg-white transition-all overflow-hidden text-ellipsis"
                     required
                   />
-                  {/* Eye Toggle Button */}
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
@@ -125,7 +112,6 @@ export default function Login() {
           </div>
         </div>
 
-        {/* RIGHT: BRANDING */}
         <div className="hidden md:flex md:w-1/2 flex-col items-center justify-center relative overflow-hidden">
           <img src={woodBg} alt="Background" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0 bg-white/30 z-10"></div>

@@ -1,36 +1,53 @@
-import axios from "axios";
+import axios, { AxiosHeaders } from 'axios';
+
+const DEFAULT_API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL;
 
 const axiosInstance = axios.create({
-  baseURL: "http://192.168.1.12:5000/api", 
+  baseURL: API_BASE_URL,
   timeout: 10000,
+  withCredentials: true,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 
+const clearAuthSession = () => {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('user');
+  delete axiosInstance.defaults.headers.common.Authorization;
+};
+
+const forceLogout = () => {
+  clearAuthSession();
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('auth:logout'));
+
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
+  }
+};
+
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const accessToken = localStorage.getItem('accessToken');
+
+    if (accessToken) {
+      const headers =
+        config.headers instanceof AxiosHeaders
+          ? config.headers
+          : new AxiosHeaders(config.headers);
+
+      headers.set('Authorization', `Bearer ${accessToken}`);
+      config.headers = headers;
     }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-axiosInstance.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "/login"; 
-    }
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error),
 );
 
 export default axiosInstance;
