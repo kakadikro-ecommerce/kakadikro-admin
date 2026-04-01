@@ -365,17 +365,43 @@ export const updateAdminOrder = async (
   orderId: string,
   orderData: Partial<Order>,
 ): Promise<Order> => {
-  const cleanPayload = {
-    orderStatus: normalizeOrderStatus(orderData.orderStatus),
-    paymentStatus: orderData.paymentStatus,
-    adminNote: orderData.adminNote,
-    shipment: {
-      trackingId: orderData.shipment?.trackingId || '',
-      courierName: orderData.shipment?.courierName || '',
-      dispatchedAt: orderData.shipment?.dispatchedAt || null,
-      deliveredAt: orderData.shipment?.deliveredAt || null,
-    },
-  };
+  const cleanPayload: Record<string, unknown> = {};
+
+  if (typeof orderData.orderStatus === 'string') {
+    cleanPayload.orderStatus = normalizeOrderStatus(orderData.orderStatus);
+  }
+
+  if (typeof orderData.paymentStatus === 'string') {
+    cleanPayload.paymentStatus = orderData.paymentStatus;
+  }
+
+  if (orderData.adminNote !== undefined) {
+    cleanPayload.adminNote = orderData.adminNote;
+  }
+
+  if (orderData.shipment) {
+    const shipmentPayload: Record<string, unknown> = {};
+
+    if (orderData.shipment.trackingId !== undefined) {
+      shipmentPayload.trackingId = orderData.shipment.trackingId;
+    }
+
+    if (orderData.shipment.courierName !== undefined) {
+      shipmentPayload.courierName = orderData.shipment.courierName;
+    }
+
+    if (orderData.shipment.dispatchedAt !== undefined) {
+      shipmentPayload.dispatchedAt = orderData.shipment.dispatchedAt;
+    }
+
+    if (orderData.shipment.deliveredAt !== undefined) {
+      shipmentPayload.deliveredAt = orderData.shipment.deliveredAt;
+    }
+
+    if (Object.keys(shipmentPayload).length > 0) {
+      cleanPayload.shipment = shipmentPayload;
+    }
+  }
 
   const response = await axiosInstance.put(
     `/v1/admin/orders/status/${orderId}`,

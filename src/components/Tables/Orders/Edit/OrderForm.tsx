@@ -26,6 +26,48 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
   onSave,
 }) => {
   const [loading, setLoading] = useState(false);
+
+  const buildChangedPayload = (
+    originalOrder: Order | null,
+    nextFormData: Partial<Order>,
+  ): Partial<Order> => {
+    const payload: Partial<Order> = {};
+
+    if (!originalOrder) {
+      return nextFormData;
+    }
+
+    if (nextFormData.orderStatus !== originalOrder.orderStatus) {
+      payload.orderStatus = nextFormData.orderStatus;
+    }
+
+    if ((nextFormData.adminNote ?? '') !== (originalOrder.adminNote ?? '')) {
+      payload.adminNote = nextFormData.adminNote ?? '';
+    }
+
+    const nextShipment = nextFormData.shipment;
+    const originalShipment = originalOrder.shipment;
+
+    if (
+      nextShipment &&
+      (
+        (nextShipment.trackingId ?? '') !== (originalShipment?.trackingId ?? '') ||
+        (nextShipment.courierName ?? '') !== (originalShipment?.courierName ?? '') ||
+        (nextShipment.dispatchedAt ?? null) !== (originalShipment?.dispatchedAt ?? null) ||
+        (nextShipment.deliveredAt ?? null) !== (originalShipment?.deliveredAt ?? null)
+      )
+    ) {
+      payload.shipment = {
+        trackingId: nextShipment.trackingId ?? '',
+        courierName: nextShipment.courierName ?? '',
+        dispatchedAt: nextShipment.dispatchedAt ?? null,
+        deliveredAt: nextShipment.deliveredAt ?? null,
+      };
+    }
+
+    return payload;
+  };
+
   const [formData, setFormData] = useState<Partial<Order>>({
     orderStatus: '',
     adminNote: '',
@@ -76,7 +118,8 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
     e.preventDefault();
     setLoading(true);
     try {
-      await onSave(formData);
+      const changedPayload = buildChangedPayload(order, formData);
+      await onSave(changedPayload);
       onClose();
     } catch (error) {
       console.error('Form submission error:', error);
