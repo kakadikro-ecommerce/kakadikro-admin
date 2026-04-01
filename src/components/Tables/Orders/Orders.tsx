@@ -27,6 +27,7 @@ import {
   setSelectedOrder,
   updateOrder,
 } from '../../../store/modules/orders/orders.slice';
+import { updateAdminUser } from '../../../store/modules/admin/admin.slice';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 
 const OrdersTable: React.FC = () => {
@@ -111,8 +112,17 @@ const OrdersTable: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleDelete = (orderId: string, orderNumber: string) => {
-    setOrderToDelete({ id: orderId, orderNumber });
+  const handleUpdateUserStatus = async (userId: string) => {
+    if (!userId) {
+      showNotification('error', 'User ID not available.');
+      return;
+    }
+    try {
+      await dispatch(updateAdminUser({ id: userId, data: { isActive: false } })).unwrap();
+      showNotification('success', 'User status updated to inactive successfully!');
+    } catch (error) {
+      showNotification('error', String(error) || 'Failed to update user status.');
+    }
   };
 
   const processDelete = async () => {
@@ -275,6 +285,7 @@ const OrdersTable: React.FC = () => {
                       <div className="flex justify-center gap-2">
                         <button onClick={() => handleOpenOrderView(order._id)} className="p-2 text-gray-400 hover:text-teal-600 transition-all"><Eye size={17} /></button>
                         <button onClick={() => handleOpenOrderEdit(order._id)} className="p-2 text-gray-400 hover:text-blue-600 transition-all"><Edit3 size={17} /></button>
+                        <button onClick={() => handleUpdateUserStatus(order.user?._id || '')} className="p-2 text-gray-400 hover:text-green-600 transition-all" title="Update User Status"><Check size={17} /></button>
                         <button onClick={() => handleDelete(order._id, order.orderNumber)} className="p-2 text-gray-400 hover:text-rose-600 transition-all"><Trash2 size={17} /></button>
                       </div>
                     </td>
