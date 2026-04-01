@@ -93,13 +93,6 @@ const OrdersTable: React.FC = () => {
 
   const handleSave = async (updatedData: Partial<Order>) => {
     if (!selectedOrder?._id) return;
-
-    if (Object.keys(updatedData).length === 0) {
-      setIsEditOpen(false);
-      showNotification('info', 'No order changes to save.');
-      return;
-    }
-
     try {
       await dispatch(
         updateOrder({ orderId: selectedOrder._id, orderData: updatedData }),
