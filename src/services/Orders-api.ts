@@ -101,7 +101,7 @@ export const normalizeOrderStatus = (status?: string | null): string => {
   const normalizedStatus = status?.trim().toLowerCase();
 
   if (!normalizedStatus) {
-    return 'confirmed';
+    return 'pending';
   }
 
   if (normalizedStatus === 'shipped') {
