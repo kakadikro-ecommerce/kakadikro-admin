@@ -1,28 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Authentication/Login';
 import DefaultLayout from './layout/DefaultLayout';
 import Dashboard from './pages/Dashboard/ECommerce';
-// import ProductsTable from './pages/tables/products/ProductsTable';
-// Assume you create this next:
-// import ProductDetails from './pages/tables/products/ProductDetails';
-import { authService } from './services/authService';
-// import ProductDetails from './pages/Products/view/ProductsView';
+import ProductsTable from './pages/Products/Products';
+import UserTable from './components/Tables/UsersTable/UsersTable';
+import OrdersTable from './pages/Orders/Orders';
+import Admin from './pages/Admin/Admin';
+import { clearAuthState, initializeAuth } from './store/modules/auth/auth.slice';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import ContactsTable from './pages/Contacts/ContactsTable';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const [isChecking, setIsChecking] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { initialized, isAuthenticated, status } = useAppSelector(
+    (state) => state.auth,
+  );
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const authenticated = authService.isAuthenticated();
-      setIsAuthenticated(authenticated);
-      setIsChecking(false);
-    };
-    checkAuth();
-  }, []);
-
-  if (isChecking) {
+  if (!initialized || status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FDF8EE]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7A330F]"></div>
@@ -34,14 +28,28 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
+  const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+
   useEffect(() => {
-    authService.initAuth();
-  }, []);
+    dispatch(initializeAuth());
+  }, [dispatch]);
+
+  useEffect(() => {
+    const handleLogout = () => {
+      dispatch(clearAuthState());
+    };
+
+    window.addEventListener('auth:logout', handleLogout);
+
+    return () => {
+      window.removeEventListener('auth:logout', handleLogout);
+    };
+  }, [dispatch]);
 
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      {/* Dashboard */}
       <Route
         path="/dashboard"
         element={
@@ -52,8 +60,27 @@ function App() {
           </ProtectedRoute>
         }
       />
-      {/* Products Table */}
-      {/* <Route
+            <Route
+        path="/Admin"
+        element={
+          <ProtectedRoute>
+            <DefaultLayout>
+              <Admin />
+            </DefaultLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute>
+            <DefaultLayout>
+              <UserTable />
+            </DefaultLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/products"
         element={
           <ProtectedRoute>
@@ -62,24 +89,31 @@ function App() {
             </DefaultLayout>
           </ProtectedRoute>
         }
-      /> */}
-      {/* NEW: Individual Product View Page */}
-      import ProductDetails from './pages/tables/products/ProductDetails'; //
-      Inside your Routes:
-      {/* <Route
-        path="/product/:slug"
+      />
+      <Route
+        path="/orders"
         element={
           <ProtectedRoute>
             <DefaultLayout>
-              <ProductDetails />
+              <OrdersTable />
             </DefaultLayout>
           </ProtectedRoute>
         }
-      /> */}
+      />
+      <Route
+        path="/contacts"
+        element={
+          <ProtectedRoute>
+            <DefaultLayout>
+              <ContactsTable />
+            </DefaultLayout>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/"
         element={
-          authService.isAuthenticated() ? (
+          isAuthenticated ? (
             <Navigate to="/dashboard" replace />
           ) : (
             <Navigate to="/login" replace />

@@ -213,6 +213,21 @@ span.flatpickr-weekday,
 [x-cloak] {
   display: none !important;
 }
+
+.table-scroll-wrapper {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable both-edges;
+}
+
+@media (max-width: 767px) {
+  .table-scroll-wrapper {
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+}
+
 .login-container {
     font-family: 'Lato', sans-serif;
 }

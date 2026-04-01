@@ -1,17 +1,14 @@
 import Breadcrumb from '../components/Breadcrumbs/Breadcrumb';
-import TableOne from '../components/Tables/TableOne';
-import TableThree from '../components/Tables/TableThree';
-import TableTwo from '../components/Tables/TableTwo';
 
 const Tables = () => {
   return (
     <>
       <Breadcrumb pageName="Tables" />
 
-      <div className="flex flex-col gap-10">
-        <TableOne />
-        <TableTwo />
-        <TableThree />
+      <div className="rounded-sm border border-stroke bg-white px-6 py-10 shadow-default dark:border-strokedark dark:bg-boxdark">
+        <p className="text-sm font-medium text-black dark:text-white">
+          Table demo components are not available in this project build.
+        </p>
       </div>
     </>
   );
