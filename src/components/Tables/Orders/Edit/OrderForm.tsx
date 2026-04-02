@@ -45,24 +45,23 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
       payload.adminNote = nextFormData.adminNote ?? '';
     }
 
-    const nextShipment = nextFormData.shipment;
-    const originalShipment = originalOrder.shipment;
+    const nextStatus = nextFormData.orderStatus;
 
-    if (
-      nextShipment &&
-      (
-        (nextShipment.trackingId ?? '') !== (originalShipment?.trackingId ?? '') ||
-        (nextShipment.courierName ?? '') !== (originalShipment?.courierName ?? '') ||
-        (nextShipment.dispatchedAt ?? null) !== (originalShipment?.dispatchedAt ?? null) ||
-        (nextShipment.deliveredAt ?? null) !== (originalShipment?.deliveredAt ?? null)
-      )
-    ) {
-      payload.shipment = {
-        trackingId: nextShipment.trackingId ?? '',
-        courierName: nextShipment.courierName ?? '',
-        dispatchedAt: nextShipment.dispatchedAt ?? null,
-        deliveredAt: nextShipment.deliveredAt ?? null,
-      };
+    if (nextStatus === 'dispatched') {
+      const trackingId = nextFormData.shipment?.trackingId?.trim();
+      const courierName = nextFormData.shipment?.courierName?.trim();
+
+      if (trackingId || courierName) {
+        payload.shipment = {};
+
+        if (trackingId) {
+          payload.shipment.trackingId = trackingId;
+        }
+
+        if (courierName) {
+          payload.shipment.courierName = courierName;
+        }
+      }
     }
 
     return payload;
@@ -117,8 +116,21 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
+      if (formData.orderStatus === 'dispatched') {
+        const trackingId = formData.shipment?.trackingId?.trim();
+        const courierName = formData.shipment?.courierName?.trim();
+
+        if (!trackingId || !courierName) {
+          alert('Tracking ID and Courier Name are required for dispatch');
+          setLoading(false);
+          return;
+        }
+      }
+
       const changedPayload = buildChangedPayload(order, formData);
+
       await onSave(changedPayload);
       onClose();
     } catch (error) {
@@ -128,13 +140,15 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
     }
   };
 
+  const isDispatched = formData.orderStatus === 'dispatched';
+
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col h-auto max-h-[89vh] overflow-hidden border border-white my-auto"
       >
-        {/* Header */}
+
         <div className="bg-[#2D1B19] p-6 md:p-3 flex justify-between items-center text-white shrink-0">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
@@ -155,10 +169,8 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-6 md:p-10 space-y-8 overflow-y-auto custom-scrollbar bg-gray-50/50 flex-1">
-          
-          {/* ROW 1: Order Status & Courier Name */}
+        <div className="p-6 md:p-10 space-y-8 overflow-y-auto bg-gray-50/50 flex-1">
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 uppercase tracking-widest">
@@ -169,8 +181,9 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   name="orderStatus"
                   value={formData.orderStatus}
                   onChange={handleChange}
-                  className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none appearance-none cursor-pointer shadow-sm focus:ring-4 focus:ring-[#3E2723]/5 transition-all"
+                  className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none appearance-none cursor-pointer shadow-sm"
                 >
+                  <option value="confirmed">PENDING</option>
                   <option value="confirmed">CONFIRMED</option>
                   <option value="dispatched">DISPATCHED</option>
                   <option value="delivered">DELIVERED</option>
@@ -191,13 +204,13 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 name="courierName"
                 value={formData.shipment?.courierName || ''}
                 onChange={handleChange}
+                disabled={!isDispatched}
                 placeholder="BlueDart, FedEx, etc."
-                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm focus:border-[#3E2723]/30 focus:ring-4 focus:ring-[#3E2723]/5 transition-all"
+                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm"
               />
             </div>
           </div>
 
-          {/* ROW 2: Tracking ID & Admin Note */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 uppercase tracking-widest">
@@ -208,8 +221,9 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 name="trackingId"
                 value={formData.shipment?.trackingId || ''}
                 onChange={handleChange}
+                disabled={!isDispatched}
                 placeholder="TRK123456789"
-                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm focus:border-[#3E2723]/30 focus:ring-4 focus:ring-[#3E2723]/5 transition-all"
+                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm"
               />
             </div>
 
@@ -223,26 +237,21 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 onChange={handleChange}
                 rows={1}
                 placeholder="Internal order notes..."
-                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm focus:border-[#3E2723]/30 focus:ring-4 focus:ring-[#3E2723]/5 transition-all resize-none overflow-hidden"
+                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm resize-none"
               />
             </div>
           </div>
 
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 bg-white border-t border-[#EFE4D5]/30 flex justify-center shrink-0">
+        <div className="px-6 py-4 bg-white border-t flex justify-center">
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 max-w-[260px] py-3.5 bg-[#3E2723] text-white rounded-full flex items-center justify-center gap-4 hover:bg-[#2D1B19] active:scale-[0.98] disabled:opacity-50 transition-all shadow-lg shadow-[#3E2723]/20"
+            className="flex-1 max-w-[260px] py-3.5 bg-[#3E2723] text-white rounded-full flex items-center justify-center gap-4"
           >
-            {loading ? (
-              <Loader2 className="animate-spin" size={18} />
-            ) : (
-              <Save size={18} />
-            )}
-            <span className="font-black tracking-[0.2em] text-[10px] uppercase">
+            {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+            <span className="font-black text-[10px] uppercase">
               {loading ? 'Processing...' : 'Save Updates'}
             </span>
           </button>

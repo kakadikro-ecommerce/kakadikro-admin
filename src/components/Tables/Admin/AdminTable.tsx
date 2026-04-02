@@ -142,8 +142,8 @@ const AdminTable: React.FC<AdminTableProps> = ({ onDelete, onView }) => {
         <div className="table-scroll-wrapper overflow-x-auto">
           <table className="w-full min-w-[800px] border-separate border-spacing-y-3 text-left md:min-w-full">
             <thead>
-              <tr className="text-[#3E2723] opacity-40 text-[10px] font-black uppercase tracking-[0.2em]">
-                <th className="px-6 py-2 w-16 text-center">#</th>
+              <tr className="text-[#3E2723] text-[10px] font-black uppercase tracking-[0.2em]">
+                <th className="px-6 py-2 w-16 text-center">ID</th>
                 <th className="px-6 py-2">Admin Name</th>
                 <th className="px-6 py-2 hidden lg:table-cell">Email</th>
                 <th className="px-6 py-2">Role</th>
@@ -167,10 +167,10 @@ const AdminTable: React.FC<AdminTableProps> = ({ onDelete, onView }) => {
                     <td className="px-6 py-4 bg-gray-50/50 rounded-l-2xl text-[#3E2723] font-black text-xs text-center">
                       {String(i + 1).padStart(2, '0')}
                     </td>
-                    <td className="px-6 py-4 bg-gray-50/50 text-[#3E2723] text-sm">
+                    <td className="px-6 py-4 bg-gray-50/50 text-[#3E2723] font-bold text-sm">
                       {admin.name}
                     </td>
-                    <td className="px-6 py-4 bg-gray-50/50 text-[11px] font-medium text-gray-600 hidden lg:table-cell">
+                    <td className="px-6 py-4 bg-gray-50/50 text-sm font-bold text-gray-600 hidden lg:table-cell">
                       {admin.email}
                     </td>
                     <td className="px-6 py-4 bg-gray-50/50">

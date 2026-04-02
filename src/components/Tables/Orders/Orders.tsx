@@ -3,8 +3,6 @@ import {
   Edit3,
   Eye,
   Filter,
-  Copy,
-  Check,
   Trash2,
   AlertTriangle,
 } from 'lucide-react';
@@ -27,7 +25,6 @@ import {
   setSelectedOrder,
   updateOrder,
 } from '../../../store/modules/orders/orders.slice';
-import { updateAdminUser } from '../../../store/modules/admin/admin.slice';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 
 const OrdersTable: React.FC = () => {
@@ -46,7 +43,6 @@ const OrdersTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<{
     id: string;
@@ -94,6 +90,13 @@ const OrdersTable: React.FC = () => {
 
   const handleSave = async (updatedData: Partial<Order>) => {
     if (!selectedOrder?._id) return;
+
+    const cleanData = { ...updatedData };
+
+    if (cleanData.orderStatus !== "dispatched") {
+      delete cleanData.shipment;
+    }
+
     try {
       await dispatch(
         updateOrder({ orderId: selectedOrder._id, orderData: updatedData }),
@@ -103,25 +106,6 @@ const OrdersTable: React.FC = () => {
       dispatch(fetchOrders({ page: currentPage, limit: 10, isDeleted: selectedIsDeleted }));
     } catch (updateError) {
       showNotification('error', String(updateError) || 'Update failed.');
-    }
-  };
-
-  const handleCopy = (id: string) => {
-    navigator.clipboard.writeText(id);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const handleUpdateUserStatus = async (userId: string) => {
-    if (!userId) {
-      showNotification('error', 'User ID not available.');
-      return;
-    }
-    try {
-      await dispatch(updateAdminUser({ id: userId, data: { isActive: false } })).unwrap();
-      showNotification('success', 'User status updated to inactive successfully!');
-    } catch (error) {
-      showNotification('error', String(error) || 'Failed to update user status.');
     }
   };
 
@@ -135,6 +119,10 @@ const OrdersTable: React.FC = () => {
     } catch (deleteError) {
       showNotification('error', String(deleteError) || 'Delete failed.');
     }
+  };
+
+  const handleDelete = (orderId: string, orderNumber: string) => {
+    setOrderToDelete({ id: orderId, orderNumber });
   };
 
   const handleOpenOrderView = async (orderId: string) => {
@@ -179,7 +167,6 @@ const OrdersTable: React.FC = () => {
     }
   };
 
-
   return (
     <div className="relative min-h-screen font-sans">
       {notification.show && (
@@ -193,8 +180,7 @@ const OrdersTable: React.FC = () => {
       )}
 
       <div className="mx-auto w-full max-w-8xl overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-3 shadow-sm sm:p-4 md:p-8">
-        
-        {/* --- HEADER --- */}
+
         <div className="mb-8 flex flex-col gap-6 md:mb-10">
           <div className="w-full min-w-0 border-b border-gray-100 pb-4">
             <h1 className="text-2xl md:text-3xl font-black text-[#3E2723] tracking-tight">
@@ -213,10 +199,10 @@ const OrdersTable: React.FC = () => {
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value as any)}
-                  className="h-[48px] w-full pl-11 pr-10 bg-gray-50/80 border-none rounded-2xl text-[11px] outline-none appearance-none cursor-pointer shadow-sm text-[#3E2723]"
+                  className="h-[48px] w-full pl-11 pr-10 bg-gray-50/80 border-none rounded-2xl text-xs font-bold outline-none appearance-none cursor-pointer shadow-sm"
                 >
                   {ORDER_STATUS_FILTER_OPTIONS.map((option) => (
-                    <option key={option} value={option}>{option === 'All' ? 'ALL ORDER STATUS' : option}</option>
+                    <option className='font-bold text-xs uppercase' key={option} value={option}>{option === 'All' ? 'ALL ORDER STATUS' : option}</option>
                   ))}
                 </select>
               </div>
@@ -224,13 +210,12 @@ const OrdersTable: React.FC = () => {
           </div>
         </div>
 
-        {/* --- TABLE (HOVER REMOVED) --- */}
         <div className="table-scroll-wrapper overflow-x-auto">
           <table className="w-full text-left border-separate border-spacing-y-3 min-w-[1000px]">
             <thead>
-              <tr className="text-[#3E2723] opacity-40 text-[10px] font-black tracking-[0.2em] uppercase">
-                <th className="px-6 py-2 w-16 text-center">Id</th>
-                <th className="px-6 py-2">Order ID</th>
+              <tr className="text-[#3E2723] text-[10px] tracking-[0.2em] uppercase">
+                <th className="px-6 py-2 w-16 text-center">ID</th>
+                <th className="px-6 py-2">Order Number</th>
                 <th className="px-6 py-2">Customer Name</th>
                 <th className="px-6 py-2">Amount</th>
                 <th className="px-6 py-2">Status</th>
@@ -247,46 +232,74 @@ const OrdersTable: React.FC = () => {
               ) : (
                 visibleOrders.map((order, i) => (
                   <tr key={order._id}>
-                    {/* SEQUENCE ID */}
-                    <td className="px-6 py-4 bg-gray-50/50 rounded-l-3xl text-[#3E2723] font-black text-xs text-center">
+                    <td className="px-6 py-4 text-center font-bold text-sm">
                       {String((currentPage - 1) * 10 + i + 1).padStart(2, '0')}
                     </td>
 
-                    {/* FORMATTED ORDER ID (Matches Image) */}
                     <td className="px-6 py-4 bg-gray-50/50">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <span className="text-[#A3948F] text-sm tracking-tight">
                           {order.orderNumber}
                         </span>
-                        <button
-                          onClick={() => handleCopy(order.orderNumber)}
-                          className="text-[#D1D5DB] hover:text-[#3E2723] transition-colors"
-                        >
-                          {copiedId === order.orderNumber ? <Check size={14} /> : <Copy size={14} />}
-                        </button>
+
+                        {order.isDeleted === true && (
+                          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[9px] font-black tracking-[0.18em] text-rose-600">
+                            DELETED
+                          </span>
+                        )}
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 bg-gray-50/50 text-[#3E2723] text-sm">
+                    <td className="px-6 py-4 bg-gray-50/50 text-gray-900 font-bold text-sm">
                       {order.user?.name || 'Guest'}
                     </td>
 
-                    <td className="px-6 py-4 bg-gray-50/50 text-[#3E2723] text-sm">
+                    <td className="px-6 py-4 bg-gray-50/50 text-gray-900 font-bold text-sm">
                       Rs {order.totalAmount?.toLocaleString()}
                     </td>
 
                     <td className="px-6 py-4 bg-gray-50/50">
-                      <span className={`px-3 py-1 text-[9px] font-black rounded-full border bg-white ${getStatusStyle(order.orderStatus)}`}>
+                      <span className={`px-3 py-1 text-xs font-black rounded-full border bg-white ${getStatusStyle(order.orderStatus)}`}>
                         {normalizeOrderStatus(order.orderStatus).toUpperCase()}
                       </span>
                     </td>
 
                     <td className="px-6 py-4 bg-gray-50/50 rounded-r-3xl text-center">
                       <div className="flex justify-center gap-2">
-                        <button onClick={() => handleOpenOrderView(order._id)} className="p-2 text-gray-400 hover:text-teal-600 transition-all"><Eye size={17} /></button>
-                        <button onClick={() => handleOpenOrderEdit(order._id)} className="p-2 text-gray-400 hover:text-blue-600 transition-all"><Edit3 size={17} /></button>
-                        <button onClick={() => handleUpdateUserStatus(order.user?._id || '')} className="p-2 text-gray-400 hover:text-green-600 transition-all" title="Update User Status"><Check size={17} /></button>
-                        <button onClick={() => handleDelete(order._id, order.orderNumber)} className="p-2 text-gray-400 hover:text-rose-600 transition-all"><Trash2 size={17} /></button>
+                        <button
+                          onClick={() => handleOpenOrderView(order._id)}
+                          className="p-2 text-gray-400 hover:text-teal-600 transition-all"
+                        >
+                          <Eye size={17} />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            if (order.isDeleted === true) return;
+                            handleOpenOrderEdit(order._id);
+                          }}
+                          disabled={order.isDeleted === true}
+                          className={`p-2 text-gray-400 transition-all ${order.isDeleted === true
+                            ? 'opacity-30 cursor-not-allowed'
+                            : 'hover:text-blue-600'
+                            }`}
+                        >
+                          <Edit3 size={17} />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            if (order.isDeleted === true) return;
+                            handleDelete(order._id, order.orderNumber);
+                          }}
+                          disabled={order.isDeleted === true}
+                          className={`p-2 text-gray-400 transition-all ${order.isDeleted === true
+                            ? 'opacity-30 cursor-not-allowed'
+                            : 'hover:text-rose-600'
+                            }`}
+                        >
+                          <Trash2 size={17} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -301,7 +314,6 @@ const OrdersTable: React.FC = () => {
         </div>
       </div>
 
-      {/* MODALS */}
       <OrderViewModal isOpen={isViewOpen} order={selectedOrder} onClose={() => setIsViewOpen(false)} />
       {isEditOpen && <OrderEditModal isOpen={isEditOpen} order={selectedOrder} onClose={() => setIsEditOpen(false)} onSave={handleSave} />}
 

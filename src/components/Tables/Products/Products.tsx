@@ -212,8 +212,8 @@ const Products = () => {
         <div className="table-scroll-wrapper -mx-3 overflow-x-auto px-3 sm:-mx-4 sm:px-4">
           <table className="w-full text-left border-separate border-spacing-y-2 min-w-[700px]">
             <thead>
-              <tr className="text-[#3E2723] opacity-40 text-[10px] font-black uppercase tracking-[0.2em]">
-                <th className="px-6 py-2 w-16 text-center">Id</th>
+              <tr className="text-[#3E2723] text-[10px] font-bold uppercase tracking-[0.2em]">
+                <th className="px-6 py-2 w-16 text-center">ID</th>
                 <th className="px-6 py-2 text-center w-24">Images</th>
                 <th className="px-6 py-2">Name</th>
                 <th className="px-6 py-2 hidden lg:table-cell">Category</th>
@@ -236,7 +236,7 @@ const Products = () => {
                   const displayImage = typeof firstImg === 'object' && firstImg !== null ? (firstImg as any).url : firstImg;
                   return (
                     <tr key={item._id || i}>
-                      <td className="px-6 py-3 bg-gray-50/40 rounded-l-2xl text-[#3E2723] font-black text-xs text-center">
+                      <td className="px-6 py-3 text-gray-900 font-bold text-sm text-center">
                         {String((currentPage - 1) * 10 + i + 1).padStart(2, '0')}
                       </td>
                       <td className="px-6 py-3 bg-gray-50/40">
@@ -248,14 +248,14 @@ const Products = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-3 bg-gray-50/40 text-[#3E2723] text-sm truncate max-w-[200px]">
+                      <td className="px-6 py-3 text-gray-900 font-bold text-sm truncate max-w-[200px]">
                         {item.name}
                       </td>
-                      <td className="px-6 py-3 bg-gray-50/40 text-[#3E2723] text-sm truncate max-w-[200px]">
+                      <td className="px-6 py-3 text-gray-900 font-bold text-sm truncate max-w-[200px]">
                         {item.category}
                       </td>
                       <td className="px-6 py-3 bg-gray-50/40">
-                        <span className={`px-2.5 py-0.5 text-[8px] font-black rounded-full border ${item.isActive ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                        <span className={`px-2.5 py-0.5 text-xs font-black rounded-full border ${item.isActive ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
                           {item.isActive ? '● ACTIVE' : '○ INACTIVE'}
                         </span>
                       </td>

@@ -100,6 +100,13 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
         return;
       }
 
+      if (order.isDeleted === true) {
+        setOrderDetails(order);
+        setError(null);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 

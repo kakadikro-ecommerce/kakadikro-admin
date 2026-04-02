@@ -141,8 +141,8 @@ const Contacts = () => {
         <div className="table-scroll-wrapper overflow-x-auto">
           <table className="w-full text-left border-separate border-spacing-y-3 min-w-[640px] md:min-w-full">
             <thead>
-              <tr className="text-[#3E2723] opacity-40 text-[10px] font-black uppercase tracking-[0.2em]">
-                <th className="px-6 py-2 w-16 text-center">Id</th>
+              <tr className="text-[#3E2723] text-xs font-bold uppercase tracking-[0.2em]">
+                <th className="px-6 py-2 w-16 text-center">ID</th>
                 <th className="px-6 py-2">Name</th>
                 <th className="px-6 py-2 hidden lg:table-cell">Email</th>
                 <th className="px-6 py-2">Phone</th>
@@ -170,19 +170,19 @@ const Contacts = () => {
                     </td>
                     <td className="px-6 py-4 bg-gray-50/50">
                       <div className="flex items-center gap-2">
-                        <span className=" text-[#3E2723] text-sm">
+                        <span className=" text-gray-900 font-bold text-sm">
                           {contact.name}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 bg-gray-50/50 text-[11px] text-gray-600 hidden lg:table-cell">
+                    <td className="px-6 py-4 bg-gray-50/50 text-sm text-gray-900 font-bold hidden lg:table-cell">
                       <div>
                         {contact.email}
                       </div>
                     </td>
                     <td className="px-6 py-4 bg-gray-50/50">
                       <div>
-                        <span className="text-[11px] text-[#3E2723]">
+                        <span className="text-sm text-gray-900 font-bold">
                           {contact.phone}
                         </span>
                       </div>

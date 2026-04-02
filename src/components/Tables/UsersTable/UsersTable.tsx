@@ -202,8 +202,8 @@ const UserTable: React.FC<UserTableProps> = ({
         <div className="table-scroll-wrapper overflow-x-auto">
           <table className="w-full text-left border-separate border-spacing-y-3 min-w-[700px]">
             <thead>
-              <tr className="text-[#3E2723] opacity-40 text-[10px] font-black  tracking-[0.2em]">
-                <th className="px-6 py-2 w-16 text-center">Id</th>
+              <tr className="text-[#3E2723] text-sm font-bold tracking-[0.2em]">
+                <th className="px-6 py-2 w-16 text-center">ID</th>
                 <th className="px-6 py-2">Name</th>
                 <th className="px-6 py-2">Email</th>
                 <th className="px-6 py-2">Role</th>
@@ -227,18 +227,20 @@ const UserTable: React.FC<UserTableProps> = ({
                     <td className="px-6 py-4 bg-gray-50/50 rounded-l-2xl text-[#3E2723] font-black text-xs text-center">
                       {String((currentPage - 1) * 10 + i + 1).padStart(2, '0')}
                     </td>
-                    <td className="px-6 py-4 bg-gray-50/50 text-[#3E2723] text-sm">{u.name}</td>
-                    <td className="px-6 py-4 bg-gray-50/50 text-[11px] font-medium text-gray-600">
+                    <td className="px-6 py-4  text-[#3E2723] text-sm font-bold">
+                      {u.name}
+                    </td>
+                    <td className="px-6 py-4 bg-gray-50/50 text-sm font-bold text-gray-900">
                       {u.email}
                     </td>
                     <td className="px-6 py-4 bg-gray-50/50">
-                      <span className={`px-3 py-1 text-[9px] font-black rounded-full border ${getRoleBadgeColor(u.role)}`}>
+                      <span className={`px-3 py-1 text-xs font-bold rounded-full border ${getRoleBadgeColor(u.role)}`}>
                         {u.role?.toUpperCase()}
                       </span>
                     </td>
                     <td className="px-6 py-4 bg-gray-50/50">
                       <span
-                        className={`px-3 py-1 text-[9px] font-black rounded-full border ${
+                        className={`px-3 py-1 text-xs font-black rounded-full border ${
                           u.isActive
                             ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                             : 'bg-rose-50 text-rose-600 border-rose-100'

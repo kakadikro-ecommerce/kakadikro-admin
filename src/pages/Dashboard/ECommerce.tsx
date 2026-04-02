@@ -146,7 +146,7 @@ const ECommerce: React.FC = () => {
               {recentUsers.map((u, idx) => (
                 <tr key={idx} className="hover:bg-[#FAF6F0] transition-colors">
                   <td className="px-4 py-3 text-sm font-bold text-[#5C3E2E]">{u.name}</td>
-                  <td className="px-4 py-3 text-sm text-[#A67B45] truncate max-w-[120px]">{u.email}</td>
+                  <td className="px-4 py-3 text-sm text-[#A67B45] font-bold truncate max-w-[120px]">{u.email}</td>
                   <td className="px-4 py-3 text-center">
                     <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[#E8DBC8] text-[#5C3E2E] uppercase border border-[#D7C4A9]">
                       {u.role || 'User'}
@@ -171,7 +171,7 @@ const ECommerce: React.FC = () => {
               {recentProducts.map((p, idx) => (
                 <tr key={idx} className="hover:bg-[#FAF6F0] transition-colors">
                   <td className="px-4 py-3 text-sm font-bold text-[#5C3E2E]">{p.name}</td>
-                  <td className="px-4 py-3 text-xs text-[#A67B45] italic">{p.category || 'General'}</td>
+                  <td className="px-4 py-3 text-xs text-[#A67B45] font-bold">{p.category || 'General'}</td>
                   <td className="px-4 py-3 text-right">
                     <span className={`px-2 py-0.5 rounded-full text-[8px] font-black border ${p.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
                       {p.isActive ? 'ACTIVE' : 'INACTIVE'}
@@ -187,7 +187,7 @@ const ECommerce: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead className="bg-[#F3E5D3]/50 border-b border-[#E8DBC8]">
               <tr>
-                <th className="px-6 py-4 text-[10px] font-black text-[#8B5A2B] uppercase tracking-wider">Order ID</th>
+                <th className="px-6 py-4 text-[10px] font-black text-[#8B5A2B] uppercase tracking-wider">Order Number</th>
                 <th className="px-6 py-4 text-[10px] font-black text-[#8B5A2B] uppercase tracking-wider">Customer</th>
                 <th className="px-4 py-4 text-[10px] font-black text-[#8B5A2B] uppercase text-center tracking-wider">Status</th>
               </tr>
@@ -199,7 +199,7 @@ const ECommerce: React.FC = () => {
                     <td className="px-6 py-4 text-sm font-mono font-bold text-[#5C3E2E]">
                       {o.orderNumber || `#${o._id?.slice(-6).toUpperCase() || 'N/A'}`}
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium text-[#A67B45]">
+                    <td className="px-6 py-4 text-sm font-bold text-[#A67B45]">
                       {o.user?.name || o.shippingAddress?.fullName || 'Guest'}
                     </td>
                     <td className="px-4 py-4 text-center">
@@ -237,8 +237,8 @@ const ECommerce: React.FC = () => {
               {recentContacts.map((c, idx) => (
                 <tr key={idx} className="hover:bg-[#FAF6F0] transition-colors">
                   <td className="px-4 py-3 text-sm font-bold text-[#5C3E2E]">{c.name}</td>
-                  <td className="px-4 py-3 text-sm text-[#A67B45] truncate max-w-[150px]">{c.email}</td>
-                  <td className="px-4 py-3 text-right text-[10px] text-[#8B5A2B] font-medium">
+                  <td className="px-4 py-3 text-sm text-[#A67B45] truncate font-bold max-w-[150px]">{c.email}</td>
+                  <td className="px-4 py-3 text-right text-sm text-[#8B5A2B] font-bold">
                     {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}
                   </td>
                 </tr>

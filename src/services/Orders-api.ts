@@ -2,6 +2,7 @@ import axiosInstance from './axiosInstance';
 
 export const ORDER_STATUS_FILTER_OPTIONS = [
   'All',
+  'Pending',
   'Active',
   'Deleted',
   'confirmed',
@@ -101,7 +102,7 @@ export const normalizeOrderStatus = (status?: string | null): string => {
   const normalizedStatus = status?.trim().toLowerCase();
 
   if (!normalizedStatus) {
-    return 'pending';
+    return '';
   }
 
   if (normalizedStatus === 'shipped') {
@@ -149,7 +150,7 @@ const normalizeOrderItem = (item: unknown): OrderItem => {
           : typeof (rawItem.product as Record<string, unknown> | undefined)?.image === 'string'
             ? ((rawItem.product as Record<string, unknown>).image as string)
             : typeof (rawItem.product as Record<string, unknown> | undefined)?.productImage ===
-                'string'
+              'string'
               ? ((rawItem.product as Record<string, unknown>).productImage as string)
               : undefined,
     image: typeof rawItem.image === 'string' ? rawItem.image : undefined,
@@ -183,33 +184,33 @@ const normalizeOrder = (order: unknown): Order => {
     user:
       Object.keys(rawUser).length > 0
         ? {
-            _id: typeof rawUser._id === 'string' ? rawUser._id : undefined,
-            name: typeof rawUser.name === 'string' ? rawUser.name : undefined,
-            email: typeof rawUser.email === 'string' ? rawUser.email : undefined,
-            phone: typeof rawUser.phone === 'string' ? rawUser.phone : undefined,
-          }
+          _id: typeof rawUser._id === 'string' ? rawUser._id : undefined,
+          name: typeof rawUser.name === 'string' ? rawUser.name : undefined,
+          email: typeof rawUser.email === 'string' ? rawUser.email : undefined,
+          phone: typeof rawUser.phone === 'string' ? rawUser.phone : undefined,
+        }
         : null,
     items: Array.isArray(rawOrder.items) ? rawOrder.items.map(normalizeOrderItem) : [],
     shippingAddress:
       Object.keys(rawShipping).length > 0
         ? {
-            fullName:
-              typeof rawShipping.fullName === 'string' ? rawShipping.fullName : undefined,
-            phone: typeof rawShipping.phone === 'string' ? rawShipping.phone : undefined,
-            addressLine1:
-              typeof rawShipping.addressLine1 === 'string'
-                ? rawShipping.addressLine1
-                : undefined,
-            addressLine2:
-              typeof rawShipping.addressLine2 === 'string'
-                ? rawShipping.addressLine2
-                : undefined,
-            city: typeof rawShipping.city === 'string' ? rawShipping.city : undefined,
-            state: typeof rawShipping.state === 'string' ? rawShipping.state : undefined,
-            postalCode:
-              typeof rawShipping.postalCode === 'string' ? rawShipping.postalCode : undefined,
-            country: typeof rawShipping.country === 'string' ? rawShipping.country : undefined,
-          }
+          fullName:
+            typeof rawShipping.fullName === 'string' ? rawShipping.fullName : undefined,
+          phone: typeof rawShipping.phone === 'string' ? rawShipping.phone : undefined,
+          addressLine1:
+            typeof rawShipping.addressLine1 === 'string'
+              ? rawShipping.addressLine1
+              : undefined,
+          addressLine2:
+            typeof rawShipping.addressLine2 === 'string'
+              ? rawShipping.addressLine2
+              : undefined,
+          city: typeof rawShipping.city === 'string' ? rawShipping.city : undefined,
+          state: typeof rawShipping.state === 'string' ? rawShipping.state : undefined,
+          postalCode:
+            typeof rawShipping.postalCode === 'string' ? rawShipping.postalCode : undefined,
+          country: typeof rawShipping.country === 'string' ? rawShipping.country : undefined,
+        }
         : null,
     totalAmount: toNumber(rawOrder.totalAmount),
     subtotalAmount: toNumber(rawOrder.subtotalAmount),
@@ -226,18 +227,18 @@ const normalizeOrder = (order: unknown): Order => {
     paymentDetails:
       Object.keys(rawPaymentDetails).length > 0
         ? {
-            transactionId:
-              typeof rawPaymentDetails.transactionId === 'string'
-                ? rawPaymentDetails.transactionId
-                : undefined,
-            gateway:
-              typeof rawPaymentDetails.gateway === 'string'
-                ? rawPaymentDetails.gateway
-                : undefined,
-            paidAt:
-              typeof rawPaymentDetails.paidAt === 'string' ? rawPaymentDetails.paidAt : null,
-            amount: toNumber(rawPaymentDetails.amount),
-          }
+          transactionId:
+            typeof rawPaymentDetails.transactionId === 'string'
+              ? rawPaymentDetails.transactionId
+              : undefined,
+          gateway:
+            typeof rawPaymentDetails.gateway === 'string'
+              ? rawPaymentDetails.gateway
+              : undefined,
+          paidAt:
+            typeof rawPaymentDetails.paidAt === 'string' ? rawPaymentDetails.paidAt : null,
+          amount: toNumber(rawPaymentDetails.amount),
+        }
         : null,
     adminNote: typeof rawOrder.adminNote === 'string' ? rawOrder.adminNote : undefined,
     notes: typeof rawOrder.notes === 'string' ? rawOrder.notes : undefined,
@@ -245,15 +246,15 @@ const normalizeOrder = (order: unknown): Order => {
     shipment:
       Object.keys(rawShipment).length > 0
         ? {
-            trackingId:
-              typeof rawShipment.trackingId === 'string' ? rawShipment.trackingId : undefined,
-            courierName:
-              typeof rawShipment.courierName === 'string' ? rawShipment.courierName : undefined,
-            dispatchedAt:
-              typeof rawShipment.dispatchedAt === 'string' ? rawShipment.dispatchedAt : null,
-            deliveredAt:
-              typeof rawShipment.deliveredAt === 'string' ? rawShipment.deliveredAt : null,
-          }
+          trackingId:
+            typeof rawShipment.trackingId === 'string' ? rawShipment.trackingId : undefined,
+          courierName:
+            typeof rawShipment.courierName === 'string' ? rawShipment.courierName : undefined,
+          dispatchedAt:
+            typeof rawShipment.dispatchedAt === 'string' ? rawShipment.dispatchedAt : null,
+          deliveredAt:
+            typeof rawShipment.deliveredAt === 'string' ? rawShipment.deliveredAt : null,
+        }
         : null,
     placedAt: typeof rawOrder.placedAt === 'string' ? rawOrder.placedAt : null,
     createdAt: typeof rawOrder.createdAt === 'string' ? rawOrder.createdAt : null,
@@ -382,12 +383,18 @@ export const updateAdminOrder = async (
   if (orderData.shipment) {
     const shipmentPayload: Record<string, unknown> = {};
 
-    if (orderData.shipment.trackingId !== undefined) {
-      shipmentPayload.trackingId = orderData.shipment.trackingId;
+    if (
+      typeof orderData.shipment.trackingId === "string" &&
+      orderData.shipment.trackingId.trim() !== ""
+    ) {
+      shipmentPayload.trackingId = orderData.shipment.trackingId.trim();
     }
 
-    if (orderData.shipment.courierName !== undefined) {
-      shipmentPayload.courierName = orderData.shipment.courierName;
+    if (
+      typeof orderData.shipment.courierName === "string" &&
+      orderData.shipment.courierName.trim() !== ""
+    ) {
+      shipmentPayload.courierName = orderData.shipment.courierName.trim();
     }
 
     if (orderData.shipment.dispatchedAt !== undefined) {

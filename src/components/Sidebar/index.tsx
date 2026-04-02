@@ -104,7 +104,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                     )}
                   </div>
 
-                  <span className={`flex-1 whitespace-nowrap font-medium transition-opacity duration-300 ${!sidebarExpanded ? 'hidden' : 'block'}`}>
+                  <span className={`flex-1 whitespace-nowrap font-bold transition-opacity duration-300 ${!sidebarExpanded ? 'hidden' : 'block'}`}>
                     {item.name}
                   </span>
 
@@ -121,10 +121,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           <div className="mt-8 pt-8 border-t border-[#D7C4A9]">
             <button
               onClick={handleLogout}
-              className={`group flex w-full items-center gap-3 rounded-xl text-black transition-all hover:bg-red-50 hover:text-red-600 ${sidebarExpanded ? 'px-4 py-3' : 'justify-center py-3'}`}
+              className={`group flex w-full items-center gap-3 rounded-xl text-black font-bold transition-all hover:bg-red-50 hover:text-red-600 ${sidebarExpanded ? 'px-4 py-3' : 'justify-center py-3'}`}
             >
               <span className="shrink-0"><LogoutIcon /></span>
-              <span className={`${!sidebarExpanded ? 'hidden' : 'block'} font-medium`}>Logout</span>
+              <span className={`${!sidebarExpanded ? 'hidden' : 'block'} font-bold`}>Logout</span>
             </button>
           </div>
         </nav>
