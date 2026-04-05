@@ -1,4 +1,3 @@
-// services/admin-api.ts
 import api from './axiosInstance';
 import { Admin, AdminFormData } from '../types/Admin';
 import { User, UserRole } from '../types/users';
