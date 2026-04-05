@@ -66,7 +66,7 @@ const ECommerce: React.FC = () => {
         );
 
         const [uRes, pRes, cRes, oRes] = await Promise.all([
-          adminService.getAllUsers(1, 5),
+          adminService.getAllUsers(1, 5, undefined, 'user'),
           getAllProducts(1, 5),
           contactService.adminGetAll(1, 5),
           orders.getAllOrders(1, 5),

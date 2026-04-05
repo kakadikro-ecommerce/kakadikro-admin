@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { Modal } from '../../../../pages/UiElements/Modal';
 import type { User } from '../../../../types/users';
-// Updated to use Admin slice actions
 import {
   createAdminUser,
   updateAdminUser,
@@ -40,9 +39,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   onRefresh,
 }) => {
   const dispatch = useAppDispatch();
-  // Get loading states from admin slice
   const { createState, updateState } = useAppSelector((state) => state.admin);
-  
   const isEdit = !!user;
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -107,10 +104,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
       const submitData = { ...formData };
       if (isEdit && user?._id) {
         if (!submitData.password) delete submitData.password;
-        // Use updateAdminUser
         await dispatch(updateAdminUser({ id: user._id, data: submitData })).unwrap();
       } else {
-        // Use createAdminUser
         await dispatch(createAdminUser(submitData as any)).unwrap();
       }
       onRefresh();
@@ -126,7 +121,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose}>
       <form
         onSubmit={handleFormSubmit}
-        className="w-full max-w-2xl mx-auto bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col h-full sm:h-auto max-h-[95vh] sm:max-h-[89vh] overflow-hidden border border-white"
+        className="w-full max-w-2xl mx-auto bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col h-full sm:h-auto max-h-[95vh] sm:max-h-[89vh] overflow-hidden"
       >
         <div className="bg-[#2D1B19] p-5 sm:p-6 flex justify-between items-center text-white shrink-0">
           <div className="flex items-center gap-3 sm:gap-4">
@@ -220,8 +215,6 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                   className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none appearance-none cursor-pointer shadow-sm focus:ring-4 focus:ring-[#3E2723]/5 transition-all"
                 >
                   <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                  <option value="moderator">Moderator</option>
                 </select>
                 <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
@@ -255,7 +248,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
             <span className="font-black tracking-[0.2em] text-[11px]">
-              {isEdit ? 'Update Profile' : 'Create Account'}
+              {isEdit ? 'Update User' : 'Create User'}
             </span>
           </button>
         </div>

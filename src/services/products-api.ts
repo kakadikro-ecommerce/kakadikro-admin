@@ -39,7 +39,7 @@ export const productService = {
       };
     } catch (adminError) {
       try {
-        let fallbackQuery = `/products?page=${page}&limit=${limit}`;
+        let fallbackQuery = `/v1/admin/products?page=${page}&limit=${limit}`;
 
         if (isActive !== undefined) {
           fallbackQuery += `&isActive=${isActive}`;
@@ -91,7 +91,6 @@ export const productService = {
     return api.put<Product>(`/v1/admin/products/${id}`, payload);
   },
 
-  delete: (id: string) => api.delete(`/v1/admin/products/${id}`),
 };
 
 export const getAllProducts = (

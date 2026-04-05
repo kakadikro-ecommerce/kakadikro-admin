@@ -6,7 +6,6 @@ import {
   Shield,
   Calendar,
   Clock,
-  Fingerprint,
   Activity,
 } from 'lucide-react';
 import { User as UserType } from '../../../../types/users';
@@ -36,10 +35,8 @@ const UserViewModal: React.FC<UserViewModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      {/* Modal Container with consistent rounding and border */}
-      <div className="w-full max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden my-auto border border-[#EFE4D5]">
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden my-auto ">
         
-        {/* Header - Matching "ADD USER" Image exactly */}
         <div className="bg-[#3E2723] px-6 py-3 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
             <div className="bg-white/10 p-2 rounded-lg">
@@ -57,13 +54,10 @@ const UserViewModal: React.FC<UserViewModalProps> = ({
           </button>
         </div>
 
-        {/* Unified Content Area */}
         <div className="flex-1 overflow-y-auto p-6 bg-white custom-scrollbar">
           
-          {/* Single Unified Card - Matching "ACCOUNT PROFILE" Style */}
-          <div className="bg-white border border-[#EFE4D5] rounded-[2rem] p-8 space-y-10">
+          <div className="bg-white rounded-[2rem] p-8 space-y-10">
 
-            {/* Grid for all data points in one unified container */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
               
               <InfoItem label="Full Name" value={user.name} icon={<User size={14} />} />

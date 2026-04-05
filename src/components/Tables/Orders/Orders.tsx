@@ -19,11 +19,10 @@ import Pagination from '../../../pages/UiElements/Pagination';
 import SearchInput from '../../../pages/UiElements/SearchBar';
 import TableLoaderRow from '../../../pages/UiElements/TableLoaderRow';
 import {
-  deleteOrder,
   fetchOrders,
   resetOrdersNewCount,
   setSelectedOrder,
-  updateOrder,
+  updateOrderStatus,
 } from '../../../store/modules/orders/orders.slice';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 
@@ -99,7 +98,7 @@ const OrdersTable: React.FC = () => {
 
     try {
       await dispatch(
-        updateOrder({ orderId: selectedOrder._id, orderData: updatedData }),
+        updateOrderStatus({ orderId: selectedOrder._id, orderData: updatedData }),
       ).unwrap();
       setIsEditOpen(false);
       showNotification('success', `Order ${selectedOrder.orderNumber} updated successfully!`);
@@ -107,22 +106,6 @@ const OrdersTable: React.FC = () => {
     } catch (updateError) {
       showNotification('error', String(updateError) || 'Update failed.');
     }
-  };
-
-  const processDelete = async () => {
-    if (!orderToDelete) return;
-    try {
-      await dispatch(deleteOrder({ orderId: orderToDelete.id })).unwrap();
-      showNotification('success', `Order ${orderToDelete.orderNumber} deleted successfully!`);
-      setOrderToDelete(null);
-      dispatch(fetchOrders({ page: currentPage, limit: 10, isDeleted: selectedIsDeleted }));
-    } catch (deleteError) {
-      showNotification('error', String(deleteError) || 'Delete failed.');
-    }
-  };
-
-  const handleDelete = (orderId: string, orderNumber: string) => {
-    setOrderToDelete({ id: orderId, orderNumber });
   };
 
   const handleOpenOrderView = async (orderId: string) => {
@@ -150,7 +133,7 @@ const OrdersTable: React.FC = () => {
     const normalizedStatus = normalizeOrderStatus(order.orderStatus);
     const searchTarget = `${order.orderNumber} ${order.user?.name || ''}`.toLowerCase();
     const matchesSearch = searchTarget.includes(searchTerm.toLowerCase());
-    const matchesStatus = selectedStatus === 'All' || selectedStatus === 'Active' || selectedStatus === 'Deleted' || normalizedStatus === normalizeOrderStatus(selectedStatus);
+    const matchesStatus = selectedStatus === 'All' || selectedStatus === 'Active' || normalizedStatus === normalizeOrderStatus(selectedStatus);
     return matchesSearch && matchesStatus;
   });
 
@@ -232,13 +215,13 @@ const OrdersTable: React.FC = () => {
               ) : (
                 visibleOrders.map((order, i) => (
                   <tr key={order._id}>
-                    <td className="px-6 py-4 text-center font-bold text-sm">
+                    <td className="px-6 py-4 text-center font-bold text-sm text-gray-900 bg-gray-50/50 rounded-l-3xl">
                       {String((currentPage - 1) * 10 + i + 1).padStart(2, '0')}
                     </td>
 
                     <td className="px-6 py-4 bg-gray-50/50">
                       <div className="flex items-center gap-2">
-                        <span className="text-[#A3948F] text-sm tracking-tight">
+                        <span className="text-gray-900 text-sm font-bold tracking-tight">
                           {order.orderNumber}
                         </span>
 
@@ -286,20 +269,6 @@ const OrdersTable: React.FC = () => {
                         >
                           <Edit3 size={17} />
                         </button>
-
-                        <button
-                          onClick={() => {
-                            if (order.isDeleted === true) return;
-                            handleDelete(order._id, order.orderNumber);
-                          }}
-                          disabled={order.isDeleted === true}
-                          className={`p-2 text-gray-400 transition-all ${order.isDeleted === true
-                            ? 'opacity-30 cursor-not-allowed'
-                            : 'hover:text-rose-600'
-                            }`}
-                        >
-                          <Trash2 size={17} />
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -329,7 +298,6 @@ const OrdersTable: React.FC = () => {
             </div>
             <div className="p-6 bg-white flex gap-3">
               <button onClick={() => setOrderToDelete(null)} className="flex-1 py-4 rounded-2xl text-[10px] font-black text-gray-400">Cancel</button>
-              <button onClick={processDelete} className="flex-1 py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black">Delete Now</button>
             </div>
           </div>
         </div>

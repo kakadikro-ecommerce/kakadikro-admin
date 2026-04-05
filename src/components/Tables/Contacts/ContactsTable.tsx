@@ -141,7 +141,7 @@ const Contacts = () => {
         <div className="table-scroll-wrapper overflow-x-auto">
           <table className="w-full text-left border-separate border-spacing-y-3 min-w-[640px] md:min-w-full">
             <thead>
-              <tr className="text-[#3E2723] text-xs font-bold uppercase tracking-[0.2em]">
+              <tr className="text-[#3E2723] text-[10px] font-bold uppercase tracking-[0.2em]">
                 <th className="px-6 py-2 w-16 text-center">ID</th>
                 <th className="px-6 py-2">Name</th>
                 <th className="px-6 py-2 hidden lg:table-cell">Email</th>

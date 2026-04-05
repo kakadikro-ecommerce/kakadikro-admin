@@ -1,10 +1,9 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
-  deleteAdminOrder,
   fetchAdminOrders,
   type FetchOrdersParams,
   type Order,
-  updateAdminOrder,
+  updateAdminOrderStatus,
 } from '../../../services/Orders-api';
 import { getErrorMessage } from '../../shared/helpers';
 import {
@@ -50,28 +49,16 @@ export const fetchOrders = createAsyncThunk(
   },
 );
 
-export const updateOrder = createAsyncThunk(
-  'orders/updateOrder',
+export const updateOrderStatus = createAsyncThunk(
+  'orders/updateOrderStatus',
   async (
     { orderId, orderData }: { orderId: string; orderData: Partial<Order> },
     { rejectWithValue },
   ) => {
     try {
-      return await updateAdminOrder(orderId, orderData);
+      return await updateAdminOrderStatus(orderId, orderData);
     } catch (error) {
       return rejectWithValue(getErrorMessage(error, 'Failed to update order'));
-    }
-  },
-);
-
-export const deleteOrder = createAsyncThunk(
-  'orders/deleteOrder',
-  async ({ orderId }: { orderId: string }, { rejectWithValue }) => {
-    try {
-      await deleteAdminOrder(orderId);
-      return orderId;
-    } catch (error) {
-      return rejectWithValue(getErrorMessage(error, 'Failed to delete order'));
     }
   },
 );
@@ -116,39 +103,22 @@ const ordersSlice = createSlice({
         state.status = 'failed';
         state.error = (action.payload as string) ?? 'Failed to load orders';
       })
-      .addCase(updateOrder.pending, (state) => {
+      .addCase(updateOrderStatus.pending, (state) => {
         state.updateState.status = 'loading';
         state.updateState.error = null;
       })
-      .addCase(updateOrder.fulfilled, (state, action) => {
+      .addCase(updateOrderStatus.fulfilled, (state, action) => {
         state.updateState.status = 'succeeded';
         state.selectedOrder = action.payload;
         state.items = state.items.map((order) =>
           order._id === action.payload._id ? { ...order, ...action.payload } : order,
         );
       })
-      .addCase(updateOrder.rejected, (state, action) => {
+      .addCase(updateOrderStatus.rejected, (state, action) => {
         state.updateState.status = 'failed';
         state.updateState.error =
           (action.payload as string) ?? 'Failed to update order';
       })
-      .addCase(deleteOrder.pending, (state) => {
-        state.deleteState.status = 'loading';
-        state.deleteState.error = null;
-      })
-      .addCase(deleteOrder.fulfilled, (state, action) => {
-        state.deleteState.status = 'succeeded';
-        state.items = state.items.filter((order) => order._id !== action.payload);
-        state.totalCount = Math.max(0, state.totalCount - 1);
-        if (state.selectedOrder?._id === action.payload) {
-          state.selectedOrder = null;
-        }
-      })
-      .addCase(deleteOrder.rejected, (state, action) => {
-        state.deleteState.status = 'failed';
-        state.deleteState.error =
-          (action.payload as string) ?? 'Failed to delete order';
-      });
   },
 });
 

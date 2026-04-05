@@ -3,7 +3,7 @@ export interface User {
   _id: string;
   name: string;
   email: string;
-  role: 'user' | 'admin' | 'moderator';
+  role: 'user' | 'admin' | 'super_admin';
   isActive: boolean;
   password?: string;
   createdAt?: string;
@@ -31,14 +31,14 @@ export interface UserResponse {
 export interface UserFormData {
   name: string;
   email: string;
-  role: 'user' | 'admin' | 'moderator';
+  role: 'user' | 'admin' | 'super_admin';
   isActive: boolean;
   password?: string;
 }
 
 export interface UserFilters {
   searchTerm: string;
-  role: 'All' | 'user' | 'admin' | 'moderator';
+  role: 'All' | 'user' | 'admin';
   status: 'Active' | 'Inactive';
 }
 
@@ -47,11 +47,10 @@ export interface UserStats {
   active: number;
   inactive: number;
   admins: number;
-  moderators: number;
   users: number;
 }
 
-export type UserRole = 'user' | 'admin' | 'moderator';
+export type UserRole = 'user' | 'admin' | 'super_admin';
 
 export type UserStatus = 'active' | 'inactive';
 

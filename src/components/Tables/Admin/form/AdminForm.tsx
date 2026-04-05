@@ -14,16 +14,21 @@ import { Modal } from '../../../../pages/UiElements/Modal';
 import Alert from '../../../../pages/UiElements/Alerts'; 
 import type { Admin } from '../../../../types/Admin';
 import {
+  createAdminUser,
+  updateAdminUser,
   updateAdminPassword,
   updateAdminProfile,
 } from '../../../../store/modules/admin/admin.slice';
+import { setAuthUser } from '../../../../store/modules/auth/auth.slice';
 import { useAppDispatch } from '../../../../store/hooks';
+import { adminSchema } from '../../../../validations/adminValidation';
 
 interface AdminFormModalProps {
   admin: Admin | null;
   isOpen: boolean;
   onClose: () => void;
   onRefresh: () => void;
+  mode?: 'profile' | 'admin';
 }
 
 const AdminFormModal: React.FC<AdminFormModalProps> = ({
@@ -31,8 +36,11 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
   isOpen,
   onClose,
   onRefresh,
+  mode = 'profile',
 }) => {
   const dispatch = useAppDispatch();
+  const isProfileMode = mode === 'profile';
+  const isCreateMode = mode === 'admin' && !admin;
   
   const [loading, setLoading] = useState(false);
   const [passLoading, setPassLoading] = useState(false);
@@ -40,20 +48,42 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{ type: 'success' | 'error' | 'info' | 'warning', message: string } | null>(null);
 
-  const [formData, setFormData] = useState({ name: '', email: '' });
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    role: 'admin' as 'admin' | 'super_admin',
+    isActive: true,
+  });
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [errors, setErrors] = useState<{
+  name?: string;
+  email?: string;
+  password?: string;
+}>({});
 
   useEffect(() => {
     if (isOpen && admin) {
       setFormData({
         name: admin.name || '',
         email: admin.email || '',
+        role: admin.role || 'admin',
+        isActive: admin.isActive ?? true,
       });
+    } else if (isOpen && isCreateMode) {
+      setFormData({
+        name: '',
+        email: '',
+        role: 'admin',
+        isActive: true,
+      });
+    }
+
+    if (isOpen) {
       setCurrentPassword('');
       setNewPassword('');
     }
-  }, [admin, isOpen]);
+  }, [admin, isCreateMode, isOpen]);
 
   const showAlert = (type: 'success' | 'error', message: string) => {
     setAlertConfig({ type, message });
@@ -61,16 +91,79 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+      const result = adminSchema.safeParse({
+    name: formData.name,
+    email: formData.email,
+    password: newPassword,
+  });
+
+  if (!result.success) {
+    const fieldErrors: any = {};
+
+    result.error.issues.forEach((err) => {
+      const field = err.path[0];
+      fieldErrors[field] = err.message;
+    });
+
+    setErrors(fieldErrors);
+    return;
+  }
+
+    setErrors({});
+    
     if (!formData.name.trim()) {
       showAlert('error', "Name cannot be empty");
+      return;
+    }
+    if (isCreateMode && !formData.email.trim()) {
+      showAlert('error', "Email cannot be empty");
+      return;
+    }
+    if (isCreateMode && newPassword.length < 6) {
+      showAlert('error', "Password must be at least 6 characters");
       return;
     }
 
     setLoading(true);
     try {
-      await dispatch(updateAdminProfile({ name: formData.name })).unwrap();
+      if (isProfileMode) {
+        const updatedProfile = await dispatch(updateAdminProfile({ name: formData.name })).unwrap();
+        dispatch(setAuthUser( updatedProfile as any));
+      } else if (isCreateMode) {
+        await dispatch(createAdminUser({
+          name: formData.name,
+          email: formData.email,
+          password: newPassword,
+          role: 'admin',
+          isActive: true,
+        } as any)).unwrap();
+      } else if (admin?._id) {
+        const payload: Record<string, unknown> = {
+          name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          isActive: formData.isActive,
+        };
+
+        if (newPassword) {
+          payload.password = newPassword;
+        }
+
+        await dispatch(updateAdminUser({ id: admin._id, data: payload as any })).unwrap();
+      } else {
+        throw new Error('Admin ID is not available');
+      }
+
       onRefresh();
-      showAlert('success', "Profile updated successfully!");
+      showAlert(
+        'success',
+        isProfileMode
+          ? "Profile updated successfully!"
+          : isCreateMode
+            ? "Admin created successfully!"
+            : "Admin updated successfully!",
+      );
 
       setTimeout(() => {
         onClose();
@@ -85,6 +178,9 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isProfileMode) {
+      return;
+    }
     if (!currentPassword) {
       showAlert('error', "Please enter your current password");
       return;
@@ -160,65 +256,73 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[12px] font-bold text-[#3E2723] outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
                   />
+                  {errors.name && (
+                    <p className="text-red-500 text-[10px] ml-2">{errors.name}</p>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <label className="text-[9px] font-black text-gray-400 ml-2 ">Email Address</label>
                   <input
                     type="email"
                     value={formData.email}
-                    disabled
-                    className="w-full px-4 py-3 bg-gray-100 border border-gray-100 rounded-xl text-[12px] font-bold text-gray-400 cursor-not-allowed outline-none"
+                    disabled={!isCreateMode}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className={`w-full rounded-xl border px-4 py-3 text-[12px] font-bold outline-none transition-all ${
+                      isCreateMode
+                        ? 'bg-gray-50 text-[#3E2723] border-gray-100 focus:ring-2 focus:ring-[#3E2723]/5'
+                        : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
+                    }`}
                   />
+                  {errors.email && (
+                    <p className="text-red-500 text-[10px] ml-2">{errors.email}</p>
+                  )}
                 </div>
               </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full sm:w-auto px-6 py-3 bg-[#3E2723] text-white rounded-xl text-[9px] font-black  tracking-widest flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-sm"
-              >
-                {loading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                Update Profile
-              </button>
-            </form>
 
-            <div className="h-px bg-gray-100 w-full" />
-
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <h3 className="text-[10px] font-black text-[#3E2723]  tracking-widest flex items-center gap-2">
-                <KeyRound size={12} /> Change Credentials
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black text-gray-400 ml-2 ">Current Password</label>
-                  <div className="relative">
+              {!isProfileMode && !isCreateMode && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-gray-400 ml-2 ">Role</label>
                     <input
-                      type={showCurrentPassword ? 'text' : 'password'}
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="Current password"
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
+                      type="text"
+                      value={formData.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                      disabled
+                      className="w-full px-4 py-3 bg-gray-100 border border-gray-100 rounded-xl text-[12px] font-bold text-gray-400 cursor-not-allowed outline-none"
                     />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-gray-400 ml-2 ">Account Status</label>
                     <button
                       type="button"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#3E2723]"
+                      onClick={() => setFormData((prev) => ({ ...prev, isActive: !prev.isActive }))}
+                      className={`w-full rounded-xl border px-4 py-3 text-[12px] font-black uppercase tracking-widest transition-all ${
+                        formData.isActive
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : 'bg-rose-50 text-rose-600 border-rose-100'
+                      }`}
                     >
-                      {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      {formData.isActive ? 'Active' : 'Inactive'}
                     </button>
                   </div>
                 </div>
+              )}
 
+              {!isProfileMode && (
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-gray-400 ml-2 ">New Password</label>
+                  <label className="text-[9px] font-black text-gray-400 ml-2 ">
+                    {isCreateMode ? 'Password' : 'New Password'}
+                  </label>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="New password"
+                      placeholder={isCreateMode ? 'Minimum  characters' : 'Leave blank to keep current password'}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
                     />
+                    {errors.password && (
+                      <p className="text-red-500 text-[10px] ml-2">{errors.password}</p>
+                    )}
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
@@ -228,17 +332,79 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                     </button>
                   </div>
                 </div>
-              </div>
-
+              )}
               <button
                 type="submit"
-                disabled={passLoading || !currentPassword || newPassword.length < 6}
+                disabled={loading}
                 className="w-full sm:w-auto px-6 py-3 bg-[#3E2723] text-white rounded-xl text-[9px] font-black  tracking-widest flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-sm"
               >
-                {passLoading ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
-                Confirm New Password
+                {loading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                {isProfileMode ? 'Update Profile' : isCreateMode ? 'Create Admin' : 'Update Admin'}
               </button>
             </form>
+
+            {isProfileMode && (
+              <>
+                <div className="h-px bg-gray-100 w-full" />
+
+                <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                  <h3 className="text-[10px] font-black text-[#3E2723]  tracking-widest flex items-center gap-2">
+                    <KeyRound size={12} /> Change Credentials
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-gray-400 ml-2 ">Current Password</label>
+                      <div className="relative">
+                        <input
+                          type={showCurrentPassword ? 'text' : 'password'}
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          placeholder="Current password"
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#3E2723]"
+                        >
+                          {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-gray-400 ml-2 ">New Password</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="New password"
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#3E2723]"
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={passLoading || !currentPassword || newPassword.length < 6}
+                    className="w-full sm:w-auto px-6 py-3 bg-[#3E2723] text-white rounded-xl text-[9px] font-black  tracking-widest flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-sm"
+                  >
+                    {passLoading ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
+                    Confirm New Password
+                  </button>
+                </form>
+              </>
+            )}
           </div>
         </div>
       </Modal>

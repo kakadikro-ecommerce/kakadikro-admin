@@ -3,7 +3,7 @@ import axiosInstance from "../services/axiosInstance";
 export const authService = {
   async login(email: string, password: string) {
     try {
-      const response = await axiosInstance.post("/v1/auth/login", { email, password });
+      const response = await axiosInstance.post("/v1/admin/auth/login", { email, password });
       
       console.log("AuthService - Full response:", response);
       console.log("AuthService - Response data:", response.data);

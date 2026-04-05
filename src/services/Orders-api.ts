@@ -4,7 +4,6 @@ export const ORDER_STATUS_FILTER_OPTIONS = [
   'All',
   'Pending',
   'Active',
-  'Deleted',
   'confirmed',
   'dispatched',
   'delivered',
@@ -362,7 +361,7 @@ export const fetchAdminOrders = async (
   return normalizeOrdersResponse(response.data) as OrdersListResponse;
 };
 
-export const updateAdminOrder = async (
+export const updateAdminOrderStatus = async (
   orderId: string,
   orderData: Partial<Order>,
 ): Promise<Order> => {
@@ -417,10 +416,6 @@ export const updateAdminOrder = async (
   return normalizeOrdersResponse(response.data) as Order;
 };
 
-export const deleteAdminOrder = async (orderId: string) => {
-  const response = await axiosInstance.delete(`/v1/admin/orders/${orderId}`);
-  return normalizeOrdersResponse(response.data);
-};
 
 export const getAdminOrderById = async (orderId: string): Promise<Order> => {
   const response = await axiosInstance.get(`/v1/admin/orders/${orderId}`);
@@ -430,8 +425,7 @@ export const getAdminOrderById = async (orderId: string): Promise<Order> => {
 export const orderService = {
   adminGetAll: fetchAdminOrders,
   getById: getAdminOrderById,
-  update: updateAdminOrder,
-  delete: deleteAdminOrder,
+  update: updateAdminOrderStatus,
 };
 
 const ordersApi = {

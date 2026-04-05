@@ -1,4 +1,3 @@
-// components/Tables/Admin/AdminViewModal.tsx
 import React from 'react';
 import {
   X,
@@ -9,6 +8,7 @@ import {
   Clock,
   Activity,
   BadgeCheck,
+  Edit3,
 } from 'lucide-react';
 import { Admin } from '../../../../types/Admin';
 import { Modal } from '../../../../pages/UiElements/Modal';
@@ -17,12 +17,14 @@ interface AdminViewModalProps {
   admin: Admin | null;
   isOpen: boolean;
   onClose: () => void;
+  onEdit?: (admin: Admin) => void;
 }
 
 const AdminViewModal: React.FC<AdminViewModalProps> = ({
   admin,
   isOpen,
   onClose,
+  onEdit,
 }) => {
   if (!admin) return null;
 
@@ -45,7 +47,7 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="w-full max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden my-auto border border-[#EFE4D5]">
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden my-auto">
         <div className="bg-[#3E2723] px-6 py-4 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
             <div className="bg-white/10 p-2 rounded-lg">
@@ -69,7 +71,7 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-white custom-scrollbar">
-          <div className="bg-white border border-[#EFE4D5] rounded-[2rem] p-8 space-y-8">
+          <div className="bg-white p-8 space-y-8">
 
             <div className="flex items-center gap-6 pb-4 border-b border-[#EFE4D5]/50">
          
@@ -84,7 +86,7 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
                     : 'bg-indigo-50 text-indigo-700 border-indigo-100'
                 }`}>
                   <Shield size={12} />
-                  {admin.role === 'super_admin' ? 'SUPER ADMINI' : 'ADMINI'}
+                  {admin.role === 'super_admin' ? 'SUPER ADMIN' : 'ADMIN'}
                 </span>
               </div>
             </div>
@@ -110,6 +112,18 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
               <InfoItem label="Created At" value={formatDate(admin.createdAt)} icon={<Calendar size={14} />} />
               <InfoItem label="Last Updated" value={`${formatDate(admin.updatedAt)} at ${formatTime(admin.updatedAt)}`} icon={<Clock size={14} />} />
             </div>
+
+            {onEdit && (
+              <div className="flex justify-end border-t border-[#EFE4D5]/60 pt-6">
+                <button
+                  onClick={() => onEdit(admin)}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#3E2723] px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-[#2D1B19]"
+                >
+                  <Edit3 size={14} />
+                  Edit
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

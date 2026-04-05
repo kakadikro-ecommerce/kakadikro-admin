@@ -39,7 +39,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
   const menuItems = [
     { id: 'dashboard', path: '/dashboard', name: 'Dashboard', icon: <DashboardIcon />, badge: 0 },
-    { id: 'admin', path: '/admin', name: 'Admin', icon: <AdminIcon />, badge: newAdmins },
+    { id: 'admins', path: '/admins', name: 'Admins', icon: <AdminIcon />, badge: newAdmins },
     { id: 'users', path: '/users', name: 'Users', icon: <UsersIcon />, badge: newUsers }, 
     { id: 'products', path: '/products', name: 'Products', icon: <ProductsIcon />, badge: newProducts },
     { id: 'orders', path: '/orders', name: 'Orders', icon: <OrdersIcon />, badge: newOrders },

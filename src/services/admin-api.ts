@@ -1,7 +1,7 @@
 // services/admin-api.ts
 import api from './axiosInstance';
 import { Admin, AdminFormData } from '../types/Admin';
-import { User } from '../types/users';
+import { User, UserRole } from '../types/users';
 
 export interface PaginatedUsersResponse {
   total: number;
@@ -15,9 +15,35 @@ export interface PaginatedUsersResponse {
 }
 
 export const adminService = {
+
+  createUser: async (data: any): Promise<any> => {
+    try {
+      const { _id, ...createData } = data;
+      const formattedData = {
+        name: createData.name,
+        email: createData.email,
+        password: createData.password,
+        role: createData.role || 'user',
+        isActive: createData.isActive !== undefined ? createData.isActive : true,
+      };
+
+      let response;
+      try {
+        response = await api.post('/v1/admin/users', formattedData);
+      } catch (err) {
+        console.error('Create User API Error:', err);
+        throw err;
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Create User Error:', error);
+      throw error;
+    }
+  },
+
   getProfile: async (): Promise<Admin> => {
     try {
-      const response = await api.get('/v1/admin/users/profile');
+      const response = await api.get('/v1/admin/profile');
       return response.data.data || response.data;
     } catch (error) {
       console.error("Fetch Profile Error:", error);
@@ -27,7 +53,7 @@ export const adminService = {
 
   updateProfile: async (data: Partial<AdminFormData>): Promise<Admin> => {
     try {
-      const response = await api.put('/v1/admin/users/profile', data);
+      const response = await api.put('/v1/admin/profile', data);
       return response.data.data || response.data;
     } catch (error) {
       console.error("Update Profile Error:", error);
@@ -37,7 +63,7 @@ export const adminService = {
 
   updatePassword: async (id: string, password: string): Promise<any> => {
     try {
-      const response = await api.put(`/v1/admin/users/profile/password/${id}`, { password });
+      const response = await api.put(`/v1/admin/profile/password/${id}`, { password });
       return response.data;
     } catch (error) {
       console.error("Update Password Error:", error);
@@ -49,11 +75,15 @@ export const adminService = {
     page = 1,
     limit = 10,
     isActive?: boolean,
+    role?: UserRole,
   ): Promise<PaginatedUsersResponse> => {
     try {
       let query = `/v1/admin/users?page=${page}&limit=${limit}`;
       if (isActive !== undefined) {
         query += `&isActive=${isActive}`;
+      }
+      if (role) {
+        query += `&role=${role}`;
       }
 
       const response = await api.get(query);
@@ -89,39 +119,12 @@ export const adminService = {
     }
   },
 
-  createUser: async (data: any): Promise<any> => {
+  updateUser: async (id: string, data: Partial<User> | Partial<AdminFormData>): Promise<any> => {
     try {
-      const { _id, ...createData } = data;
-      const formattedData = {
-        name: createData.name,
-        email: createData.email,
-        password: createData.password,
-        role: createData.role || 'user',
-        isActive: createData.isActive !== undefined ? createData.isActive : true,
-      };
-
-      let response;
-      try {
-        response = await api.post('/v1/admin/users', formattedData);
-      } catch (err) {
-        response = await api.post('/v1/auth/register', formattedData);
-      }
-      return response.data;
-    } catch (error) {
-      console.error('Create User Error:', error);
-      throw error;
-    }
-  },
-
-  updateUser: async (id: string, data: any): Promise<any> => {
-    try {
-      const { password, _id, ...updateData } = data;
-      const formattedData = {
-        name: updateData.name,
-        email: updateData.email,
-        role: updateData.role,
-        isActive: updateData.isActive,
-      };
+      const { _id, ...updateData } = data as Record<string, unknown>;
+      const formattedData = Object.fromEntries(
+        Object.entries(updateData).filter(([, value]) => value !== undefined),
+      );
 
       const response = await api.put(`/v1/admin/users/${id}`, formattedData);
       return response.data;
@@ -131,15 +134,15 @@ export const adminService = {
     }
   },
 
-  deleteUser: async (id: string): Promise<any> => {
+  updateUserStatus: async (id: string, isActive: boolean): Promise<any> => {
     try {
-      const response = await api.delete(`/v1/admin/users/${id}`);
+      const response = await api.put(`/v1/admin/users/status/${id}`, { isActive });
       return response.data;
     } catch (error) {
-      console.error("Delete Admin/User Error:", error);
+      console.error('Update User Status Error:', error);
       throw error;
     }
-  },
+  }
 };
 
 export default adminService;

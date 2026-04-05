@@ -12,17 +12,19 @@ interface PaginationState {
 
 interface AdminState {
   profile: Admin | null;
-  
+
   users: User[];
+  admins: Admin[];
   selectedUser: User | null;
   pagination: PaginationState;
-  
+  adminPagination: PaginationState;
+
   totalCount: number;
   newCount: number;
-  
+
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
-  
+
   createState: {
     status: 'idle' | 'loading' | 'succeeded' | 'failed';
     error: string | null;
@@ -49,8 +51,15 @@ const initialAsyncState = {
 const initialState: AdminState = {
   profile: null,
   users: [],
+  admins: [],
   selectedUser: null,
   pagination: {
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+  },
+  adminPagination: {
     total: 0,
     page: 1,
     limit: 10,
@@ -122,13 +131,36 @@ export const updateAdminPassword = createAsyncThunk(
 export const fetchAllUsers = createAsyncThunk(
   'admin/fetchAllUsers',
   async (
-    { page = 1, limit = 10, isActive }: { page?: number; limit?: number; isActive?: boolean } = {},
+    {
+      page = 1,
+      limit = 10,
+      isActive,
+      role = 'user',
+    }: { page?: number; limit?: number; isActive?: boolean; role?: 'user' | 'admin' | 'super_admin' } = {},
     { rejectWithValue }
   ) => {
     try {
-      return await adminService.getAllUsers(page, limit, isActive);
+      return await adminService.getAllUsers(page, limit, isActive, role);
     } catch (error) {
       return rejectWithValue(getErrorMessage(error, 'Failed to load users'));
+    }
+  }
+);
+
+export const fetchAllAdmins = createAsyncThunk(
+  'admin/fetchAllAdmins',
+  async (
+    {
+      page = 1,
+      limit = 10,
+      isActive,
+    }: { page?: number; limit?: number; isActive?: boolean } = {},
+    { rejectWithValue }
+  ) => {
+    try {
+      return await adminService.getAllUsers(page, limit, isActive, 'admin');
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error, 'Failed to load admins'));
     }
   }
 );
@@ -157,7 +189,10 @@ export const createAdminUser = createAsyncThunk(
 
 export const updateAdminUser = createAsyncThunk(
   'admin/updateAdminUser',
-  async ({ id, data }: { id: string; data: Partial<User> }, { rejectWithValue }) => {
+  async (
+    { id, data }: { id: string; data: Partial<User> | Partial<AdminFormData> },
+    { rejectWithValue }
+  ) => {
     try {
       return await adminService.updateUser(id, data);
     } catch (error) {
@@ -166,18 +201,20 @@ export const updateAdminUser = createAsyncThunk(
   },
 );
 
-export const deleteAdminUser = createAsyncThunk(
-  'admin/deleteAdminUser',
-  async (id: string, { rejectWithValue }) => {
+export const toggleAdminUserStatus = createAsyncThunk(
+  'admin/toggleAdminUserStatus',
+  async (
+    { id, isActive }: { id: string; isActive: boolean },
+    { rejectWithValue },
+  ) => {
     try {
-      await adminService.deleteUser(id);
-      return id;
+      await adminService.updateUserStatus(id, isActive);
+      return { id, isActive };
     } catch (error) {
-      return rejectWithValue(getErrorMessage(error, 'Failed to delete user'));
+      return rejectWithValue(getErrorMessage(error, 'Failed to update status'));
     }
   },
 );
-
 
 const adminSlice = createSlice({
   name: 'admin',
@@ -225,6 +262,19 @@ const adminSlice = createSlice({
         state.error = (action.payload as string);
       })
 
+      .addCase(fetchAllAdmins.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchAllAdmins.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.admins = action.payload.users as unknown as Admin[];
+        state.adminPagination = action.payload.pagination;
+      })
+      .addCase(fetchAllAdmins.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = (action.payload as string);
+      })
+
       .addCase(fetchUserById.fulfilled, (state, action) => {
         state.selectedUser = action.payload;
       })
@@ -253,24 +303,40 @@ const adminSlice = createSlice({
         state.updateState.error = (action.payload as string);
       })
 
+      .addCase(toggleAdminUserStatus.pending, (state) => {
+        state.updateState.status = 'loading';
+        state.updateState.error = null;
+      })
+      .addCase(toggleAdminUserStatus.fulfilled, (state, action) => {
+        state.updateState.status = 'succeeded';
+        if (state.selectedUser?._id === action.payload.id) {
+          state.selectedUser = {
+            ...state.selectedUser,
+            isActive: action.payload.isActive,
+          };
+        }
+
+        if (state.profile?._id === action.payload.id) {
+          state.profile = {
+            ...state.profile,
+            isActive: action.payload.isActive,
+          };
+        }
+      })
+      .addCase(toggleAdminUserStatus.rejected, (state, action) => {
+        state.updateState.status = 'failed';
+        state.updateState.error = (action.payload as string);
+      })
+
       .addCase(updateAdminPassword.pending, (state) => {
         state.passwordState.status = 'loading';
       })
       .addCase(updateAdminPassword.fulfilled, (state) => {
         state.passwordState.status = 'succeeded';
       })
-
-      .addCase(deleteAdminUser.pending, (state) => {
-        state.deleteState.status = 'loading';
-      })
-      .addCase(deleteAdminUser.fulfilled, (state, action) => {
-        state.deleteState.status = 'succeeded';
-        state.users = state.users.filter(user => user._id !== action.payload);
-        state.totalCount -= 1;
-      })
-      .addCase(deleteAdminUser.rejected, (state, action) => {
-        state.deleteState.status = 'failed';
-        state.deleteState.error = (action.payload as string);
+      .addCase(updateAdminPassword.rejected, (state, action) => {
+        state.passwordState.status = 'failed';
+        state.passwordState.error = (action.payload as string);
       });
   },
 });

@@ -60,8 +60,8 @@ function App() {
           </ProtectedRoute>
         }
       />
-            <Route
-        path="/Admin"
+      <Route
+        path="/admins"
         element={
           <ProtectedRoute>
             <DefaultLayout>
@@ -70,6 +70,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route path="/profile" element={<Navigate to="/admins" replace />} />
       <Route
         path="/users"
         element={
