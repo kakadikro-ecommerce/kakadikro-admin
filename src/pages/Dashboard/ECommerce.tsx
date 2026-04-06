@@ -239,7 +239,13 @@ const ECommerce: React.FC = () => {
                   <td className="px-4 py-3 text-sm font-bold text-[#5C3E2E]">{c.name}</td>
                   <td className="px-4 py-3 text-sm text-[#A67B45] truncate font-bold max-w-[150px]">{c.email}</td>
                   <td className="px-4 py-3 text-right text-sm text-[#8B5A2B] font-bold">
-                    {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}
+                    {c.createdAt
+                      ? new Date(c.createdAt).toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                        })
+                      : 'N/A'}
                   </td>
                 </tr>
               ))}

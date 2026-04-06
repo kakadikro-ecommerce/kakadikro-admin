@@ -34,10 +34,10 @@ const formatDate = (dateValue?: string | null) => {
     return 'Invalid Date';
   }
 
-  return parsedDate.toLocaleDateString('en-US', {
+  return parsedDate.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
     year: 'numeric',
-    month: 'long',
-    day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });
