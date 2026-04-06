@@ -202,22 +202,22 @@ const Contacts = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 bg-gray-50/50 rounded-r-2xl text-center">
-                      <div className="flex justify-center gap-1">
+                      <div className="flex items-center justify-center gap-3">
                         <button
                           onClick={() => openViewModal(contact)}
-                          className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-xl transition-all"
+                          className="flex items-center justify-center rounded-lg p-2 text-gray-500 transition-all hover:bg-teal-50 hover:text-teal-600 active:scale-95"
                           title="View Details"
                         >
-                          <Eye size={16} />
+                          <Eye size={18} className="sm:size-5" />
                         </button>
                         <button
                           onClick={() =>
                             contact._id && confirmDelete(contact._id, contact.name)
                           }
-                          className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                          className="flex items-center justify-center rounded-lg p-2 text-gray-500 transition-all hover:bg-rose-50 hover:text-rose-600 active:scale-95"
                           title="Delete Contact"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={18} className="sm:size-5" />
                         </button>
                       </div>
                     </td>
