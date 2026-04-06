@@ -43,7 +43,8 @@ const formatDate = (dateValue?: string | null) => {
   });
 };
 
-const formatCurrency = (amount?: number | null) => `Rs ${Number(amount ?? 0).toLocaleString()}`;
+const formatCurrency = (amount?: number | null) =>
+  `Rs ${Number(amount ?? 0).toLocaleString()}`;
 
 const getItemImage = (item: OrderItem) => item.productImage || item.image || '';
 
@@ -146,10 +147,14 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
 
   const normalizedStatus = normalizeOrderStatus(displayOrder.orderStatus);
   const paymentLabel = displayOrder.paymentMethod
-    ? `${displayOrder.paymentMethod.toUpperCase()} (${displayOrder.paymentStatus || 'pending'})`
+    ? `${displayOrder.paymentMethod.toUpperCase()} (${
+        displayOrder.paymentStatus || 'pending'
+      })`
     : displayOrder.paymentStatus || 'N/A';
   const customerName =
-    displayOrder.user?.name || displayOrder.shippingAddress?.fullName || 'Guest';
+    displayOrder.user?.name ||
+    displayOrder.shippingAddress?.fullName ||
+    'Guest';
   const shippingPhone =
     displayOrder.shippingAddress?.phone || displayOrder.user?.phone || 'N/A';
   const shippingAddress = buildAddress(displayOrder);
@@ -157,64 +162,64 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="w-full mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden my-auto min-h-0">
-        <div className="bg-[#3E2723] px-6 py-4 flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="bg-white/10 p-2 rounded-lg shrink-0">
-              <Package className="text-white" size={18} />
+      <div className="w-full mx-auto  shadow-2xl flex flex-col max-h-[90vh] overflow-hidden my-auto min-h-0">
+        {/* Header - Reduced padding */}
+        <div className="bg-[#3E2723] px-5 py-3 flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="bg-white/10 p-1.5 rounded-lg shrink-0">
+              <Package className="text-white" size={16} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-white font-bold tracking-tight text-lg leading-tight">
+              <h2 className="text-white font-bold tracking-tight text-base leading-tight">
                 Order Details
               </h2>
-              <p className="text-white/60 text-[10px] font-medium tracking-[0.1em] truncate">
-                {displayOrder.orderNumber}
-              </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-white/80 shrink-0"
+            className="p-1 hover:bg-white/10 rounded-lg transition-all text-white/80 shrink-0"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-white custom-scrollbar space-y-6 min-h-0">
+        {/* Content - Reduced padding and gaps */}
+        <div className="flex-1 overflow-y-auto p-4 bg-white custom-scrollbar space-y-4 min-h-0">
           {loading && (
-            <div className="flex items-center justify-center gap-3 py-6 text-[#A69080]">
-              <Loader2 size={18} className="animate-spin" />
-              <span className="text-[11px] font-black tracking-[0.2em] uppercase">
+            <div className="flex items-center justify-center gap-2 py-4 text-[#A69080]">
+              <Loader2 size={16} className="animate-spin" />
+              <span className="text-[10px] font-black tracking-[0.2em] uppercase">
                 Loading Order
               </span>
             </div>
           )}
 
           {error && (
-            <div className="bg-rose-50/40 border border-rose-100 rounded-[1.5rem] px-4 py-3 flex items-center gap-3 text-rose-700">
-              <AlertCircle size={16} className="shrink-0" />
-              <p className="text-[11px] font-bold uppercase tracking-wider">
+            <div className="bg-rose-50/40 border border-rose-100 rounded-xl px-3 py-2 flex items-center gap-2 text-rose-700">
+              <AlertCircle size={14} className="shrink-0" />
+              <p className="text-[10px] font-bold uppercase tracking-wider">
                 {error}
               </p>
             </div>
           )}
 
-          <div className="bg-white rounded-[2rem] p-5 md:p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+          {/* Order Info Section - Reduced padding */}
+          <div className="bg-white rounded-xl p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
               <InfoItem
-                label="Order Number"
-                value={displayOrder.orderNumber || 'N/A'}
-                icon={<Package size={14} />}
+                label="Order ID"
+                value={displayOrder._id || displayOrder.orderNumber || 'N/A'}
+                icon={<Package size={12} />}
               />
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity size={14} className="text-[#A69080] opacity-60" />
-                  <p className="text-[9px] font-black text-[#A69080] tracking-widest uppercase">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Activity size={12} className="text-[#A69080] opacity-60" />
+                  <p className="text-[8px] font-black text-[#A69080] tracking-widest uppercase">
                     Order Status
                   </p>
                 </div>
                 <span
-                  className={`inline-flex items-center px-4 py-1.5 rounded-xl font-black text-[10px] tracking-widest border uppercase ${getStatusStyle(
+                  className={`inline-flex items-center px-3 py-1 rounded-lg font-black text-[9px] tracking-widest border uppercase ${getStatusStyle(
                     normalizedStatus,
                   )}`}
                 >
@@ -223,73 +228,83 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
               </div>
               <InfoItem
                 label="Placed At"
-                value={formatDate(displayOrder.placedAt || displayOrder.createdAt)}
-                icon={<Calendar size={14} />}
+                value={formatDate(
+                  displayOrder.placedAt || displayOrder.createdAt,
+                )}
+                icon={<Calendar size={12} />}
               />
               <InfoItem
                 label="Payment Method"
                 value={paymentLabel}
-                icon={<CreditCard size={14} />}
+                icon={<CreditCard size={12} />}
               />
-              <InfoItem label="Customer" value={customerName} icon={<User size={14} />} />
+              <InfoItem
+                label="Customer"
+                value={customerName}
+                icon={<User size={12} />}
+              />
             </div>
           </div>
 
-          <div className="bg-white rounded-[2rem] p-5 md:p-8">
-            <div className="flex items-center gap-2 pb-4 mb-6">
-              <ShoppingBag size={16} className="text-[#A69080]" />
-              <h3 className="text-[10px] font-black text-[#A69080] tracking-[0.2em] uppercase">
+          {/* Order Items Section - Reduced padding */}
+          <div className="bg-white rounded-xl p-4">
+            <div className="flex items-center gap-1.5 pb-3 mb-3 border-b border-[#EFE4D5]">
+              <ShoppingBag size={14} className="text-[#A69080]" />
+              <h3 className="text-[9px] font-black text-[#A69080] tracking-[0.2em] uppercase">
                 Ordered Items ({itemsCount})
               </h3>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {itemsCount > 0 ? (
                 displayOrder.items.map((item, idx) => (
                   <div
-                    key={item._id || `${item.productId || item.name || 'item'}-${idx}`}
-                    className="flex items-center justify-between gap-4 p-4 bg-[#FDFBF9] rounded-[1.5rem] transition-colors"
+                    key={
+                      item._id ||
+                      `${item.productId || item.name || 'item'}-${idx}`
+                    }
+                    className="flex items-center justify-between gap-3 p-3 bg-[#FDFBF9] rounded-xl transition-colors"
                   >
-                    <div className="flex items-center gap-4 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
                       {getItemImage(item) ? (
                         <img
                           src={getItemImage(item)}
                           alt={item.name || 'Order item'}
-                          className="w-14 h-14 rounded-2xl object-cover bg-white border border-[#EFE4D5] shrink-0"
+                          className="w-10 h-10 rounded-xl object-cover bg-white border border-[#EFE4D5] shrink-0"
                         />
                       ) : (
-                        <div className="w-14 h-14 rounded-2xl bg-white border border-[#EFE4D5] shrink-0 flex items-center justify-center text-[#A69080]">
-                          <Package size={20} />
+                        <div className="w-10 h-10 rounded-xl bg-white border border-[#EFE4D5] shrink-0 flex items-center justify-center text-[#A69080]">
+                          <Package size={16} />
                         </div>
                       )}
                       <div className="min-w-0">
-                        <h4 className="text-[14px] font-black text-[#3E2723] truncate">
+                        <h4 className="text-[12px] font-black text-[#3E2723] truncate">
                           {item.name || 'Unnamed Product'}
                         </h4>
-                        <div className="flex flex-wrap items-center gap-3 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 mt-0.5">
                           {item.weight && (
-                            <span className="text-[10px] font-bold text-[#A69080] bg-white px-2 py-0.5 rounded-md border border-[#EFE4D5]">
+                            <span className="text-[9px] font-bold text-[#A69080] bg-white px-1.5 py-0.5 rounded-md border border-[#EFE4D5]">
                               {item.weight}
                             </span>
                           )}
-                          <span className="text-[10px] font-black text-[#3E2723]/60">
+                          <span className="text-[9px] font-black text-[#3E2723]/60">
                             QTY: {item.quantity ?? 0}
                           </span>
                         </div>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-[11px] text-[#A69080] font-bold">
+                      <p className="text-[9px] text-[#A69080] font-bold">
                         {formatCurrency(item.unitPrice)} / unit
                       </p>
-                      <p className="text-[15px] font-black text-[#3E2723]">
+                      <p className="text-[13px] font-black text-[#3E2723]">
                         {formatCurrency(item.totalPrice)}
                       </p>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="p-6 bg-[#FDFBF9] rounded-[1.5rem] text-center">
-                  <p className="text-[11px] font-black text-[#A69080] uppercase tracking-wider">
+                <div className="p-4 bg-[#FDFBF9] rounded-xl text-center">
+                  <p className="text-[10px] font-black text-[#A69080] uppercase tracking-wider">
                     No Items Available
                   </p>
                 </div>
@@ -297,46 +312,48 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
             </div>
           </div>
 
-          <div className="bg-white rounded-[2rem] p-5 md:p-8">
-            <div className="flex items-center gap-2 border-b border-[#EFE4D5] pb-4 mb-6">
-              <MapPin size={16} className="text-[#A69080]" />
-              <h3 className="text-[10px] font-black text-[#A69080] tracking-[0.2em] uppercase">
+          {/* Delivery Address Section - Reduced padding */}
+          <div className="bg-white rounded-xl p-4">
+            <div className="flex items-center gap-1.5 border-b border-[#EFE4D5] pb-3 mb-3">
+              <MapPin size={14} className="text-[#A69080]" />
+              <h3 className="text-[9px] font-black text-[#A69080] tracking-[0.2em] uppercase">
                 Delivery Address
               </h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-1">
-                <p className="text-[11px] font-black text-[#A69080] uppercase tracking-widest">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-black text-[#A69080] uppercase tracking-widest">
                   Recipient
                 </p>
-                <p className="text-[15px] font-black text-[#3E2723]">
-                  {displayOrder.shippingAddress?.fullName || customerName}
+                <p className="text-[13px] font-black text-[#3E2723]">
+                  {customerName}
                 </p>
-                <p className="text-[13px] font-bold text-[#3E2723]/70 flex items-center gap-2">
+                <p className="text-[11px] font-bold text-[#3E2723]/70 flex items-center gap-1.5">
                   <span className="w-1 h-1 rounded-full bg-[#A69080]" />
                   {shippingPhone}
                 </p>
               </div>
-              <div className="space-y-1">
-                <p className="text-[11px] font-black text-[#A69080] uppercase tracking-widest">
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-black text-[#A69080] uppercase tracking-widest">
                   Location
                 </p>
-                <p className="text-[13px] font-bold text-[#3E2723]/80 leading-relaxed break-words">
+                <p className="text-[11px] font-bold text-[#3E2723]/80 leading-relaxed break-words">
                   {shippingAddress}
                 </p>
               </div>
             </div>
           </div>
 
+          {/* Admin Notes Section - Reduced padding */}
           {(displayOrder.adminNote || displayOrder.notes) && (
-            <div className="bg-rose-50/30 border border-rose-100 rounded-[2rem] p-5 md:p-8">
-              <div className="flex items-center gap-2 mb-4 text-rose-800">
-                <FileText size={16} />
-                <h3 className="text-[10px] font-black tracking-[0.2em] uppercase">
+            <div className="bg-rose-50/30 border border-rose-100 rounded-xl p-4">
+              <div className="flex items-center gap-1.5 mb-2 text-rose-800">
+                <FileText size={13} />
+                <h3 className="text-[9px] font-black tracking-[0.2em] uppercase">
                   Admin Instructions
                 </h3>
               </div>
-              <p className="text-[13px] font-medium text-[#3E2723] italic leading-relaxed break-words">
+              <p className="text-[11px] font-medium text-[#3E2723] italic leading-relaxed break-words">
                 "{displayOrder.adminNote || displayOrder.notes}"
               </p>
             </div>
@@ -356,14 +373,14 @@ const InfoItem = ({
   value: string;
   icon: React.ReactNode;
 }) => (
-  <div className="space-y-2 min-w-0">
-    <div className="flex items-center gap-2">
+  <div className="space-y-1 min-w-0">
+    <div className="flex items-center gap-1.5">
       <span className="text-[#A69080] opacity-60 shrink-0">{icon}</span>
-      <p className="text-[9px] font-black text-[#A69080] tracking-widest uppercase">
+      <p className="text-[8px] font-black text-[#A69080] tracking-widest uppercase">
         {label}
       </p>
     </div>
-    <p className="text-[14px] font-black text-[#3E2723] tracking-tight break-words">
+    <p className="text-[12px] font-black text-[#3E2723] tracking-tight break-words">
       {value}
     </p>
   </div>

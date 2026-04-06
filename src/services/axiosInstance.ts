@@ -1,6 +1,6 @@
 import axios, { AxiosHeaders } from 'axios';
 
-const DEFAULT_API_BASE_URL = 'http://localhost:5000/api';
+const DEFAULT_API_BASE_URL = 'http://192.168.1.13:5000/api';
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL;
 
@@ -12,24 +12,6 @@ const axiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
-const clearAuthSession = () => {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('user');
-  delete axiosInstance.defaults.headers.common.Authorization;
-};
-
-const forceLogout = () => {
-  clearAuthSession();
-
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('auth:logout'));
-
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login';
-    }
-  }
-};
 
 axiosInstance.interceptors.request.use(
   (config) => {
