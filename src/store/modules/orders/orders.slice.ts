@@ -3,6 +3,7 @@ import {
   fetchAdminOrders,
   type FetchOrdersParams,
   type Order,
+  toggleOrderActiveStatus,
   updateAdminOrderStatus,
 } from '../../../services/Orders-api';
 import { getErrorMessage } from '../../shared/helpers';
@@ -45,6 +46,20 @@ export const fetchOrders = createAsyncThunk(
       return await fetchAdminOrders(params);
     } catch (error) {
       return rejectWithValue(getErrorMessage(error, 'Failed to load orders'));
+    }
+  },
+);
+
+export const toggleOrderActiveStatusThunk = createAsyncThunk(
+  'orders/toggleOrderActiveStatus',
+  async (
+    { orderId, isActive }: { orderId: string; isActive: boolean },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await toggleOrderActiveStatus(orderId, isActive);
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error, 'Failed to update order status'));
     }
   },
 );
@@ -119,6 +134,24 @@ const ordersSlice = createSlice({
         state.updateState.error =
           (action.payload as string) ?? 'Failed to update order';
       })
+      .addCase(toggleOrderActiveStatusThunk.pending, (state) => {
+        state.updateState.status = 'loading';
+        state.updateState.error = null;
+      })
+      .addCase(toggleOrderActiveStatusThunk.fulfilled, (state, action) => {
+        state.updateState.status = 'succeeded';
+        state.items = state.items.map((order) =>
+          order._id === action.payload._id ? { ...order, ...action.payload } : order,
+        );
+        if (state.selectedOrder?._id === action.payload._id) {
+          state.selectedOrder = action.payload;
+        }
+      })
+      .addCase(toggleOrderActiveStatusThunk.rejected, (state, action) => {
+        state.updateState.status = 'failed';
+        state.updateState.error =
+          (action.payload as string) ?? 'Failed to update order status';
+      });
   },
 });
 

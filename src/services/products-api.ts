@@ -92,7 +92,7 @@ export const productService = {
   },
 
   toggleStatus: (id: string, isActive: boolean) => {
-  return api.patch(`/v1/admin/products/status/${id}`, { isActive });
+  return api.put(`/v1/admin/products/status/${id}`, { isActive });
 },
 
 };

@@ -10,7 +10,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { Modal } from '../../../../pages/UiElements/Modal';
-import { Order } from '../../../../services/Orders-api';
+import { Order, normalizeOrderStatus } from '../../../../services/Orders-api';
 
 interface OrderEditModalProps {
   isOpen: boolean;
@@ -80,8 +80,10 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
 
   useEffect(() => {
     if (order && isOpen) {
+      const normalizedStatus = normalizeOrderStatus(order.orderStatus);
+      
       setFormData({
-        orderStatus: order.orderStatus,
+        orderStatus: normalizedStatus,
         adminNote: order.adminNote || '',
         shipment: {
           trackingId: order.shipment?.trackingId || '',
@@ -131,10 +133,18 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
 
       const changedPayload = buildChangedPayload(order, formData);
 
+      // Only send if there are changes
+      if (Object.keys(changedPayload).length === 0) {
+        alert('No changes to save');
+        setLoading(false);
+        return;
+      }
+
       await onSave(changedPayload);
       onClose();
     } catch (error) {
       console.error('Form submission error:', error);
+      alert('Failed to save changes. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -146,18 +156,17 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose}>
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col h-auto max-h-[89vh] overflow-hidden my-auto"
+        className="w-full max-w-2xl mx-auto  shadow-2xl flex flex-col h-auto max-h-[89vh] overflow-hidden  my-auto"
       >
-
         <div className="bg-[#2D1B19] p-6 md:p-3 flex justify-between items-center text-white shrink-0">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
               <Package size={24} className="text-orange-200" />
             </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-bold tracking-tight">
+              <h2 className="text-xl md:text-2xl font-black tracking-tight">
                 Edit Order
-              </h2>
+              </h2> 
             </div>
           </div>
           <button
@@ -169,11 +178,11 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
           </button>
         </div>
 
-        <div className="p-6 md:p-10 space-y-8 overflow-y-auto bg-gray-50/50 flex-1">
-
+        <div className="p-6 md:p-8 space-y-6 overflow-y-auto bg-gray-50/50 flex-1">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Order Status - Fixed select options */}
             <div className="space-y-2">
-              <label className="text-xs md:text-sm font-semibold text-gray-900 ml-2 flex items-center gap-2 uppercase tracking-widest">
+              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 tracking-widest">
                 <Activity size={12} /> Order Status
               </label>
               <div className="relative">
@@ -181,22 +190,25 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   name="orderStatus"
                   value={formData.orderStatus}
                   onChange={handleChange}
-                  className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-sm md:text-base font-semibold outline-none appearance-none cursor-pointer shadow-sm"
+                  className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none appearance-none cursor-pointer shadow-sm focus:ring-2 focus:ring-[#3E2723]/20 focus:border-[#3E2723]/30"
                 >
-                  <option value="confirmed">PENDING</option>
+                  <option value="pending">PENDING</option>
                   <option value="confirmed">CONFIRMED</option>
                   <option value="dispatched">DISPATCHED</option>
                   <option value="delivered">DELIVERED</option>
+                  <option value="cancelled">CANCELLED</option>
                 </select>
                 <ChevronDown
                   size={16}
                   className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                 />
               </div>
+              <p className="text-[8px] text-gray-400 ml-2">
+                Current status: {formData.orderStatus?.toUpperCase() || 'N/A'}
+              </p>
             </div>
-
             <div className="space-y-2">
-              <label className="text-xs md:text-sm font-semibold text-gray-900 ml-2 flex items-center gap-2 uppercase tracking-widest">
+              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 tracking-widest">
                 <Truck size={12} /> Courier Name
               </label>
               <input
@@ -205,15 +217,18 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={formData.shipment?.courierName || ''}
                 onChange={handleChange}
                 disabled={!isDispatched}
-                placeholder="BlueDart, FedEx, etc."
-                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-sm md:text-base font-semibold outline-none shadow-sm"
+                placeholder={isDispatched ? "BlueDart, FedEx, etc." : "Enable 'DISPATCHED' status first"}
+                className={`w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm ${
+                  !isDispatched ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Tracking ID */}
             <div className="space-y-2">
-              <label className="text-xs md:text-sm font-semibold text-gray-900 ml-2 flex items-center gap-2 uppercase tracking-widest">
+              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 tracking-widest">
                 <Truck size={12} /> Tracking ID
               </label>
               <input
@@ -222,37 +237,51 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={formData.shipment?.trackingId || ''}
                 onChange={handleChange}
                 disabled={!isDispatched}
-                placeholder="TRK123456789"
-                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-sm md:text-base font-semibold outline-none shadow-sm"
+                placeholder={isDispatched ? "TRK123456789" : "Enable 'DISPATCHED' status first"}
+                className={`w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm ${
+                  !isDispatched ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               />
+              {isDispatched && (
+                <p className="text-[8px] text-amber-600 ml-2">
+                  Tracking details are required for dispatched orders
+                </p>
+              )}
             </div>
 
+            {/* Admin Note */}
             <div className="space-y-2">
-              <label className="text-xs md:text-sm font-semibold text-gray-900 ml-2 flex items-center gap-2 uppercase tracking-widest">
-                <FileText size={12} /> Admin Note
+              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 tracking-widest">
+                <FileText size={10} /> Admin Note
               </label>
               <textarea
                 name="adminNote"
                 value={formData.adminNote || ''}
                 onChange={handleChange}
-                rows={1}
+                rows={2}
                 placeholder="Internal order notes..."
-                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-sm md:text-base font-semibold outline-none shadow-sm resize-none"
+                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm resize-none focus:ring-2 focus:ring-[#3E2723]/20"
               />
             </div>
           </div>
-
         </div>
 
-        <div className="px-6 py-4 bg-white border-t flex justify-center">
+        <div className="px-6 py-4 bg-white border-t flex justify-center gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-6 py-3.5 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center gap-2 hover:bg-gray-200 transition-all"
+          >
+            <span className="font-black text-[10px]">Cancel</span>
+          </button>
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 max-w-[260px] py-3.5 bg-[#3E2723] text-white rounded-full flex items-center justify-center gap-4"
+            className="flex-1 max-w-[200px] py-3.5 bg-[#3E2723] text-white rounded-full flex items-center justify-center gap-4 hover:bg-[#2D1B19] transition-all disabled:opacity-50"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-            <span className="text-xs md:text-sm font-semibold uppercase">
-              {loading ? 'Processing...' : 'Save Updates'}
+            <span className="font-black text-[10px] tracking-wider">
+              {loading ? 'Processing...' : 'Save Changes'}
             </span>
           </button>
         </div>

@@ -18,10 +18,10 @@ const ContactViewModal: React.FC<ContactViewModalProps> = ({
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
       year: 'numeric',
-      month: 'long',
-      day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -91,5 +91,5 @@ const InfoItem = ({ label, value }: { label: string; value: string }) => (
     </p>
   </div>
 );
-
+ 
 export default ContactViewModal; 
