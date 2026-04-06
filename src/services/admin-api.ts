@@ -60,12 +60,18 @@ export const adminService = {
     }
   },
 
-  updatePassword: async (id: string, password: string): Promise<any> => {
+  updatePassword: async (
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<any> => {
     try {
-      const response = await api.put(`/v1/admin/profile/password/${id}`, { password });
+      const response = await api.put('/v1/admin/profile/password', {
+        currentPassword,
+        newPassword,
+      });
       return response.data;
     } catch (error) {
-      console.error("Update Password Error:", error);
+      console.error('Update Password Error:', error);
       throw error;
     }
   },

@@ -167,7 +167,7 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
               <h2 className="text-white font-bold tracking-tight text-lg leading-tight">
                 Order Details
               </h2>
-              <p className="text-white/60 text-[10px] font-medium tracking-[0.1em] truncate">
+              <p className="text-xs md:text-sm font-medium text-white/70 tracking-wide truncate">
                 {displayOrder.orderNumber}
               </p>
             </div>
@@ -184,7 +184,7 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
           {loading && (
             <div className="flex items-center justify-center gap-3 py-6 text-[#A69080]">
               <Loader2 size={18} className="animate-spin" />
-              <span className="text-[11px] font-black tracking-[0.2em] uppercase">
+              <span className="text-sm md:text-base font-semibold tracking-wide uppercase">
                 Loading Order
               </span>
             </div>
@@ -193,7 +193,7 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
           {error && (
             <div className="bg-rose-50/40 border border-rose-100 rounded-[1.5rem] px-4 py-3 flex items-center gap-3 text-rose-700">
               <AlertCircle size={16} className="shrink-0" />
-              <p className="text-[11px] font-bold uppercase tracking-wider">
+              <p className="text-sm font-semibold tracking-wide">
                 {error}
               </p>
             </div>
@@ -202,19 +202,19 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
           <div className="bg-white rounded-[2rem] p-5 md:p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
               <InfoItem
-                label="Order Number"
+                label="Order ID"
                 value={displayOrder.orderNumber || 'N/A'}
                 icon={<Package size={14} />}
               />
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Activity size={14} className="text-[#A69080] opacity-60" />
-                  <p className="text-[9px] font-black text-[#A69080] tracking-widest uppercase">
+                  <p className="text-sm md:text-base font-bold text-[#A69080] tracking-widest uppercase">
                     Order Status
                   </p>
                 </div>
                 <span
-                  className={`inline-flex items-center px-4 py-1.5 rounded-xl font-black text-[10px] tracking-widest border uppercase ${getStatusStyle(
+                  className={`inline-flex items-center px-4 py-1.5 rounded-xl text-sm md:text-base font-semibold tracking-widest border uppercase ${getStatusStyle(
                     normalizedStatus,
                   )}`}
                 >
@@ -238,7 +238,7 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
           <div className="bg-white rounded-[2rem] p-5 md:p-8">
             <div className="flex items-center gap-2 pb-4 mb-6">
               <ShoppingBag size={16} className="text-[#A69080]" />
-              <h3 className="text-[10px] font-black text-[#A69080] tracking-[0.2em] uppercase">
+              <h3 className="text-sm md:text-base font-semibold text-[#A69080] tracking-[0.2em] uppercase">
                 Ordered Items ({itemsCount})
               </h3>
             </div>
@@ -262,26 +262,26 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
                         </div>
                       )}
                       <div className="min-w-0">
-                        <h4 className="text-[14px] font-black text-[#3E2723] truncate">
+                        <h4 className="text-base md:text-lg font-bold text-[#3E2723] truncate">
                           {item.name || 'Unnamed Product'}
                         </h4>
                         <div className="flex flex-wrap items-center gap-3 mt-1">
                           {item.weight && (
-                            <span className="text-[10px] font-bold text-[#A69080] bg-white px-2 py-0.5 rounded-md border border-[#EFE4D5]">
+                            <span className="text-xs md:text-sm font-semibold text-[#A69080] bg-white px-2 py-1 rounded-md">
                               {item.weight}
                             </span>
                           )}
-                          <span className="text-[10px] font-black text-[#3E2723]/60">
+                          <span className="text-xs md:text-sm font-semibold text-[#3E2723]/70">
                             QTY: {item.quantity ?? 0}
                           </span>
                         </div>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-[11px] text-[#A69080] font-bold">
+                     <p className="text-sm md:text-base text-[#A69080] font-medium">
                         {formatCurrency(item.unitPrice)} / unit
                       </p>
-                      <p className="text-[15px] font-black text-[#3E2723]">
+                      <p className="text-lg md:text-xl font-bold text-[#3E2723]">
                         {formatCurrency(item.totalPrice)}
                       </p>
                     </div>
@@ -289,7 +289,7 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
                 ))
               ) : (
                 <div className="p-6 bg-[#FDFBF9] rounded-[1.5rem] text-center">
-                  <p className="text-[11px] font-black text-[#A69080] uppercase tracking-wider">
+                  <p className="text-[11px] font-bold text-[#A69080] uppercase tracking-wider">
                     No Items Available
                   </p>
                 </div>
@@ -300,16 +300,16 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
           <div className="bg-white rounded-[2rem] p-5 md:p-8">
             <div className="flex items-center gap-2 border-b border-[#EFE4D5] pb-4 mb-6">
               <MapPin size={16} className="text-[#A69080]" />
-              <h3 className="text-[10px] font-black text-[#A69080] tracking-[0.2em] uppercase">
+              <h3 className="text-sm md:text-base font-semibold text-[#A69080] tracking-[0.2em] uppercase">
                 Delivery Address
               </h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-1">
-                <p className="text-[11px] font-black text-[#A69080] uppercase tracking-widest">
+                <p className="text-xs md:text-sm font-semibold text-[#A69080] uppercase tracking-wide">
                   Recipient
                 </p>
-                <p className="text-[15px] font-black text-[#3E2723]">
+                <p className="text-base md:text-lg font-bold text-[#3E2723]">
                   {displayOrder.shippingAddress?.fullName || customerName}
                 </p>
                 <p className="text-[13px] font-bold text-[#3E2723]/70 flex items-center gap-2">
@@ -318,10 +318,10 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-[11px] font-black text-[#A69080] uppercase tracking-widest">
+                <p className="text-xs md:text-sm font-semibold text-[#A69080] uppercase tracking-wide">
                   Location
                 </p>
-                <p className="text-[13px] font-bold text-[#3E2723]/80 leading-relaxed break-words">
+                <p className="text-sm md:text-base font-medium text-[#3E2723]/80 leading-relaxed">
                   {shippingAddress}
                 </p>
               </div>
@@ -332,11 +332,11 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
             <div className="bg-rose-50/30 border border-rose-100 rounded-[2rem] p-5 md:p-8">
               <div className="flex items-center gap-2 mb-4 text-rose-800">
                 <FileText size={16} />
-                <h3 className="text-[10px] font-black tracking-[0.2em] uppercase">
+              <h3 className="text-sm md:text-base font-semibold uppercase tracking-wide">
                   Admin Instructions
                 </h3>
               </div>
-              <p className="text-[13px] font-medium text-[#3E2723] italic leading-relaxed break-words">
+              <p className="text-sm md:text-base font-medium text-[#3E2723] italic leading-relaxed">
                 "{displayOrder.adminNote || displayOrder.notes}"
               </p>
             </div>
@@ -359,11 +359,11 @@ const InfoItem = ({
   <div className="space-y-2 min-w-0">
     <div className="flex items-center gap-2">
       <span className="text-[#A69080] opacity-60 shrink-0">{icon}</span>
-      <p className="text-[9px] font-black text-[#A69080] tracking-widest uppercase">
+      <p className="text-xs md:text-sm font-semibold text-[#A69080] tracking-wide uppercase">
         {label}
       </p>
     </div>
-    <p className="text-[14px] font-black text-[#3E2723] tracking-tight break-words">
+    <p className="text-base md:text-lg font-bold text-[#3E2723] break-words leading-snug">
       {value}
     </p>
   </div>

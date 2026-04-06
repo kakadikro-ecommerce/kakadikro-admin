@@ -166,7 +166,7 @@ const OrdersTable: React.FC = () => {
 
         <div className="mb-8 flex flex-col gap-6 md:mb-10">
           <div className="w-full min-w-0 border-b border-gray-100 pb-4">
-            <h1 className="text-2xl md:text-3xl font-black text-[#3E2723] tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#3E2723] tracking-tight">
               Order Management
             </h1>
           </div>
@@ -198,7 +198,7 @@ const OrdersTable: React.FC = () => {
             <thead>
               <tr className="text-[#3E2723] text-[10px] tracking-[0.2em] uppercase">
                 <th className="px-6 py-2 w-16 text-center">ID</th>
-                <th className="px-6 py-2">Order Number</th>
+                <th className="px-6 py-2">Order ID</th>
                 <th className="px-6 py-2">Customer Name</th>
                 <th className="px-6 py-2">Amount</th>
                 <th className="px-6 py-2">Status</th>
@@ -220,13 +220,13 @@ const OrdersTable: React.FC = () => {
                     </td>
 
                     <td className="px-6 py-4 bg-gray-50/50">
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-900 text-sm font-bold tracking-tight">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-gray-900 text-sm font-bold break-all min-w-0">
                           {order.orderNumber}
                         </span>
 
                         {order.isDeleted === true && (
-                          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[9px] font-black tracking-[0.18em] text-rose-600">
+                          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[9px] font-bold tracking-[0.18em] text-rose-600">
                             DELETED
                           </span>
                         )}
@@ -242,7 +242,7 @@ const OrdersTable: React.FC = () => {
                     </td>
 
                     <td className="px-6 py-4 bg-gray-50/50">
-                      <span className={`px-3 py-1 text-xs font-black rounded-full border bg-white ${getStatusStyle(order.orderStatus)}`}>
+                      <span className={`px-3 py-1 text-xs font-bold rounded-full border bg-white ${getStatusStyle(order.orderStatus)}`}>
                         {normalizeOrderStatus(order.orderStatus).toUpperCase()}
                       </span>
                     </td>
@@ -293,11 +293,11 @@ const OrdersTable: React.FC = () => {
               <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-rose-500 mb-5 border border-rose-100">
                 <AlertTriangle size={36} />
               </div>
-              <h3 className="text-xl font-black text-[#3E2723]">Delete Order?</h3>
+              <h3 className="text-xl font-bold text-[#3E2723]">Delete Order?</h3>
               <p className="text-[11px] text-gray-500 mt-3">Delete <span className="text-rose-600">"{orderToDelete.orderNumber}"</span>?</p>
             </div>
             <div className="p-6 bg-white flex gap-3">
-              <button onClick={() => setOrderToDelete(null)} className="flex-1 py-4 rounded-2xl text-[10px] font-black text-gray-400">Cancel</button>
+              <button onClick={() => setOrderToDelete(null)} className="flex-1 py-4 rounded-2xl text-[10px] font-bold text-gray-400">Cancel</button>
             </div>
           </div>
         </div>

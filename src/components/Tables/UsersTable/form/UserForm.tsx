@@ -60,7 +60,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
           email: user.email,
           role: user.role,
           isActive: user.isActive,
-          password: '', 
+          password: '',
         });
       } else {
         setFormData({
@@ -87,10 +87,10 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
     }
     if (!isEdit) {
       if (!formData.password || formData.password.length < 6) {
-        newErrors.password = 'Password must be at least 6 characters';
+        newErrors.password = 'Password must be at least 10 characters';
       }
-    } else if (formData.password && formData.password.length < 6) {
-      newErrors.password = 'New password must be at least 6 characters';
+    } else if (formData.password && formData.password.length < 10) {
+      newErrors.password = 'New password must be at least 10 characters';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -99,7 +99,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     try {
       const submitData = { ...formData };
       if (isEdit && user?._id) {
@@ -129,7 +129,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
               <UserIcon size={20} className="sm:text-[24px] text-orange-200" />
             </div>
             <div>
-              <h2 className="text-lg sm:text-2xl font-black tracking-tight">
+              <h2 className="text-lg sm:text-2xl font-bold tracking-tight">
                 {isEdit ? 'Update' : 'Add New'} User
               </h2>
             </div>
@@ -146,7 +146,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
         <div className="p-6 sm:p-10 space-y-6 sm:space-y-8 overflow-y-auto custom-scrollbar bg-gray-50/50 flex-1">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2">
+              <label className="text-[10px] font-bold text-gray-400 ml-2 flex items-center gap-2">
                 <UserIcon size={12} /> Full Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -154,15 +154,14 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="John Doe"
-                className={`w-full px-5 py-4 bg-white border rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm transition-all ${
-                  errors.name ? 'border-red-400 ring-4 ring-red-50' : 'border-gray-100 focus:border-[#3E2723]/30 focus:ring-4 focus:ring-[#3E2723]/5'
-                }`}
+                className={`w-full px-5 py-4 bg-white border rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm transition-all ${errors.name ? 'border-red-400 ring-4 ring-red-50' : 'border-gray-100 focus:border-[#3E2723]/30 focus:ring-4 focus:ring-[#3E2723]/5'
+                  }`}
               />
               {errors.name && <p className="text-[10px] text-red-500 ml-2 font-bold">{errors.name}</p>}
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2">
+              <label className="text-[10px] font-bold text-gray-400 ml-2 flex items-center gap-2">
                 <Mail size={12} /> Email Address <span className="text-red-500">*</span>
               </label>
               <input
@@ -170,9 +169,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="john@example.com"
-                className={`w-full px-5 py-4 bg-white border rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm transition-all ${
-                  errors.email ? 'border-red-400 ring-4 ring-red-50' : 'border-gray-100 focus:border-[#3E2723]/30 focus:ring-4 focus:ring-[#3E2723]/5'
-                }`}
+                className={`w-full px-5 py-4 bg-white border rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm transition-all ${errors.email ? 'border-red-400 ring-4 ring-red-50' : 'border-gray-100 focus:border-[#3E2723]/30 focus:ring-4 focus:ring-[#3E2723]/5'
+                  }`}
               />
               {errors.email && <p className="text-[10px] text-red-500 ml-2 font-bold">{errors.email}</p>}
             </div>
@@ -180,7 +178,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2">
+              <label className="text-[10px] font-bold text-gray-400 ml-2 flex items-center gap-2">
                 <Shield size={12} /> {isEdit ? 'Change Password' : 'Password'} {!isEdit && <span className="text-red-500">*</span>}
               </label>
               <div className="relative">
@@ -189,9 +187,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder={isEdit ? 'Leave blank to keep current' : 'Min. 6 characters'}
-                  className={`w-full px-5 py-4 bg-white border rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm pr-12 transition-all ${
-                    errors.password ? 'border-red-400 ring-4 ring-red-50' : 'border-gray-100 focus:border-[#3E2723]/30 focus:ring-4 focus:ring-[#3E2723]/5'
-                  }`}
+                  className={`w-full px-5 py-4 bg-white border rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm pr-12 transition-all ${errors.password ? 'border-red-400 ring-4 ring-red-50' : 'border-gray-100 focus:border-[#3E2723]/30 focus:ring-4 focus:ring-[#3E2723]/5'
+                    }`}
                 />
                 <button
                   type="button"
@@ -205,7 +202,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2">
+              <label className="text-[10px] font-bold text-gray-400 ml-2 flex items-center gap-2">
                 <Shield size={12} /> User Role
               </label>
               <div className="relative">
@@ -223,15 +220,14 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
 
           {isEdit && (
             <div className="pt-1">
-              <label className="text-[10px] font-black text-[#A69080] uppercase tracking-widest ml-2 mb-3 flex items-center gap-2">
+              <label className="text-[10px] font-bold text-[#A69080] uppercase tracking-widest ml-2 mb-3 flex items-center gap-2">
                 <Activity size={12} /> Account Status
               </label>
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
-                className={`w-full sm:w-auto px-8 py-3.5 rounded-[1.25rem] text-[11px] font-black border transition-all flex items-center justify-center gap-3 shadow-sm ${
-                  formData.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'
-                }`}
+                className={`w-full sm:w-auto px-8 py-3.5 rounded-[1.25rem] text-[11px] font-bold border transition-all flex items-center justify-center gap-3 shadow-sm ${formData.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'
+                  }`}
               >
                 <div className={`w-2 h-2 rounded-full ${formData.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
                 <span className="uppercase tracking-widest">{formData.isActive ? 'Active' : 'Inactive'}</span>
@@ -247,7 +243,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
             className="w-full sm:max-w-[260px] py-4 bg-[#3E2723] text-white rounded-full flex items-center justify-center gap-4 hover:bg-[#2D1B19] active:scale-[0.98] disabled:opacity-50 transition-all shadow-lg shadow-[#3E2723]/20"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-            <span className="font-black tracking-[0.2em] text-[11px]">
+            <span className="font-bold tracking-[0.2em] text-[11px]">
               {isEdit ? 'Update User' : 'Create User'}
             </span>
           </button>

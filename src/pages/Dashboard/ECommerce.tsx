@@ -105,15 +105,14 @@ const ECommerce: React.FC = () => {
 
   return (
     <div className="space-y-8 bg-[#FFF9F0] p-4 md:p-6 rounded-xl min-h-screen font-sans">
-      
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {cards.map((card, i) => (
           <div
             key={i}
             onClick={() => !loading && navigate(card.route)}
-            className={`relative p-4 rounded-2xl shadow-sm transition-all bg-gradient-to-br from-[#F5E6D3] to-[#EFE4D5] border border-white/50 ${
-              loading ? 'cursor-wait' : 'cursor-pointer hover:scale-[1.03] hover:shadow-md'
-            }`}
+            className={`relative p-4 rounded-2xl shadow-sm transition-all bg-gradient-to-br from-[#F5E6D3] to-[#EFE4D5] border border-white/50 ${loading ? 'cursor-wait' : 'cursor-pointer hover:scale-[1.03] hover:shadow-md'
+              }`}
           >
             <div className="flex flex-col items-center text-center">
               <div className="p-2 bg-white/50 rounded-lg mb-2">
@@ -123,7 +122,7 @@ const ECommerce: React.FC = () => {
               {loading ? (
                 <NumberLoader percentage={percentages[card.pKey as keyof typeof percentages]} />
               ) : (
-                <p className="text-2xl font-black text-[#5C3E2E]">{card.value.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-[#5C3E2E]">{card.value.toLocaleString()}</p>
               )}
               <p className="text-[9px] font-medium text-[#A67B45] mt-1 opacity-70">{card.sub}</p>
             </div>
@@ -132,14 +131,14 @@ const ECommerce: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
+
         <DashboardTable title="Recent Users" icon={<UserPlus size={18} />} onViewAll={() => navigate('/users')} loading={loading}>
           <table className="w-full text-left border-collapse">
             <thead className="bg-[#FDF9F2] border-b border-[#E8DBC8]">
               <tr>
-                <th className="px-4 py-3 text-[10px] font-black text-[#8B5A2B] uppercase">Name</th>
-                <th className="px-4 py-3 text-[10px] font-black text-[#8B5A2B] uppercase">Email</th>
-                <th className="px-4 py-3 text-[10px] font-black text-[#8B5A2B] uppercase text-center">Role</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-[#8B5A2B] uppercase">Name</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-[#8B5A2B] uppercase">Email</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-[#8B5A2B] uppercase text-center">Role</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0E8DC]">
@@ -148,7 +147,7 @@ const ECommerce: React.FC = () => {
                   <td className="px-4 py-3 text-sm font-bold text-[#5C3E2E]">{u.name}</td>
                   <td className="px-4 py-3 text-sm text-[#A67B45] font-bold truncate max-w-[120px]">{u.email}</td>
                   <td className="px-4 py-3 text-center">
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[#E8DBC8] text-[#5C3E2E] uppercase border border-[#D7C4A9]">
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#E8DBC8] text-[#5C3E2E] uppercase border border-[#D7C4A9]">
                       {u.role || 'User'}
                     </span>
                   </td>
@@ -162,9 +161,9 @@ const ECommerce: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead className="bg-[#FDF9F2] border-b border-[#E8DBC8]">
               <tr>
-                <th className="px-4 py-3 text-[10px] font-black text-[#8B5A2B] uppercase">Name</th>
-                <th className="px-4 py-3 text-[10px] font-black text-[#8B5A2B] uppercase">Category</th>
-                <th className="px-4 py-3 text-[10px] font-black text-[#8B5A2B] uppercase text-right">Status</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-[#8B5A2B] uppercase">Name</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-[#8B5A2B] uppercase">Category</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-[#8B5A2B] uppercase text-right">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0E8DC]">
@@ -173,7 +172,7 @@ const ECommerce: React.FC = () => {
                   <td className="px-4 py-3 text-sm font-bold text-[#5C3E2E]">{p.name}</td>
                   <td className="px-4 py-3 text-xs text-[#A67B45] font-bold">{p.category || 'General'}</td>
                   <td className="px-4 py-3 text-right">
-                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-black border ${p.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold border ${p.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
                       {p.isActive ? 'ACTIVE' : 'INACTIVE'}
                     </span>
                   </td>
@@ -187,9 +186,9 @@ const ECommerce: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead className="bg-[#F3E5D3]/50 border-b border-[#E8DBC8]">
               <tr>
-                <th className="px-6 py-4 text-[10px] font-black text-[#8B5A2B] uppercase tracking-wider">Order Number</th>
-                <th className="px-6 py-4 text-[10px] font-black text-[#8B5A2B] uppercase tracking-wider">Customer</th>
-                <th className="px-4 py-4 text-[10px] font-black text-[#8B5A2B] uppercase text-center tracking-wider">Status</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#8B5A2B] uppercase tracking-wider">Order Number</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#8B5A2B] uppercase tracking-wider">Customer</th>
+                <th className="px-4 py-4 text-[10px] font-bold text-[#8B5A2B] uppercase text-center tracking-wider">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0E8DC]">
@@ -203,15 +202,14 @@ const ECommerce: React.FC = () => {
                       {o.user?.name || o.shippingAddress?.fullName || 'Guest'}
                     </td>
                     <td className="px-4 py-4 text-center">
-                      <span className={`px-3 py-1 rounded-full text-[9px] font-black border uppercase tracking-tighter ${
-                        normalizeOrderStatus(o.orderStatus) === 'delivered'
+                      <span className={`px-3 py-1 rounded-full text-[9px] font-bold border uppercase tracking-tighter ${normalizeOrderStatus(o.orderStatus) === 'delivered'
                           ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                           : normalizeOrderStatus(o.orderStatus) === 'cancelled'
                             ? 'bg-rose-50 text-rose-600 border-rose-100'
                             : normalizeOrderStatus(o.orderStatus) === 'dispatched'
                               ? 'bg-blue-50 text-blue-600 border-blue-100'
                               : 'bg-amber-50 text-amber-600 border-amber-100'
-                      }`}>
+                        }`}>
                         {normalizeOrderStatus(o.orderStatus).toUpperCase()}
                       </span>
                     </td>
@@ -228,9 +226,9 @@ const ECommerce: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead className="bg-[#FDF9F2] border-b border-[#E8DBC8]">
               <tr>
-                <th className="px-4 py-3 text-[10px] font-black text-[#8B5A2B] uppercase">Name</th>
-                <th className="px-4 py-3 text-[10px] font-black text-[#8B5A2B] uppercase">Email</th>
-                <th className="px-4 py-3 text-[10px] font-black text-[#8B5A2B] uppercase text-right">Date</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-[#8B5A2B] uppercase">Name</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-[#8B5A2B] uppercase">Email</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-[#8B5A2B] uppercase text-right">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0E8DC]">
@@ -273,9 +271,9 @@ const DashboardTable: React.FC<{
     <div className="px-5 py-4 bg-gradient-to-r from-[#F5E6D3] to-[#EFE4D5] flex items-center justify-between border-b border-[#E8DBC8]">
       <div className="flex items-center gap-2">
         <div className="text-[#5C3E2E]">{icon}</div>
-        <h3 className="text-sm font-black text-[#5C3E2E] uppercase tracking-wider">{title}</h3>
+        <h3 className="text-sm font-bold text-[#5C3E2E] uppercase tracking-wider">{title}</h3>
       </div>
-      <button onClick={onViewAll} className="flex items-center gap-1.5 px-3 py-1 bg-white/80 hover:bg-white text-[#5C3E2E] rounded-lg text-[10px] font-black border border-[#D7C4A9] transition-all active:scale-95 shadow-sm">
+      <button onClick={onViewAll} className="flex items-center gap-1.5 px-3 py-1 bg-white/80 hover:bg-white text-[#5C3E2E] rounded-lg text-[10px] font-bold border border-[#D7C4A9] transition-all active:scale-95 shadow-sm">
         <Eye size={12} /> VIEW ALL
       </button>
     </div>

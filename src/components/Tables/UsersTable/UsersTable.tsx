@@ -146,11 +146,11 @@ const UserTable: React.FC<UserTableProps> = ({
       )}
 
       <div className="mx-auto w-full max-w-8xl overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-3 shadow-sm sm:p-4 md:p-8">
-        
+
         <div className="mb-8 flex flex-col gap-6 px-1 sm:px-0">
 
           <div className="w-full min-w-0 border-b border-gray-100 pb-4">
-            <h1 className="text-2xl md:text-3xl font-black text-[#3E2723]  tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#3E2723]  tracking-tight">
               User Management
             </h1>
           </div>
@@ -205,7 +205,7 @@ const UserTable: React.FC<UserTableProps> = ({
               ) : (
                 filteredUsers.map((u: User, i: number) => (
                   <tr key={u._id} className="group transition-all">
-                    <td className="px-6 py-4 bg-gray-50/50 rounded-l-2xl text-[#3E2723] font-black text-xs text-center">
+                    <td className="px-6 py-4 bg-gray-50/50 rounded-l-2xl text-[#3E2723] font-bold text-xs text-center">
                       {String((currentPage - 1) * 10 + i + 1).padStart(2, '0')}
                     </td>
                     <td className="px-6 py-4 bg-gray-50/50 text-[#3E2723] text-sm font-bold">
@@ -221,11 +221,10 @@ const UserTable: React.FC<UserTableProps> = ({
                     </td>
                     <td className="px-6 py-4 bg-gray-50/50">
                       <span
-                        className={`px-3 py-1 text-xs font-black rounded-full border ${
-                          u.isActive
+                        className={`px-3 py-1 text-xs font-bold rounded-full border ${u.isActive
                             ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                             : 'bg-rose-50 text-rose-600 border-rose-100'
-                        }`}
+                          }`}
                       >
                         {u.isActive ? 'ACTIVE' : 'INACTIVE'}
                       </span>
@@ -247,8 +246,8 @@ const UserTable: React.FC<UserTableProps> = ({
                           onClick={() => handleToggleStatus(u)}
                           disabled={!canToggleUserStatus || updatingUserId === u._id}
                           className={`relative flex h-6 w-11 sm:h-7 sm:w-12 items-center rounded-full transition-all duration-300 ${u.isActive
-                              ? "bg-emerald-500"
-                              : "bg-rose-500"
+                            ? "bg-emerald-500"
+                            : "bg-rose-500"
                             } ${!canToggleUserStatus || updatingUserId === u._id
                               ? "cursor-not-allowed opacity-50"
                               : "hover:shadow-md"
@@ -258,8 +257,8 @@ const UserTable: React.FC<UserTableProps> = ({
                         >
                           <span
                             className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${u.isActive
-                                ? "translate-x-5 sm:translate-x-6"
-                                : "translate-x-1"
+                              ? "translate-x-5 sm:translate-x-6"
+                              : "translate-x-1"
                               }`}
                           />
                         </button>

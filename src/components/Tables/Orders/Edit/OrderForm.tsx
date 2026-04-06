@@ -146,7 +146,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose}>
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col h-auto max-h-[89vh] overflow-hidden border border-white my-auto"
+        className="w-full max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col h-auto max-h-[89vh] overflow-hidden my-auto"
       >
 
         <div className="bg-[#2D1B19] p-6 md:p-3 flex justify-between items-center text-white shrink-0">
@@ -155,7 +155,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
               <Package size={24} className="text-orange-200" />
             </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase">
+              <h2 className="text-xl md:text-2xl font-bold tracking-tight">
                 Edit Order
               </h2>
             </div>
@@ -173,7 +173,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 uppercase tracking-widest">
+              <label className="text-xs md:text-sm font-semibold text-gray-900 ml-2 flex items-center gap-2 uppercase tracking-widest">
                 <Activity size={12} /> Order Status
               </label>
               <div className="relative">
@@ -181,7 +181,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   name="orderStatus"
                   value={formData.orderStatus}
                   onChange={handleChange}
-                  className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none appearance-none cursor-pointer shadow-sm"
+                  className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-sm md:text-base font-semibold outline-none appearance-none cursor-pointer shadow-sm"
                 >
                   <option value="confirmed">PENDING</option>
                   <option value="confirmed">CONFIRMED</option>
@@ -196,7 +196,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 uppercase tracking-widest">
+              <label className="text-xs md:text-sm font-semibold text-gray-900 ml-2 flex items-center gap-2 uppercase tracking-widest">
                 <Truck size={12} /> Courier Name
               </label>
               <input
@@ -206,14 +206,14 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 onChange={handleChange}
                 disabled={!isDispatched}
                 placeholder="BlueDart, FedEx, etc."
-                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm"
+                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-sm md:text-base font-semibold outline-none shadow-sm"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 uppercase tracking-widest">
+              <label className="text-xs md:text-sm font-semibold text-gray-900 ml-2 flex items-center gap-2 uppercase tracking-widest">
                 <Truck size={12} /> Tracking ID
               </label>
               <input
@@ -223,12 +223,12 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 onChange={handleChange}
                 disabled={!isDispatched}
                 placeholder="TRK123456789"
-                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm"
+                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-sm md:text-base font-semibold outline-none shadow-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 uppercase tracking-widest">
+              <label className="text-xs md:text-sm font-semibold text-gray-900 ml-2 flex items-center gap-2 uppercase tracking-widest">
                 <FileText size={12} /> Admin Note
               </label>
               <textarea
@@ -237,7 +237,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 onChange={handleChange}
                 rows={1}
                 placeholder="Internal order notes..."
-                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm resize-none"
+                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-sm md:text-base font-semibold outline-none shadow-sm resize-none"
               />
             </div>
           </div>
@@ -251,7 +251,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
             className="flex-1 max-w-[260px] py-3.5 bg-[#3E2723] text-white rounded-full flex items-center justify-center gap-4"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-            <span className="font-black text-[10px] uppercase">
+            <span className="text-xs md:text-sm font-semibold uppercase">
               {loading ? 'Processing...' : 'Save Updates'}
             </span>
           </button>

@@ -13,6 +13,5 @@ export const adminSchema = z.object({
 
     password: z
         .string()
-        .min(10, "Password must be at least 10 characters")
-        .max(10, "Password cannot exceed 10 characters"),
+        .min(10, "Password must be at least 10 characters"),
 });

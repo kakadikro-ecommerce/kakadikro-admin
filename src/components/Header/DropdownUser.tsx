@@ -39,7 +39,7 @@ const DropdownUser = () => {
           className="flex items-center gap-4 group cursor-pointer"
         >
           <span className="hidden text-right lg:block">
-            <span className="block text-sm font-black text-[#3E2723] uppercase tracking-tight">
+            <span className="block text-sm font-bold text-[#3E2723] uppercase tracking-tight">
               {user.name}
             </span>
             <span className="block text-[10px] font-bold text-[#A68F7B] uppercase tracking-widest">
@@ -47,7 +47,7 @@ const DropdownUser = () => {
             </span>
           </span>
 
-          <div className="h-11 w-11 flex items-center justify-center rounded-xl bg-[#3E2723] text-white font-black text-lg shadow-md transition-transform group-hover:scale-105">
+          <div className="h-11 w-11 flex items-center justify-center rounded-xl bg-[#3E2723] text-white font-bold text-lg shadow-md transition-transform group-hover:scale-105">
             {firstLetter}
           </div>
 
@@ -61,7 +61,7 @@ const DropdownUser = () => {
           <div className="absolute right-0 mt-4 w-64 max-sm:w-[90vw] max-sm:right-2 flex flex-col rounded-2xl border border-gray-100 bg-white shadow-2xl z-[10000] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
 
             <div className="px-5 py-5 bg-[#faf7f2]/50 border-b border-gray-100">
-              <p className="truncate text-sm font-black text-[#3E2723] uppercase tracking-tight">
+              <p className="truncate text-sm font-bold text-[#3E2723] uppercase tracking-tight">
                 {user.name}
               </p>
               <p className="truncate text-[10px] font-bold text-[#A68F7B] uppercase tracking-widest mt-0.5">

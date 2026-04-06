@@ -7,16 +7,16 @@ import Alert from '../../../pages/UiElements/Alerts';
 import Pagination from '../../../pages/UiElements/Pagination';
 import SearchInput from '../../../pages/UiElements/SearchBar';
 import TableLoaderRow from '../../../pages/UiElements/TableLoaderRow';
- 
+
 const Contacts = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
- 
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
- 
+
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -24,7 +24,7 @@ const Contacts = () => {
     id: string;
     name: string;
   } | null>(null);
- 
+
   const [notification, setNotification] = useState<{
     show: boolean;
     type: 'success' | 'error' | 'info' | 'warning';
@@ -34,7 +34,7 @@ const Contacts = () => {
     type: 'success',
     message: '',
   });
- 
+
   const showNotification = (
     type: 'success' | 'error' | 'info' | 'warning',
     message: string,
@@ -45,12 +45,12 @@ const Contacts = () => {
       4000,
     );
   };
- 
+
   const loadContacts = async (page = 1) => {
     try {
       setLoading(true);
       const res = await contactService.adminGetAll(page, 10);
- 
+
       const contactsArray = Array.isArray(res.contacts) ? res.contacts : [];
       setContacts(contactsArray);
       setTotalPages(res.pagination.totalPages || 1);
@@ -63,7 +63,7 @@ const Contacts = () => {
       setLoading(false);
     }
   };
- 
+
   useEffect(() => {
     loadContacts(currentPage);
   }, [currentPage]);
@@ -71,16 +71,16 @@ const Contacts = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
- 
+
   const openViewModal = (contact: Contact) => {
     setSelectedContact(contact);
     setIsViewOpen(true);
   };
- 
+
   const confirmDelete = (id: string, name: string) => {
     setContactToDelete({ id, name });
   };
- 
+
   const processDelete = async () => {
     if (!contactToDelete) return;
     try {
@@ -95,7 +95,7 @@ const Contacts = () => {
       setIsDeleting(false);
     }
   };
- 
+
   const filteredContacts = contacts.filter((c) => {
     const matchesSearch =
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -108,7 +108,7 @@ const Contacts = () => {
   const effectiveTotalPages = hasActiveFilters
     ? Math.ceil(effectiveTotalItems / 10)
     : totalPages;
- 
+
   return (
     <div className="relative min-h-screen font-sans">
       {notification.show && (
@@ -120,15 +120,15 @@ const Contacts = () => {
           />
         </div>
       )}
- 
+
       <div className="mx-auto w-full max-w-8xl overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-3 shadow-sm sm:p-4 md:p-8">
         <div className="mb-8 flex flex-col items-stretch justify-between gap-6 px-1 sm:px-0 xl:flex-row xl:items-center">
           <div className="w-full min-w-0 sm:w-auto">
-            <h1 className="text-2xl md:text-3xl font-black text-[#3E2723] tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#3E2723] tracking-tight">
               Contacts Management
             </h1>
           </div>
- 
+
           <div className="w-full min-w-0 sm:w-auto sm:max-w-md">
             <SearchInput
               value={searchTerm}
@@ -137,7 +137,7 @@ const Contacts = () => {
             />
           </div>
         </div>
- 
+
         <div className="table-scroll-wrapper overflow-x-auto">
           <table className="w-full text-left border-separate border-spacing-y-3 min-w-[640px] md:min-w-full">
             <thead>
@@ -165,7 +165,7 @@ const Contacts = () => {
               ) : (
                 filteredContacts.map((contact, i) => (
                   <tr key={contact._id || i} className="group transition-all">
-                    <td className="px-6 py-4 bg-gray-50/50 rounded-l-2xl text-[#3E2723] font-black text-xs text-center">
+                    <td className="px-6 py-4 bg-gray-50/50 rounded-l-2xl text-[#3E2723] font-bold text-xs text-center">
                       {String((currentPage - 1) * 10 + i + 1).padStart(2, '0')}
                     </td>
                     <td className="px-6 py-4 bg-gray-50/50">
@@ -213,7 +213,7 @@ const Contacts = () => {
             </tbody>
           </table>
         </div>
- 
+
         <Pagination
           currentPage={currentPage}
           totalPages={effectiveTotalPages}
@@ -223,7 +223,7 @@ const Contacts = () => {
           loading={loading}
         />
       </div>
- 
+
       {contactToDelete && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[#2D1B19]/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl border border-white animate-in fade-in zoom-in duration-200">
@@ -237,12 +237,12 @@ const Contacts = () => {
               <div className="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center text-rose-500 mb-5 border border-rose-100">
                 <span className="text-4xl">⚠️</span>
               </div>
-              <h3 className="text-xl font-black text-[#3E2723] tracking-tight">
+              <h3 className="text-xl font-bold text-[#3E2723] tracking-tight">
                 Delete Contact?
               </h3>
               <p className="text-[11px] text-gray-500  tracking-wider mt-3 leading-relaxed px-4 opacity-70">
                 You are about to delete <br />
-                <span className="text-rose-600 font-black">
+                <span className="text-rose-600 font-bold">
                   "{contactToDelete.name}"
                 </span>
               </p>
@@ -250,14 +250,14 @@ const Contacts = () => {
             <div className="p-6 bg-white flex gap-3">
               <button
                 onClick={() => setContactToDelete(null)}
-                className="flex-1 py-4 rounded-2xl text-[10px] font-black text-gray-400 border border-transparent hover:border-gray-100 transition-all"
+                className="flex-1 py-4 rounded-2xl text-[10px] font-bold text-gray-400 border border-transparent hover:border-gray-100 transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={processDelete}
                 disabled={isDeleting}
-                className="flex-1 py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black shadow-xl flex justify-center items-center gap-2 transition-all active:scale-95"
+                className="flex-1 py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-bold shadow-xl flex justify-center items-center gap-2 transition-all active:scale-95"
               >
                 {isDeleting ? (
                   <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
@@ -269,7 +269,7 @@ const Contacts = () => {
           </div>
         </div>
       )}
- 
+
       <ContactViewModal
         contact={selectedContact}
         isOpen={isViewOpen}
@@ -279,5 +279,5 @@ const Contacts = () => {
     </div>
   );
 };
- 
+
 export default Contacts;

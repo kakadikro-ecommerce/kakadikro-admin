@@ -5,7 +5,6 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { store } from './store';
 import './css/style.css';
-import './css/satoshi.css';
 import 'jsvectormap/dist/css/jsvectormap.css';
 import 'flatpickr/dist/flatpickr.min.css';
 

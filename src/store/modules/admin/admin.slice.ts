@@ -116,17 +116,19 @@ export const updateAdminProfile = createAsyncThunk(
 export const updateAdminPassword = createAsyncThunk(
   'admin/updateAdminPassword',
   async (
-    { id, password }: { id: string; password: string },
-    { rejectWithValue },
+    { currentPassword, newPassword }: {
+      currentPassword: string;
+      newPassword: string;
+    },
+    { rejectWithValue }
   ) => {
     try {
-      return await adminService.updatePassword(id, password);
+      return await adminService.updatePassword(currentPassword, newPassword);
     } catch (error) {
       return rejectWithValue(getErrorMessage(error, 'Failed to update password'));
     }
   },
 );
-
 
 export const fetchAllUsers = createAsyncThunk(
   'admin/fetchAllUsers',

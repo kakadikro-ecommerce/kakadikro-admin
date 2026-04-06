@@ -54,10 +54,10 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
               <Shield className="text-white" size={18} />
             </div>
             <div>
-              <h2 className="text-white font-bold tracking-tight text-lg">
+              <h2 className="text-white font-bold tracking-tight text-xl">
                 Admin Details
               </h2>
-              <p className="text-[8px] text-orange-200/60 uppercase tracking-widest mt-0.5">
+              <p className="text-sm md:text-base text-orange-200/70 uppercase tracking-wide">
                 System Administrator Profile
               </p>
             </div>
@@ -74,17 +74,16 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
           <div className="bg-white p-8 space-y-8">
 
             <div className="flex items-center gap-6 pb-4 border-b border-[#EFE4D5]/50">
-         
+
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <h4 className="text-xl font-black text-[#3E2723]">{admin.name}</h4>
+                  <h4 className="text-2xl md:text-3xl font-bold text-[#3E2723]">{admin.name}</h4>
                   <BadgeCheck size={18} className="text-emerald-500" />
                 </div>
-                <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-xl font-black text-[10px] tracking-widest border ${
-                  admin.role === 'super_admin'
-                    ? 'bg-purple-50 text-purple-700 border-purple-100'
-                    : 'bg-indigo-50 text-indigo-700 border-indigo-100'
-                }`}>
+                <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-xl font-bold text-xs md:text-sm tracking-wide border ${admin.role === 'super_admin'
+                  ? 'bg-purple-50 text-purple-700 border-purple-100'
+                  : 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                  }`}>
                   <Shield size={12} />
                   {admin.role === 'super_admin' ? 'SUPER ADMIN' : 'ADMIN'}
                 </span>
@@ -94,17 +93,16 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
               <InfoItem label="Full Name" value={admin.name} icon={<User size={14} />} />
               <InfoItem label="Email Address" value={admin.email} icon={<Mail size={14} />} />
-              
+
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Activity size={14} className="text-[#A69080] opacity-60" />
-                  <p className="text-[9px] font-black text-[#A69080] tracking-widest">Account Status</p>
+                  <p className="text-[9px] font-bold text-[#A69080] tracking-widest">Account Status</p>
                 </div>
-                <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-xl font-black text-[10px] tracking-widest border ${
-                  admin.isActive
-                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                    : 'bg-rose-50 text-rose-600 border-rose-100'
-                }`}>
+                <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-xl font-bold text-xs md:text-sm tracking-wide border ${admin.isActive
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                  : 'bg-rose-50 text-rose-600 border-rose-100'
+                  }`}>
                   {admin.isActive ? 'ACTIVE' : 'INACTIVE'}
                 </span>
               </div>
@@ -117,7 +115,7 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
               <div className="flex justify-end border-t border-[#EFE4D5]/60 pt-6">
                 <button
                   onClick={() => onEdit(admin)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#3E2723] px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-[#2D1B19]"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#3E2723] px-5 py-3 text-sm md:text-base tracking-wide font-bold uppercase text-white transition-all hover:bg-[#2D1B19]"
                 >
                   <Edit3 size={14} />
                   Edit
@@ -131,13 +129,23 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
   );
 };
 
-const InfoItem = ({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) => (
+const InfoItem = ({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+}) => (
   <div className="space-y-2">
     <div className="flex items-center gap-2">
       <span className="text-[#A69080] opacity-60">{icon}</span>
-      <p className="text-[9px] font-black text-[#A69080] tracking-widest">{label}</p>
+      <p className="text-xs md:text-sm font-medium text-[#A69080]">
+        {label}
+      </p>
     </div>
-    <p className="text-[14px] font-black text-[#3E2723] tracking-tight leading-none">
+    <p className="text-base md:text-lg font-semibold text-[#3E2723] leading-snug break-words">
       {value}
     </p>
   </div>

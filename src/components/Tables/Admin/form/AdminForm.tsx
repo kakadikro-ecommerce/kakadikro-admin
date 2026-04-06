@@ -11,7 +11,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { Modal } from '../../../../pages/UiElements/Modal';
-import Alert from '../../../../pages/UiElements/Alerts'; 
+import Alert from '../../../../pages/UiElements/Alerts';
 import type { Admin } from '../../../../types/Admin';
 import {
   createAdminUser,
@@ -41,7 +41,7 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
   const dispatch = useAppDispatch();
   const isProfileMode = mode === 'profile';
   const isCreateMode = mode === 'admin' && !admin;
-  
+
   const [loading, setLoading] = useState(false);
   const [passLoading, setPassLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -54,13 +54,14 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
     role: 'admin' as 'admin' | 'super_admin',
     isActive: true,
   });
+  const [profilePassword, setProfilePassword] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [errors, setErrors] = useState<{
-  name?: string;
-  email?: string;
-  password?: string;
-}>({});
+    name?: string;
+    email?: string;
+    password?: string;
+  }>({});
 
   useEffect(() => {
     if (isOpen && admin) {
@@ -80,6 +81,7 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
     }
 
     if (isOpen) {
+      setProfilePassword('');
       setCurrentPassword('');
       setNewPassword('');
     }
@@ -92,26 +94,27 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-      const result = adminSchema.safeParse({
-    name: formData.name,
-    email: formData.email,
-    password: newPassword,
-  });
-
-  if (!result.success) {
-    const fieldErrors: any = {};
-
-    result.error.issues.forEach((err) => {
-      const field = err.path[0];
-      fieldErrors[field] = err.message;
+    const schema = isCreateMode ? adminSchema : adminSchema.omit({ password: true });
+    const result = schema.safeParse({
+      name: formData.name,
+      email: formData.email,
+      ...(isCreateMode ? { password: profilePassword } : {}),
     });
 
-    setErrors(fieldErrors);
-    return;
-  }
+    if (!result.success) {
+      const fieldErrors: any = {};
+
+      result.error.issues.forEach((err) => {
+        const field = err.path[0];
+        fieldErrors[field] = err.message;
+      });
+
+      setErrors(fieldErrors);
+      return;
+    }
 
     setErrors({});
-    
+
     if (!formData.name.trim()) {
       showAlert('error', "Name cannot be empty");
       return;
@@ -120,8 +123,8 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
       showAlert('error', "Email cannot be empty");
       return;
     }
-    if (isCreateMode && newPassword.length < 6) {
-      showAlert('error', "Password must be at least 6 characters");
+    if (isCreateMode && profilePassword.length < 10) {
+      showAlert('error', "Password must be at least 10 characters");
       return;
     }
 
@@ -129,12 +132,12 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
     try {
       if (isProfileMode) {
         const updatedProfile = await dispatch(updateAdminProfile({ name: formData.name })).unwrap();
-        dispatch(setAuthUser( updatedProfile as any));
+        dispatch(setAuthUser(updatedProfile as any));
       } else if (isCreateMode) {
         await dispatch(createAdminUser({
           name: formData.name,
           email: formData.email,
-          password: newPassword,
+          password: profilePassword,
           role: 'admin',
           isActive: true,
         } as any)).unwrap();
@@ -185,22 +188,17 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
       showAlert('error', "Please enter your current password");
       return;
     }
-    if (newPassword.length < 6) {
-      showAlert('error', "New password must be at least 6 characters");
+    if (newPassword.length < 10) {
+      showAlert('error', "New password must be at least 10 characters");
       return;
     }
-    if (!admin?._id) {
-      showAlert('error', "Admin ID is not available");
-      return;
-    }
-
     setPassLoading(true);
     try {
       await dispatch(updateAdminPassword({
-        id: admin._id,
-        password: newPassword
+        currentPassword,
+        newPassword,
       })).unwrap();
-      
+
       setCurrentPassword('');
       setNewPassword('');
       showAlert('success', "Password updated successfully!");
@@ -215,25 +213,25 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
     <>
       {alertConfig && (
         <div className="fixed top-4 right-4 z-[10000] w-[calc(100%-2rem)] max-w-sm">
-          <Alert 
-            type={alertConfig.type} 
-            message={alertConfig.message} 
-            onClose={() => setAlertConfig(null)} 
+          <Alert
+            type={alertConfig.type}
+            message={alertConfig.message}
+            onClose={() => setAlertConfig(null)}
           />
         </div>
       )}
 
       <Modal isOpen={isOpen} onClose={onClose}>
         <div className="w-full max-w-2xl mx-auto bg-white rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden transition-all duration-300">
-          
+
           <div className="bg-[#3E2723] p-4 flex justify-between items-center text-white shrink-0 sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
                 <Shield size={20} className="text-orange-200" />
               </div>
               <div>
-                <h2 className="text-base sm:text-lg font-black tracking-tight ">Admin Settings</h2>
-                <p className="text-[8px] text-orange-200/60  tracking-widest font-bold">Security & Profile</p>
+                <h2 className="text-base sm:text-lg font-bold tracking-tight ">Admin Settings</h2>
+                <p className="text-sm md:text-base text-orange-200/60  tracking-widest font-bold">Security & Profile</p>
               </div>
             </div>
             <button onClick={onClose} className="p-1.5 bg-white/5 hover:bg-white/20 rounded-full transition-all">
@@ -242,14 +240,14 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
           </div>
 
           <div className="p-5 sm:p-8 space-y-8 bg-white overflow-y-auto">
-            
+
             <form onSubmit={handleProfileSubmit} className="space-y-4">
-              <h3 className="text-[10px] font-black text-[#3E2723]  tracking-widest flex items-center gap-2">
+              <h3 className="text-sm md:text-base font-bold text-[#3E2723]  tracking-widest flex items-center gap-2">
                 <UserIcon size={12} /> Personal Details
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-gray-400 ml-2 ">Full Name</label>
+                  <label className="text-sm md:text-base font-bold text-gray-900 ml-2 ">Full Name</label>
                   <input
                     type="text"
                     value={formData.name}
@@ -261,17 +259,16 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                   )}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-gray-400 ml-2 ">Email Address</label>
+                  <label className="text-sm md:text-base font-bold text-gray-900 ml-2 ">Email Address</label>
                   <input
                     type="email"
                     value={formData.email}
                     disabled={!isCreateMode}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className={`w-full rounded-xl border px-4 py-3 text-[12px] font-bold outline-none transition-all ${
-                      isCreateMode
-                        ? 'bg-gray-50 text-[#3E2723] border-gray-100 focus:ring-2 focus:ring-[#3E2723]/5'
-                        : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
-                    }`}
+                    className={`w-full rounded-xl border px-4 py-3 text-[12px] font-bold outline-none transition-all ${isCreateMode
+                      ? 'bg-gray-50 text-[#3E2723] border-gray-100 focus:ring-2 focus:ring-[#3E2723]/5'
+                      : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
+                      }`}
                   />
                   {errors.email && (
                     <p className="text-red-500 text-[10px] ml-2">{errors.email}</p>
@@ -282,7 +279,7 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
               {!isProfileMode && !isCreateMode && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-gray-400 ml-2 ">Role</label>
+                    <label className="text-[9px] font-bold text-gray-400 ml-2 ">Role</label>
                     <input
                       type="text"
                       value={formData.role === 'super_admin' ? 'Super Admin' : 'Admin'}
@@ -291,15 +288,14 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-gray-400 ml-2 ">Account Status</label>
+                    <label className="text-[9px] font-bold text-gray-400 ml-2 ">Account Status</label>
                     <button
                       type="button"
                       onClick={() => setFormData((prev) => ({ ...prev, isActive: !prev.isActive }))}
-                      className={`w-full rounded-xl border px-4 py-3 text-[12px] font-black uppercase tracking-widest transition-all ${
-                        formData.isActive
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                          : 'bg-rose-50 text-rose-600 border-rose-100'
-                      }`}
+                      className={`w-full rounded-xl border px-4 py-3 text-[12px] font-bold uppercase tracking-widest transition-all ${formData.isActive
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                        : 'bg-rose-50 text-rose-600 border-rose-100'
+                        }`}
                     >
                       {formData.isActive ? 'Active' : 'Inactive'}
                     </button>
@@ -309,15 +305,15 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
 
               {!isProfileMode && (
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-gray-400 ml-2 ">
+                  <label className="text-sm md:text-base font-bold text-gray-900 ml-2 ">
                     {isCreateMode ? 'Password' : 'New Password'}
                   </label>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder={isCreateMode ? 'Minimum  characters' : 'Leave blank to keep current password'}
+                      value={profilePassword}
+                      onChange={(e) => setProfilePassword(e.target.value)}
+                        placeholder={isCreateMode ? 'Minimum 10 characters' : 'Leave blank to keep current password'}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
                     />
                     {errors.password && (
@@ -336,7 +332,7 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full sm:w-auto px-6 py-3 bg-[#3E2723] text-white rounded-xl text-[9px] font-black  tracking-widest flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-sm"
+                className="w-full sm:w-auto px-6 py-3 bg-[#3E2723] text-white rounded-xl text-sm md:text-base font-bold  tracking-widest flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-sm font-bold"
               >
                 {loading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                 {isProfileMode ? 'Update Profile' : isCreateMode ? 'Create Admin' : 'Update Admin'}
@@ -348,13 +344,13 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                 <div className="h-px bg-gray-100 w-full" />
 
                 <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                  <h3 className="text-[10px] font-black text-[#3E2723]  tracking-widest flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-[#3E2723]  tracking-widest flex items-center gap-2">
                     <KeyRound size={12} /> Change Credentials
                   </h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[9px] font-black text-gray-400 ml-2 ">Current Password</label>
+                      <label className="text-[11px] font-bold text-gray-400 ml-2 ">Current Password</label>
                       <div className="relative">
                         <input
                           type={showCurrentPassword ? 'text' : 'password'}
@@ -374,7 +370,7 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[9px] font-black text-gray-400 ml-2 ">New Password</label>
+                      <label className="text-[11px] font-bold text-gray-400 ml-2 ">New Password</label>
                       <div className="relative">
                         <input
                           type={showPassword ? 'text' : 'password'}
@@ -397,7 +393,7 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                   <button
                     type="submit"
                     disabled={passLoading || !currentPassword || newPassword.length < 6}
-                    className="w-full sm:w-auto px-6 py-3 bg-[#3E2723] text-white rounded-xl text-[9px] font-black  tracking-widest flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-sm"
+                    className="w-full sm:w-auto px-6 py-3 bg-[#3E2723] text-white rounded-xl text-[11px] font-bold  tracking-widest flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-sm"
                   >
                     {passLoading ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
                     Confirm New Password

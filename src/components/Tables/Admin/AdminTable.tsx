@@ -141,7 +141,7 @@ const AdminTable: React.FC<AdminTableProps> = ({ onView }) => {
       <div className="mx-auto w-full max-w-8xl overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-3 shadow-sm sm:p-4 md:p-8">
         <div className="mb-8 flex flex-col gap-6 px-1 sm:px-0">
           <div className="w-full min-w-0 border-b border-gray-100 pb-4">
-            <h1 className="text-2xl font-black tracking-tight text-[#3E2723] md:text-3xl">
+            <h1 className="text-2xl font-bold tracking-tight text-[#3E2723] md:text-3xl">
               Admin Management
             </h1>
           </div>
@@ -192,7 +192,7 @@ const AdminTable: React.FC<AdminTableProps> = ({ onView }) => {
         <div className="table-scroll-wrapper overflow-x-auto">
           <table className="w-full min-w-[800px] border-separate border-spacing-y-3 text-left md:min-w-full">
             <thead>
-              <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-[#3E2723]">
+              <tr className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#3E2723]">
                 <th className="w-16 px-6 py-2 text-center">ID</th>
                 <th className="px-6 py-2">Admin Name</th>
                 <th className="px-6 py-2">Email</th>
@@ -216,7 +216,7 @@ const AdminTable: React.FC<AdminTableProps> = ({ onView }) => {
               ) : (
                 filteredAdmins.map((admin, index) => (
                   <tr key={admin._id} className="group transition-all">
-                    <td className="rounded-l-2xl bg-gray-50/50 px-6 py-4 text-center text-xs font-black text-[#3E2723]">
+                    <td className="rounded-l-2xl bg-gray-50/50 px-6 py-4 text-center text-xs font-bold text-[#3E2723]">
                       {String((currentPage - 1) * 10 + index + 1).padStart(2, '0')}
                     </td>
                     <td className="bg-gray-50/50 px-6 py-4 text-sm font-bold text-[#3E2723]">
@@ -227,7 +227,7 @@ const AdminTable: React.FC<AdminTableProps> = ({ onView }) => {
                     </td>
                     <td className="bg-gray-50/50 px-6 py-4">
                       <span
-                        className={`flex w-fit items-center gap-1 rounded-full border px-3 py-1 text-[9px] font-black ${getRoleBadgeColor(admin.role)}`}
+                        className={`flex w-fit items-center gap-1 rounded-full border px-3 py-1 text-[9px] font-bold ${getRoleBadgeColor(admin.role)}`}
                       >
                         <Shield size={10} />
                         {admin.role === 'super_admin' ? 'SUPER ADMIN' : 'ADMIN'}
@@ -235,7 +235,7 @@ const AdminTable: React.FC<AdminTableProps> = ({ onView }) => {
                     </td>
                     <td className="bg-gray-50/50 px-6 py-4">
                       <span
-                        className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[9px] font-black uppercase tracking-widest ${
+                        className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest ${
                           admin.isActive
                             ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                             : 'bg-rose-50 text-rose-600 border-rose-100'

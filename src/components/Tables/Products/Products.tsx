@@ -182,7 +182,7 @@ const Products = () => {
         <div className="mb-6 flex flex-col gap-4">
           <div className="flex w-full min-w-0 justify-between border-b border-gray-50 pb-3">
             <div className="min-w-0">
-              <h1 className="text-2xl font-black tracking-tight text-[#3E2723] md:text-3xl">
+              <h1 className="text-2xl font-bold tracking-tight text-[#3E2723] md:text-3xl">
                 Inventory Management
               </h1>
             </div>
@@ -312,11 +312,10 @@ const Products = () => {
                       </td>
                       <td className="bg-gray-50/40 px-6 py-3">
                         <span
-                          className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[9px] font-black uppercase tracking-widest ${
-                            item.isActive
+                          className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest ${item.isActive
                               ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                               : 'bg-rose-50 text-rose-600 border-rose-100'
-                          }`}
+                            }`}
                         >
                           {item.isActive ? 'ACTIVE' : 'INACTIVE'}
                         </span>
@@ -343,22 +342,19 @@ const Products = () => {
                             type="button"
                             onClick={() => handleToggleStatus(item)}
                             disabled={updatingId === item._id}
-                            className={`relative flex h-6 w-11 items-center rounded-full transition-all duration-300 sm:h-7 sm:w-12 ${
-                              item.isActive ? 'bg-emerald-500' : 'bg-rose-500'
-                            } ${
-                              updatingId === item._id
+                            className={`relative flex h-6 w-11 items-center rounded-full transition-all duration-300 sm:h-7 sm:w-12 ${item.isActive ? 'bg-emerald-500' : 'bg-rose-500'
+                              } ${updatingId === item._id
                                 ? 'cursor-not-allowed opacity-50'
                                 : 'hover:shadow-md'
-                            }`}
+                              }`}
                             aria-label={`Toggle ${item.name} status`}
                             aria-pressed={item.isActive}
                           >
                             <span
-                              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300 sm:h-5 sm:w-5 ${
-                                item.isActive
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300 sm:h-5 sm:w-5 ${item.isActive
                                   ? 'translate-x-5 sm:translate-x-6'
                                   : 'translate-x-1'
-                              }`}
+                                }`}
                             />
                           </button>
                         </div>

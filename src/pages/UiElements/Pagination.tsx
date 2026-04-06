@@ -26,7 +26,7 @@ const Pagination: React.FC<PaginationProps> = ({
     if (totalItems === 0) return null;
     return (
       <div className="mt-8 flex w-full justify-center border-t border-gray-100 pt-6 sm:mt-10 sm:pt-8">
-        <p className="px-3 text-center text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+        <p className="px-3 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
           Showing all <span className="text-[#3E2723]">{totalItems}</span> items
         </p>
       </div>
@@ -55,9 +55,8 @@ const Pagination: React.FC<PaginationProps> = ({
         <button
           disabled={safeCurrentPage === 1 || loading}
           onClick={() => onPageChange(safeCurrentPage - 1)}
-          className={`shrink-0 p-3 bg-gray-50 text-gray-600 rounded-2xl ${
-            safeCurrentPage === 1 ? 'opacity-30' : 'hover:bg-gray-100'
-          }`}
+          className={`shrink-0 p-3 bg-gray-50 text-gray-600 rounded-2xl ${safeCurrentPage === 1 ? 'opacity-30' : 'hover:bg-gray-100'
+            }`}
         >
           <ChevronLeft size={18} />
         </button>
@@ -72,11 +71,10 @@ const Pagination: React.FC<PaginationProps> = ({
               ) : (
                 <button
                   onClick={() => onPageChange(page as number)}
-                  className={`h-[42px] min-w-[42px] shrink-0 flex items-center justify-center rounded-2xl text-[11px] font-black transition-all ${
-                    safeCurrentPage === page
+                  className={`h-[42px] min-w-[42px] shrink-0 flex items-center justify-center rounded-2xl text-[11px] font-bold transition-all ${safeCurrentPage === page
                       ? 'bg-[#3E2723] text-white shadow-lg shadow-[#3E2723]/20'
                       : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   {String(page).padStart(2, '0')}
                 </button>
@@ -88,15 +86,14 @@ const Pagination: React.FC<PaginationProps> = ({
         <button
           disabled={safeCurrentPage === effectiveTotalPages || loading}
           onClick={() => onPageChange(safeCurrentPage + 1)}
-          className={`shrink-0 p-3 bg-gray-50 text-gray-600 rounded-2xl ${
-            safeCurrentPage === effectiveTotalPages ? 'opacity-30' : 'hover:bg-gray-100'
-          }`}
+          className={`shrink-0 p-3 bg-gray-50 text-gray-600 rounded-2xl ${safeCurrentPage === effectiveTotalPages ? 'opacity-30' : 'hover:bg-gray-100'
+            }`}
         >
           <ChevronRight size={18} />
         </button>
       </div>
 
-      <p className="px-3 text-center text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+      <p className="px-3 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
         Showing <span className="text-[#3E2723]">{(safeCurrentPage - 1) * itemsPerPage + 1}</span> - <span className="text-[#3E2723]">{Math.min(safeCurrentPage * itemsPerPage, totalItems)}</span> of {totalItems} entries
       </p>
     </div>

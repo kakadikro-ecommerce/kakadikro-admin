@@ -229,9 +229,9 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
   const splitClean = (value: any) =>
     typeof value === 'string'
       ? value
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean)
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
       : Array.isArray(value)
         ? value
         : [];
@@ -339,13 +339,13 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="w-full max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col h-auto max-h-[92vh] overflow-hidden border border-white my-auto">
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col h-auto max-h-[92vh] overflow-hidden my-auto">
         <div className="bg-[#2D1B19] p-5 md:p-6 flex justify-between items-center text-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
               <Layers3 size={20} className="text-orange-200" />
             </div>
-            <h2 className="text-lg md:text-xl font-black tracking-tight">
+            <h2 className="text-lg md:text-xl font-bold tracking-tight">
               {isEdit ? 'Edit' : 'Add'} Product
             </h2>
           </div>
@@ -375,7 +375,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-gray-400">
                     <UploadCloud size={32} />
-                    <span className="text-[9px] font-bold tracking-widest">
+                    <span className="text-xs md:text-sm font-semibold tracking-wide">
                       Drop or Click
                     </span>
                   </div>
@@ -391,17 +391,17 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
               <div className="flex-1 w-full space-y-3">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-gray-400 ml-2">
+                  <label className="text-xs md:text-sm font-semibold text-gray-900">
                     Product Name
                   </label>
                   <input
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm w-full"
+                    className="px-4 py-3 bg-white border border-gray-100 rounded-2xl text-sm md:text-base font-semibold outline-none shadow-sm w-full"
                   />
                   {errors.name && (
-                    <p className="text-red-500 text-[10px] mt-1 ml-2">
+                    <p className="text-red-500 text-xs md:text-sm mt-1 ml-2">
                       {errors.name}
                     </p>
                   )}
@@ -409,34 +409,34 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-gray-400 ml-2">
+                    <label className="text-xs md:text-sm font-semibold text-gray-900">
                       Brand
                     </label>
                     <input
                       name="brand"
                       value={formData.brand}
                       onChange={handleChange}
-                      className="px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm w-full"
+                      className="px-4 py-3 bg-white border border-gray-100 rounded-2xl text-sm md:text-base font-semibold outline-none shadow-sm w-full"
                     />
                     {errors.brand && (
-                      <p className="text-red-500 text-[10px] mt-1 ml-2">
+                      <p className="text-red-500 text-xs md:text-sm mt-1 ml-2">
                         {errors.brand}
                       </p>
                     )}
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-gray-400 ml-2">
+                    <label className="text-xs md:text-sm font-semibold text-gray-900">
                       Category
                     </label>
                     <input
                       name="category"
                       value={formData.category}
                       onChange={handleChange}
-                      className="px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm w-full"
+                      className="px-4 py-3 bg-white border border-gray-100 rounded-2xl text-sm md:text-base font-semibold outline-none shadow-sm w-full"
                     />
                     {errors.category && (
-                      <p className="text-red-500 text-[10px] mt-1 ml-2">
+                      <p className="text-red-500 text-xs md:text-sm mt-1 ml-2">
                         {errors.category}
                       </p>
                     )}
@@ -447,7 +447,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-[10px] font-black text-[#3E2723]/40 tracking-[0.25em] flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#3E2723]/40 tracking-[0.25em] flex items-center gap-2">
               <AlignLeft size={12} /> Narratives
             </h3>
 
@@ -457,7 +457,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
               { name: 'usage', label: 'Usage', as: 'input' },
             ].map((field) => (
               <div key={field.name} className="space-y-1">
-                <label className="text-[9px] font-black text-gray-400 ml-2">
+                <label className="text-xs md:text-sm font-semibold text-gray-900">
                   {field.label}
                 </label>
                 {field.as === 'textarea' ? (
@@ -465,18 +465,18 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                     name={field.name}
                     value={formData[field.name]}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none min-h-[80px] resize-none shadow-sm"
+                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl text-sm md:text-base font-semibold outline-none min-h-[80px] resize-none shadow-sm"
                   />
                 ) : (
                   <input
                     name={field.name}
                     value={formData[field.name]}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm"
+                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl text-sm md:text-base font-semibold outline-none shadow-sm"
                   />
                 )}
                 {errors[field.name] && (
-                  <p className="text-red-500 text-[10px] mt-1 ml-2">
+                  <p className="text-red-500 text-xs md:text-sm mt-1 ml-2">
                     {errors[field.name]}
                   </p>
                 )}
@@ -486,13 +486,13 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-[10px] font-black text-[#3E2723]/40 tracking-[0.25em] flex items-center gap-2">
+              <h3 className="text-sm font-bold text-[#3E2723]/40 tracking-[0.25em] flex items-center gap-2">
                 <Layers size={12} /> Pricing & Variants
               </h3>
               <button
                 type="button"
                 onClick={addVariant}
-                className="text-[9px] font-black text-blue-600 flex items-center gap-1.5 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-all"
+                className="text-sm font-bold text-blue-600 flex items-center gap-1.5 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-all"
               >
                 <PlusCircle size={14} /> ADD SIZE
               </button>
@@ -505,7 +505,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                   className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end bg-white p-4 rounded-[1.5rem] border border-gray-100 shadow-sm"
                 >
                   <div className="col-span-1 space-y-1">
-                    <label className="text-[8px] font-black text-gray-300 block mb-1">
+                    <label className="text-xs md:text-sm font-semibold text-gray-900 block mb-1">
                       Weight
                     </label>
                     <input
@@ -513,17 +513,17 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                       onChange={(e) =>
                         handleVariantChange(index, 'weight', e.target.value)
                       }
-                      className="w-full px-2 py-1 text-[11px] font-black border-b border-gray-50 outline-none"
+                      className="w-full px-2 py-1 text-sm md:text-base font-semibold border-b border-gray-50 outline-none"
                     />
                     {getVariantError(index, 'weight') && (
-                      <p className="text-red-500 text-[10px]">
+                      <p className="text-red-500 text-xs md:text-sm mt-1 ml-2">
                         {getVariantError(index, 'weight')}
                       </p>
                     )}
                   </div>
 
                   <div className="col-span-1 space-y-1">
-                    <label className="text-[8px] font-black text-gray-300 block mb-1">
+                    <label className="text-xs md:text-sm font-semibold text-gray-900 block mb-1">
                       MRP
                     </label>
                     <input
@@ -532,17 +532,17 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                       onChange={(e) =>
                         handleVariantChange(index, 'mrp', e.target.value)
                       }
-                      className="w-full px-2 py-1 text-[11px] font-black border-b border-gray-50 outline-none"
+                      className="w-full px-2 py-1 text-sm md:text-base font-semibold border-b border-gray-50 outline-none"
                     />
                     {getVariantError(index, 'mrp') && (
-                      <p className="text-red-500 text-[10px]">
+                      <p className="text-red-500 text-xs md:text-sm mt-1 ml-2">
                         {getVariantError(index, 'mrp')}
                       </p>
                     )}
                   </div>
 
                   <div className="col-span-1 space-y-1">
-                    <label className="text-[8px] font-black text-gray-300 block mb-1">
+                    <label className="text-xs md:text-sm font-semibold text-gray-900 block mb-1">
                       Price
                     </label>
                     <input
@@ -551,17 +551,17 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                       onChange={(e) =>
                         handleVariantChange(index, 'price', e.target.value)
                       }
-                      className="w-full px-2 py-1 text-[11px] font-black border-b border-gray-50 outline-none text-emerald-600"
+                      className="w-full px-2 py-1 text-sm md:text-base font-semibold border-b border-gray-50 outline-none text-emerald-600"
                     />
                     {getVariantError(index, 'price') && (
-                      <p className="text-red-500 text-[10px]">
+                      <p className="text-red-500 text-xs md:text-sm mt-1 ml-2">
                         {getVariantError(index, 'price')}
                       </p>
                     )}
                   </div>
 
                   <div className="col-span-1 space-y-1">
-                    <label className="text-[8px] font-black text-gray-300 block mb-1">
+                    <label className="text-xs md:text-sm font-semibold text-gray-900 block mb-1">
                       Stock
                     </label>
                     <input
@@ -570,10 +570,10 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                       onChange={(e) =>
                         handleVariantChange(index, 'stock', e.target.value)
                       }
-                      className="w-full px-2 py-1 text-[11px] font-black border-b border-gray-50 outline-none"
+                      className="w-full px-2 py-1 text-sm md:text-base font-semibold border-b border-gray-50 outline-none"
                     />
                     {getVariantError(index, 'stock') && (
-                      <p className="text-red-500 text-[10px]">
+                      <p className="text-red-500 text-xs md:text-sm mt-1 ml-2">
                         {getVariantError(index, 'stock')}
                       </p>
                     )}
@@ -598,7 +598,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
             {['features', 'benefits', 'ingredients', 'tags'].map((id) => (
               <div key={id} className="space-y-1">
-                <label className="text-[9px] font-black text-gray-400 tracking-widest px-2">
+                <label className="text-sm font-bold text-gray-800 tracking-widest px-2">
                   {id}
                 </label>
                 <textarea
@@ -606,10 +606,10 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                   value={formData[id]}
                   onChange={handleChange}
                   placeholder={`Separate ${id} with commas...`}
-                  className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold min-h-[80px] outline-none shadow-sm"
+                  className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs md:text-sm font-semibold min-h-[80px] outline-none shadow-sm"
                 />
                 {errors[id] && (
-                  <p className="text-red-500 text-[10px] mt-1 ml-2">
+                  <p className="text-red-500 text-xs md:text-sm mt-1 ml-2">
                     {errors[id]}
                   </p>
                 )}
@@ -629,7 +629,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
             ) : (
               <Save size={14} />
             )}
-            <span className="font-black tracking-[0.15em] text-[10px]">
+            <span className="font-bold tracking-[0.15em] text-xs md:text-sm">
               {isEdit ? 'Update Product' : 'Create Product'}
             </span>
           </button>
