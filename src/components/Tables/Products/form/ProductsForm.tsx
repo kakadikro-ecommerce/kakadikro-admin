@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   X,
   Save,
   Loader2,
-  Image as
-  Layers,
+  Image as Layers,
   Trash2,
   PlusCircle,
-   Layers3,
+  Layers3,
   AlignLeft,
   UploadCloud,
 } from 'lucide-react';
@@ -17,28 +16,30 @@ import {
   updateProduct,
 } from '../../../../store/modules/products/products.slice';
 import { useAppDispatch } from '../../../../store/hooks';
+import { productSchema } from '../../../../validations/productValidation';
+import { z } from 'zod';
+
+const emptyVariant = { weight: '', price: '', mrp: '', stock: '' };
 
 const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
   const dispatch = useAppDispatch();
   const isEdit = !!product;
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const [errors, setErrors] = useState<any>({});
   const [formData, setFormData] = useState<any>({
     name: '',
     brand: '',
     category: '',
     shortDescription: '',
     description: '',
-    active: true,
     ingredients: '',
     features: '',
     benefits: '',
     tags: '',
     usage: '',
-    variants: [{ weight: '', price: '', mrp: '', stock: '' }],
+    variants: [{ ...emptyVariant }],
   });
-
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -65,12 +66,14 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
             : product.images || '',
           variants: product.variants?.length
             ? product.variants
-            : [{ weight: '', price: '', mrp: '', stock: '' }],
+            : [{ ...emptyVariant }],
           active: product.isActive !== undefined ? product.isActive : true,
         });
       } else {
         resetForm();
       }
+      setErrors({});
+      setLoading(false);
     }
   }, [product, isOpen]);
 
@@ -88,9 +91,32 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
       benefits: '',
       tags: '',
       usage: '',
-      variants: [{ weight: '', price: '', mrp: '', stock: '' }],
+      variants: [{ ...emptyVariant }],
     });
     setSelectedFile(null);
+    setErrors({});
+  };
+
+  const setFieldError = (name: string, message?: string) => {
+    setErrors((prev: any) => {
+      const next = { ...prev };
+      if (message) next[name] = message;
+      else delete next[name];
+      return next;
+    });
+  };
+
+  const validateSingleField = (name: string, value: any) => {
+    const fieldSchema = (productSchema.shape as any)[name];
+    if (!fieldSchema) return;
+
+    const result = fieldSchema.safeParse(value);
+    if (result.success) {
+      setFieldError(name);
+      return;
+    }
+
+    setFieldError(name, result.error.issues[0]?.message || 'Invalid');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,24 +142,71 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
     }
   };
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev: any) => ({ ...prev, [name]: value }));
+    validateSingleField(name, value);
   };
 
-  const handleVariantChange = (index: number, field: string, value: string) => {
-    const updatedVariants = [...formData.variants];
-    updatedVariants[index][field] = value;
-    setFormData({ ...formData, variants: updatedVariants });
+  const handleVariantChange = (
+    index: number,
+    field: 'weight' | 'price' | 'mrp' | 'stock',
+    value: string,
+  ) => {
+    setFormData((prev: any) => {
+      const updatedVariants = [...prev.variants];
+      updatedVariants[index] = {
+        ...updatedVariants[index],
+        [field]: value,
+      };
+      return { ...prev, variants: updatedVariants };
+    });
+
+    const parsedValue =
+      field === 'weight' ? value : value === '' ? value : Number(value);
+
+    const nextVariant = {
+      ...formData.variants[index],
+      [field]: parsedValue,
+    };
+
+    const result = productSchema.shape.variants.element.safeParse(nextVariant);
+    if (result.success) {
+      setErrors((prev: any) => {
+        const next = { ...prev };
+        delete next[`variants.${index}.weight`];
+        delete next[`variants.${index}.price`];
+        delete next[`variants.${index}.mrp`];
+        delete next[`variants.${index}.stock`];
+        return next;
+      });
+      return;
+    }
+
+    const fieldMessages: Record<string, string> = {};
+    result.error.issues.forEach((issue) => {
+      const key = issue.path[0];
+      if (typeof key === 'string') {
+        fieldMessages[`variants.${index}.${key}`] = issue.message;
+      }
+    });
+
+    setErrors((prev: any) => ({
+      ...prev,
+      ...fieldMessages,
+    }));
   };
 
   const addVariant = () => {
+    const lastVariant = formData.variants[formData.variants.length - 1];
+    if (!lastVariant.weight || !lastVariant.price || !lastVariant.mrp) {
+      alert('Fill current variant before adding new one');
+      return;
+    }
+
     setFormData({
       ...formData,
-      variants: [
-        ...formData.variants,
-        { weight: '', price: '', mrp: '', stock: '' },
-      ],
+      variants: [...formData.variants, { ...emptyVariant }],
     });
   };
 
@@ -142,20 +215,48 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
       ...formData,
       variants: formData.variants.filter((_: any, i: number) => i !== index),
     });
+
+    setErrors((prev: any) => {
+      const next = { ...prev };
+      delete next[`variants.${index}.weight`];
+      delete next[`variants.${index}.price`];
+      delete next[`variants.${index}.mrp`];
+      delete next[`variants.${index}.stock`];
+      return next;
+    });
   };
+
+  const splitClean = (value: any) =>
+    typeof value === 'string'
+      ? value
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : Array.isArray(value)
+        ? value
+        : [];
 
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      const splitClean = (str: any) =>
-        typeof str === 'string'
-          ? str
-              .split(',')
-              .map((s) => s.trim())
-              .filter(Boolean)
-          : Array.isArray(str)
-          ? str
-          : [];
+
+      const parsedData = {
+        ...formData,
+        usage: formData.usage || '',
+        ingredients: splitClean(formData.ingredients),
+        features: splitClean(formData.features),
+        benefits: splitClean(formData.benefits),
+        tags: splitClean(formData.tags),
+        variants: formData.variants.map((v: any) => ({
+          weight: String(v.weight || '').trim(),
+          price: Number(v.price),
+          mrp: Number(v.mrp),
+          stock: Number(v.stock || 0),
+        })),
+      };
+
+      productSchema.parse(parsedData);
+      setErrors({});
 
       const data = new FormData();
       data.append('name', formData.name || '');
@@ -164,23 +265,21 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
       data.append('shortDescription', formData.shortDescription || '');
       data.append('description', formData.description || '');
       data.append('usage', formData.usage || '');
-      data.append('isActive', String(formData.active));
-
-      data.append(
-        'ingredients',
-        JSON.stringify(splitClean(formData.ingredients)),
-      );
+      data.append('ingredients', JSON.stringify(splitClean(formData.ingredients)));
       data.append('features', JSON.stringify(splitClean(formData.features)));
       data.append('benefits', JSON.stringify(splitClean(formData.benefits)));
       data.append('tags', JSON.stringify(splitClean(formData.tags)));
-
-      const cleanedVariants = formData.variants.map((v: any) => ({
-        weight: String(v.weight),
-        price: Number(v.price) || 0,
-        mrp: Number(v.mrp) || 0,
-        stock: Number(v.stock) || 0,
-      }));
-      data.append('variants', JSON.stringify(cleanedVariants));
+      data.append(
+        'variants',
+        JSON.stringify(
+          formData.variants.map((v: any) => ({
+            weight: String(v.weight || '').trim(),
+            price: Number(v.price) || 0,
+            mrp: Number(v.mrp) || 0,
+            stock: Number(v.stock) || 0,
+          })),
+        ),
+      );
 
       if (selectedFile) {
         data.append('images', selectedFile);
@@ -196,18 +295,47 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
       } else {
         await dispatch(createProduct(data)).unwrap();
       }
+
       onRefresh();
       onClose();
     } catch (error: any) {
-      console.error('Server Validation Details:', error.response?.data);
-      alert(
-        'Save Error: ' +
-          (error.response?.data?.message || 'Check network connection'),
-      );
+      if (error instanceof z.ZodError) {
+        const fieldErrors: any = {};
+
+        error.issues.forEach((issue) => {
+          if (issue.path.length === 1) {
+            fieldErrors[issue.path[0] as string] = issue.message;
+            return;
+          }
+
+          if (issue.path.length >= 3 && issue.path[0] === 'variants') {
+            const [_, index, field] = issue.path;
+            fieldErrors[`variants.${index}.${field}`] = issue.message;
+          }
+        });
+
+        setErrors(fieldErrors);
+        return;
+      }
+
+      if (error?.errors) {
+        const fieldErrors: any = {};
+        error.errors.forEach((err: any) => {
+          const key = err.path?.[0];
+          fieldErrors[key] = err.message;
+        });
+        setErrors(fieldErrors);
+        return;
+      }
+
+      alert('Something went wrong');
     } finally {
       setLoading(false);
     }
   };
+
+  const getVariantError = (index: number, field: string) =>
+    errors?.[`variants.${index}.${field}`];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -217,7 +345,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
             <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
               <Layers3 size={20} className="text-orange-200" />
             </div>
-            <h2 className="text-lg md:text-xl font-black  tracking-tight">
+            <h2 className="text-lg md:text-xl font-black tracking-tight">
               {isEdit ? 'Edit' : 'Add'} Product
             </h2>
           </div>
@@ -228,6 +356,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
             <X size={20} />
           </button>
         </div>
+
         <div className="p-5 md:p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1 bg-gray-50/50">
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row gap-6">
@@ -271,7 +400,13 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                     onChange={handleChange}
                     className="px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm w-full"
                   />
+                  {errors.name && (
+                    <p className="text-red-500 text-[10px] mt-1 ml-2">
+                      {errors.name}
+                    </p>
+                  )}
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[9px] font-black text-gray-400 ml-2">
@@ -283,7 +418,13 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                       onChange={handleChange}
                       className="px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm w-full"
                     />
+                    {errors.brand && (
+                      <p className="text-red-500 text-[10px] mt-1 ml-2">
+                        {errors.brand}
+                      </p>
+                    )}
                   </div>
+
                   <div className="space-y-1">
                     <label className="text-[9px] font-black text-gray-400 ml-2">
                       Category
@@ -294,77 +435,55 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                       onChange={handleChange}
                       className="px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm w-full"
                     />
+                    {errors.category && (
+                      <p className="text-red-500 text-[10px] mt-1 ml-2">
+                        {errors.category}
+                      </p>
+                    )}
                   </div>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black text-gray-400 ml-2">
-                    Status
-                  </label>
-                  <select
-                    name="active"
-                    value={String(formData.active)}
-                    onChange={(e) =>
-                      setFormData((prev: any) => ({
-                        ...prev,
-                        active: e.target.value === 'true',
-                      }))
-                    }
-                    className="px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm w-full"
-                  >
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
-                  </select>
-                </div>
-                <div
-                  className={`w-full py-3 rounded-2xl text-[10px] font-black border transition-all flex items-center justify-center gap-2 ${
-                    formData.active
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-100'
-                      : 'bg-rose-50 text-rose-600 border-rose-100'
-                  }`}
-                >
-                  {formData.active ? '● Active Product' : '○ Inactive Product'}
                 </div>
               </div>
             </div>
           </div>
+
           <div className="space-y-4">
             <h3 className="text-[10px] font-black text-[#3E2723]/40 tracking-[0.25em] flex items-center gap-2">
               <AlignLeft size={12} /> Narratives
             </h3>
-            <div className="space-y-1">
-              <label className="text-[9px] font-black text-gray-400 ml-2">
-                Short Description
-              </label>
-              <input
-                name="shortDescription"
-                value={formData.shortDescription}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[9px] font-black text-gray-400 ml-2">
-                Full Description
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none min-h-[80px] resize-none shadow-sm"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[9px] font-black text-gray-400 ml-2">
-                Usage
-              </label>
-              <input
-                name="usage"
-                value={formData.usage}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm"
-              />
-            </div>
+
+            {[
+              { name: 'shortDescription', label: 'Short Description', as: 'input' },
+              { name: 'description', label: 'Full Description', as: 'textarea' },
+              { name: 'usage', label: 'Usage', as: 'input' },
+            ].map((field) => (
+              <div key={field.name} className="space-y-1">
+                <label className="text-[9px] font-black text-gray-400 ml-2">
+                  {field.label}
+                </label>
+                {field.as === 'textarea' ? (
+                  <textarea
+                    name={field.name}
+                    value={formData[field.name]}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none min-h-[80px] resize-none shadow-sm"
+                  />
+                ) : (
+                  <input
+                    name={field.name}
+                    value={formData[field.name]}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold outline-none shadow-sm"
+                  />
+                )}
+                {errors[field.name] && (
+                  <p className="text-red-500 text-[10px] mt-1 ml-2">
+                    {errors[field.name]}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
+
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-[10px] font-black text-[#3E2723]/40 tracking-[0.25em] flex items-center gap-2">
@@ -378,13 +497,14 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                 <PlusCircle size={14} /> ADD SIZE
               </button>
             </div>
+
             <div className="space-y-3">
               {formData.variants.map((variant: any, index: number) => (
                 <div
                   key={index}
                   className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end bg-white p-4 rounded-[1.5rem] border border-gray-100 shadow-sm"
                 >
-                  <div className="col-span-1">
+                  <div className="col-span-1 space-y-1">
                     <label className="text-[8px] font-black text-gray-300 block mb-1">
                       Weight
                     </label>
@@ -395,8 +515,14 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                       }
                       className="w-full px-2 py-1 text-[11px] font-black border-b border-gray-50 outline-none"
                     />
+                    {getVariantError(index, 'weight') && (
+                      <p className="text-red-500 text-[10px]">
+                        {getVariantError(index, 'weight')}
+                      </p>
+                    )}
                   </div>
-                  <div className="col-span-1">
+
+                  <div className="col-span-1 space-y-1">
                     <label className="text-[8px] font-black text-gray-300 block mb-1">
                       MRP
                     </label>
@@ -408,8 +534,14 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                       }
                       className="w-full px-2 py-1 text-[11px] font-black border-b border-gray-50 outline-none"
                     />
+                    {getVariantError(index, 'mrp') && (
+                      <p className="text-red-500 text-[10px]">
+                        {getVariantError(index, 'mrp')}
+                      </p>
+                    )}
                   </div>
-                  <div className="col-span-1">
+
+                  <div className="col-span-1 space-y-1">
                     <label className="text-[8px] font-black text-gray-300 block mb-1">
                       Price
                     </label>
@@ -421,8 +553,14 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                       }
                       className="w-full px-2 py-1 text-[11px] font-black border-b border-gray-50 outline-none text-emerald-600"
                     />
+                    {getVariantError(index, 'price') && (
+                      <p className="text-red-500 text-[10px]">
+                        {getVariantError(index, 'price')}
+                      </p>
+                    )}
                   </div>
-                  <div className="col-span-1">
+
+                  <div className="col-span-1 space-y-1">
                     <label className="text-[8px] font-black text-gray-300 block mb-1">
                       Stock
                     </label>
@@ -434,7 +572,13 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                       }
                       className="w-full px-2 py-1 text-[11px] font-black border-b border-gray-50 outline-none"
                     />
+                    {getVariantError(index, 'stock') && (
+                      <p className="text-red-500 text-[10px]">
+                        {getVariantError(index, 'stock')}
+                      </p>
+                    )}
                   </div>
+
                   <div className="col-span-2 md:col-span-1 flex justify-end">
                     {formData.variants.length > 1 && (
                       <button
@@ -464,6 +608,11 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                   placeholder={`Separate ${id} with commas...`}
                   className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold min-h-[80px] outline-none shadow-sm"
                 />
+                {errors[id] && (
+                  <p className="text-red-500 text-[10px] mt-1 ml-2">
+                    {errors[id]}
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -491,3 +640,4 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 };
 
 export default ProductFormModal;
+

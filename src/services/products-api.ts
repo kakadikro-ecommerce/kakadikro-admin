@@ -91,6 +91,10 @@ export const productService = {
     return api.put<Product>(`/v1/admin/products/${id}`, payload);
   },
 
+  toggleStatus: (id: string, isActive: boolean) => {
+  return api.patch(`/v1/admin/products/status/${id}`, { isActive });
+},
+
 };
 
 export const getAllProducts = (
@@ -104,7 +108,6 @@ const formatPayload = (data: any) => {
 
   return {
     ...cleanData,
-    isActive: data.isActive ?? data.active ?? true,
     variants: Array.isArray(data.variants)
       ? data.variants.map((v: any) => ({
           weight: v.weight || '100g',

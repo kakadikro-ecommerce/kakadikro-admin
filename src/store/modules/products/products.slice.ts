@@ -26,7 +26,7 @@ interface ProductsState {
   error: string | null;
   createState: MutationState;
   updateState: MutationState;
-  deleteState: MutationState;
+  statusUpdateState: MutationState;
 }
 
 const initialState: ProductsState = {
@@ -39,7 +39,7 @@ const initialState: ProductsState = {
   error: null,
   createState: createInitialMutationState(),
   updateState: createInitialMutationState(),
-  deleteState: createInitialMutationState(),
+  statusUpdateState: createInitialMutationState(),
 };
 
 export const fetchProducts = createAsyncThunk(
@@ -83,14 +83,19 @@ export const updateProduct = createAsyncThunk(
   },
 );
 
-export const deleteProduct = createAsyncThunk(
-  'products/deleteProduct',
-  async (id: string, { rejectWithValue }) => {
+export const toggleProductStatus = createAsyncThunk(
+  'products/toggleProductStatus',
+  async (
+    { id, isActive }: { id: string; isActive: boolean },
+    { rejectWithValue },
+  ) => {
     try {
-      await productService.delete(id);
-      return id;
+      await productService.toggleStatus(id, isActive);
+      return { id, isActive };
     } catch (error) {
-      return rejectWithValue(getErrorMessage(error, 'Failed to delete product'));
+      return rejectWithValue(
+        getErrorMessage(error, 'Failed to update status'),
+      );
     }
   },
 );
@@ -108,7 +113,7 @@ const productsSlice = createSlice({
     clearProductMutations: (state) => {
       state.createState = createInitialMutationState();
       state.updateState = createInitialMutationState();
-      state.deleteState = createInitialMutationState();
+      state.statusUpdateState = createInitialMutationState();
     },
   },
   extraReducers: (builder) => {
@@ -157,20 +162,24 @@ const productsSlice = createSlice({
         state.updateState.error =
           (action.payload as string) ?? 'Failed to update product';
       })
-      .addCase(deleteProduct.pending, (state) => {
-        state.deleteState.status = 'loading';
-        state.deleteState.error = null;
+      .addCase(toggleProductStatus.pending, (state) => {
+        state.statusUpdateState.status = 'loading';
+        state.statusUpdateState.error = null;
       })
-      .addCase(deleteProduct.fulfilled, (state, action) => {
-        state.deleteState.status = 'succeeded';
-        state.items = state.items.filter((product) => product._id !== action.payload);
-        state.totalCount = Math.max(0, state.totalCount - 1);
+
+      .addCase(toggleProductStatus.fulfilled, (state, action) => {
+        state.statusUpdateState.status = 'succeeded';
+
+        const product = state.items.find(p => p._id === action.payload.id);
+        if (product) {
+          product.isActive = action.payload.isActive;
+        }
       })
-      .addCase(deleteProduct.rejected, (state, action) => {
-        state.deleteState.status = 'failed';
-        state.deleteState.error =
-          (action.payload as string) ?? 'Failed to delete product';
-      });
+      .addCase(toggleProductStatus.rejected, (state, action) => {
+        state.statusUpdateState.status = 'failed';
+        state.statusUpdateState.error =
+          (action.payload as string) ?? 'Failed to update status';
+      })
   },
 });
 
