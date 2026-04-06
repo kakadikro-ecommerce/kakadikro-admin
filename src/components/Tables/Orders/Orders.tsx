@@ -3,11 +3,8 @@ import {
   Edit3,
   Eye,
   Filter,
-  Trash2,
-  AlertTriangle,
 } from 'lucide-react';
 import {
-  ORDER_STATUS_FILTER_OPTIONS,
   Order,
   normalizeOrderStatus,
   orderService,
@@ -22,6 +19,7 @@ import {
   fetchOrders,
   resetOrdersNewCount,
   setSelectedOrder,
+  toggleOrderActiveStatusThunk,
   updateOrderStatus,
 } from '../../../store/modules/orders/orders.slice';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
@@ -30,23 +28,19 @@ const OrdersTable: React.FC = () => {
   const dispatch = useAppDispatch();
   const {
     items: orders,
-    pagination,
     selectedOrder,
     status,
     error,
   } = useAppSelector((state) => state.orders);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] =
-    useState<(typeof ORDER_STATUS_FILTER_OPTIONS)[number]>('All');
+  const [selectedStatus, setSelectedStatus] = useState<string>('pending');
+  const [selectedActiveStatus, setSelectedActiveStatus] = useState<string>('active');
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
-  const [orderToDelete, setOrderToDelete] = useState<{
-    id: string;
-    orderNumber: string;
-  } | null>(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
   const [notification, setNotification] = useState<{
     show: boolean;
@@ -61,21 +55,22 @@ const OrdersTable: React.FC = () => {
     setNotification({ show: true, type, message });
     setTimeout(() => setNotification((prev) => ({ ...prev, show: false })), 4000);
   };
-
-  const selectedIsDeleted =
-    selectedStatus === 'Deleted'
-      ? true
-      : selectedStatus === 'Active'
-        ? false
+  const selectedIsActive =
+    selectedActiveStatus === 'inactive'
+      ? false
+      : selectedActiveStatus === 'active'
+        ? true
         : undefined;
+  const statusOptions = ['pending', 'confirmed', 'dispatched', 'delivered', 'cancelled'];
+  const activeStatusOptions = ['active', 'inactive'];
 
   useEffect(() => {
     dispatch(resetOrdersNewCount());
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(fetchOrders({ page: currentPage, limit: 10, isDeleted: selectedIsDeleted }));
-  }, [currentPage, dispatch, selectedIsDeleted]);
+    dispatch(fetchOrders({ page: currentPage, limit: 10, isActive: selectedIsActive }));
+  }, [currentPage, dispatch, selectedIsActive]);
 
   useEffect(() => {
     if (error) {
@@ -85,7 +80,7 @@ const OrdersTable: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedStatus]);
+  }, [searchTerm, selectedStatus, selectedActiveStatus]);
 
   const handleSave = async (updatedData: Partial<Order>) => {
     if (!selectedOrder?._id) return;
@@ -101,8 +96,8 @@ const OrdersTable: React.FC = () => {
         updateOrderStatus({ orderId: selectedOrder._id, orderData: updatedData }),
       ).unwrap();
       setIsEditOpen(false);
-      showNotification('success', `Order ${selectedOrder.orderNumber} updated successfully!`);
-      dispatch(fetchOrders({ page: currentPage, limit: 10, isDeleted: selectedIsDeleted }));
+      showNotification('success', `Order ${selectedOrder._id || selectedOrder.orderNumber || 'N/A'} updated successfully!`);
+      dispatch(fetchOrders({ page: currentPage, limit: 10, isActive: selectedIsActive }));
     } catch (updateError) {
       showNotification('error', String(updateError) || 'Update failed.');
     }
@@ -127,26 +122,58 @@ const OrdersTable: React.FC = () => {
     }
   };
 
-  const loading = status === 'loading' || modalLoading;
-  const hasLocalFilters = searchTerm.trim().length > 0 || selectedStatus !== 'All';
-  const filteredOrders = orders.filter((order) => {
-    const normalizedStatus = normalizeOrderStatus(order.orderStatus);
-    const searchTarget = `${order.orderNumber} ${order.user?.name || ''}`.toLowerCase();
-    const matchesSearch = searchTarget.includes(searchTerm.toLowerCase());
-    const matchesStatus = selectedStatus === 'All' || selectedStatus === 'Active' || normalizedStatus === normalizeOrderStatus(selectedStatus);
-    return matchesSearch && matchesStatus;
-  });
+  const handleToggleStatus = async (order: Order) => {
+    setUpdatingOrderId(order._id);
 
-  const effectiveTotalItems = hasLocalFilters ? filteredOrders.length : (pagination.total || 0);
-  const effectiveTotalPages = hasLocalFilters ? Math.max(1, Math.ceil(effectiveTotalItems / 10)) : (pagination.totalPages || 1);
-  const visibleOrders = hasLocalFilters ? filteredOrders.slice((currentPage - 1) * 10, currentPage * 10) : filteredOrders;
+    try {
+      const newActiveStatus = !order.isActive;
+      
+      await dispatch(
+        toggleOrderActiveStatusThunk({
+          orderId: order._id,
+          isActive: newActiveStatus,
+        }),
+      ).unwrap();
+      
+      showNotification(
+        'success',
+        `Order ${order.orderNumber || order._id} is now ${newActiveStatus ? 'active' : 'inactive'}.`,
+      );
+      
+      await dispatch(fetchOrders({ page: currentPage, limit: 10, isActive: selectedIsActive }));
+    } catch (toggleError: any) {
+      console.error('Toggle status error:', toggleError);
+      showNotification('error', toggleError?.message || 'Failed to update order status.');
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const loading = status === 'loading' || modalLoading;
+  const filteredOrders = orders.filter((order) => {
+    const searchTermLower = searchTerm.toLowerCase();
+    const searchTarget = `${order._id} ${order.orderNumber} ${order.user?.name || ''} ${order.user?.email || ''}`.toLowerCase();
+    const matchesSearch = searchTermLower === '' || searchTarget.includes(searchTermLower);
+    const normalizedStatus = normalizeOrderStatus(order.orderStatus);
+    const matchesOrderStatus = normalizedStatus === selectedStatus;
+    const matchesActiveStatus = 
+      (selectedActiveStatus === 'active' && order.isActive === true) ||
+      (selectedActiveStatus === 'inactive' && order.isActive === false);
+    return matchesSearch && matchesOrderStatus && matchesActiveStatus;
+  });
+  const effectiveTotalItems = filteredOrders.length;
+  const effectiveTotalPages = Math.max(1, Math.ceil(effectiveTotalItems / 10));
+  const startIndex = (currentPage - 1) * 10;
+  const visibleOrders = filteredOrders.slice(startIndex, startIndex + 10);
 
   const getStatusStyle = (statusValue?: string) => {
     switch (normalizeOrderStatus(statusValue)) {
       case 'delivered': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
       case 'cancelled': return 'bg-rose-50 text-rose-600 border-rose-100';
       case 'dispatched': return 'bg-blue-50 text-blue-600 border-blue-100';
-      default: return 'bg-amber-50 text-amber-600 border-amber-100';
+      case 'confirmed': return 'bg-purple-50 text-purple-600 border-purple-100';
+      case 'pending': return 'bg-amber-50 text-amber-600 border-amber-100';
+      default: return 'bg-gray-50 text-gray-600 border-gray-100';
     }
   };
 
@@ -173,22 +200,44 @@ const OrdersTable: React.FC = () => {
 
           <div className="flex w-full flex-col items-stretch justify-between gap-4 lg:flex-row lg:items-center">
             <div className="flex w-full min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center lg:w-auto">
-              <div className="w-full min-w-0 sm:w-80 md:w-[400px]">
-                <SearchInput value={searchTerm} onChange={setSearchTerm} placeholder="Search Order ID or Name..." className="!h-[48px] !rounded-2xl shadow-sm w-full" />
+              
+              {/* Search Input */}
+              <div className="w-full min-w-0 sm:w-80">
+                <SearchInput value={searchTerm} onChange={setSearchTerm} placeholder="Search orders..." />
               </div>
 
-              <div className="relative w-full min-w-0 sm:w-60">
-                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+              {/* Order Status Filter */}
+              <div className="relative w-full min-w-0 sm:w-44">
+                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <select
                   value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value as any)}
-                  className="h-[48px] w-full pl-11 pr-10 bg-gray-50/80 border-none rounded-2xl text-xs font-bold outline-none appearance-none cursor-pointer shadow-sm"
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="w-full pl-11 pr-10 py-3 bg-gray-50 border-none rounded-2xl text-xs outline-none cursor-pointer text-[#3E2723] appearance-none uppercase font-bold"
                 >
-                  {ORDER_STATUS_FILTER_OPTIONS.map((option) => (
-                    <option className='font-bold text-xs uppercase' key={option} value={option}>{option === 'All' ? 'ALL ORDER STATUS' : option}</option>
+                  {statusOptions.map((option) => (
+                    <option key={option} value={option} className="uppercase">
+                      {option}
+                    </option>
                   ))}
                 </select>
               </div>
+
+              {/* Active Status Filter */}
+              <div className="relative w-full min-w-0 sm:w-44">
+                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                <select
+                  value={selectedActiveStatus}
+                  onChange={(e) => setSelectedActiveStatus(e.target.value)}
+                  className="w-full pl-11 pr-10 py-3 bg-gray-50 border-none rounded-2xl text-xs outline-none cursor-pointer text-[#3E2723] appearance-none uppercase font-bold"
+                >
+                  {activeStatusOptions.map((option) => (
+                    <option key={option} value={option} className="uppercase">
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
             </div>
           </div>
         </div>
@@ -196,9 +245,9 @@ const OrdersTable: React.FC = () => {
         <div className="table-scroll-wrapper overflow-x-auto">
           <table className="w-full text-left border-separate border-spacing-y-3 min-w-[1000px]">
             <thead>
-              <tr className="text-[#3E2723] text-[10px] tracking-[0.2em] uppercase">
+              <tr className="text-[#3E2723] text-[10px] font-bold uppercase tracking-[0.2em]">
                 <th className="px-6 py-2 w-16 text-center">ID</th>
-                <th className="px-6 py-2">Order Number</th>
+                <th className="px-6 py-2">Order ID</th>
                 <th className="px-6 py-2">Customer Name</th>
                 <th className="px-6 py-2">Amount</th>
                 <th className="px-6 py-2">Status</th>
@@ -207,27 +256,33 @@ const OrdersTable: React.FC = () => {
             </thead>
             <tbody>
               {loading ? (
-                <TableLoaderRow colSpan={6} message="LOADING..." />
+                <TableLoaderRow colSpan={6} />
               ) : visibleOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-20 text-gray-400 text-xs">NO ORDERS FOUND</td>
-                </tr>
+                  <td colSpan={6} className="text-center py-20">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="text-gray-300 text-5xl">📦</div>
+                      <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">
+                        NO ORDERS FOUND
+                      </p>
+                    </div>
+                   </td>
+                 </tr>
               ) : (
                 visibleOrders.map((order, i) => (
-                  <tr key={order._id}>
+                  <tr key={order._id} className="group transition-all">
                     <td className="px-6 py-4 text-center font-bold text-sm text-gray-900 bg-gray-50/50 rounded-l-3xl">
-                      {String((currentPage - 1) * 10 + i + 1).padStart(2, '0')}
+                      {String(startIndex + i + 1).padStart(2, '0')}
                     </td>
 
                     <td className="px-6 py-4 bg-gray-50/50">
                       <div className="flex items-center gap-2">
                         <span className="text-gray-900 text-sm font-bold tracking-tight">
-                          {order.orderNumber}
+                          {order._id}
                         </span>
-
-                        {order.isDeleted === true && (
+                        {order.isActive === false && (
                           <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[9px] font-black tracking-[0.18em] text-rose-600">
-                            DELETED
+                            INACTIVE
                           </span>
                         )}
                       </div>
@@ -243,31 +298,59 @@ const OrdersTable: React.FC = () => {
 
                     <td className="px-6 py-4 bg-gray-50/50">
                       <span className={`px-3 py-1 text-xs font-black rounded-full border bg-white ${getStatusStyle(order.orderStatus)}`}>
-                        {normalizeOrderStatus(order.orderStatus).toUpperCase()}
+                        {normalizeOrderStatus(order.orderStatus).toUpperCase() || 'PENDING'}
                       </span>
                     </td>
 
                     <td className="px-6 py-4 bg-gray-50/50 rounded-r-3xl text-center">
-                      <div className="flex justify-center gap-2">
+                      <div className="flex items-center justify-center gap-3">
                         <button
                           onClick={() => handleOpenOrderView(order._id)}
-                          className="p-2 text-gray-400 hover:text-teal-600 transition-all"
+                          className="flex items-center justify-center rounded-lg p-2 text-gray-500 transition-all hover:bg-teal-50 hover:text-teal-600 active:scale-95"
+                          title="View Order"
                         >
-                          <Eye size={17} />
+                          <Eye size={18} className="sm:size-5" />
                         </button>
 
                         <button
                           onClick={() => {
-                            if (order.isDeleted === true) return;
+                            if (order.isActive === false) return;
                             handleOpenOrderEdit(order._id);
                           }}
-                          disabled={order.isDeleted === true}
-                          className={`p-2 text-gray-400 transition-all ${order.isDeleted === true
-                            ? 'opacity-30 cursor-not-allowed'
-                            : 'hover:text-blue-600'
-                            }`}
+                          disabled={order.isActive === false}
+                          className={`flex items-center justify-center rounded-lg p-2 text-gray-500 transition-all active:scale-95 ${
+                            order.isActive === false
+                              ? 'opacity-30 cursor-not-allowed'
+                              : 'hover:bg-blue-50 hover:text-blue-600'
+                          }`}
+                          title={order.isActive === false ? "Cannot edit inactive order" : "Edit Order"}
                         >
-                          <Edit3 size={17} />
+                          <Edit3 size={18} className="sm:size-5" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(order)}
+                          disabled={updatingOrderId === order._id}
+                          className={`relative flex h-6 w-11 sm:h-7 sm:w-12 items-center rounded-full transition-all duration-300 ${
+                            order.isActive !== false
+                              ? "bg-emerald-500"
+                              : "bg-rose-500"
+                          } ${
+                            updatingOrderId === order._id
+                              ? "cursor-not-allowed opacity-50"
+                              : "hover:shadow-md cursor-pointer"
+                          }`}
+                          aria-label={`Toggle ${order._id} status`}
+                          aria-pressed={order.isActive !== false}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
+                              order.isActive !== false
+                                ? "translate-x-5 sm:translate-x-6"
+                                : "translate-x-1"
+                            }`}
+                          />
                         </button>
                       </div>
                     </td>
@@ -278,30 +361,22 @@ const OrdersTable: React.FC = () => {
           </table>
         </div>
 
-        <div className="mt-8">
-          <Pagination currentPage={currentPage} totalPages={effectiveTotalPages} totalItems={effectiveTotalItems} itemsPerPage={10} onPageChange={setCurrentPage} loading={loading} />
-        </div>
+        {effectiveTotalItems > 0 && (
+          <div className="mt-8">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={effectiveTotalPages}
+              totalItems={effectiveTotalItems}
+              itemsPerPage={10}
+              onPageChange={setCurrentPage}
+              loading={loading}
+            />
+          </div>
+        )}
       </div>
 
       <OrderViewModal isOpen={isViewOpen} order={selectedOrder} onClose={() => setIsViewOpen(false)} />
       {isEditOpen && <OrderEditModal isOpen={isEditOpen} order={selectedOrder} onClose={() => setIsEditOpen(false)} onSave={handleSave} />}
-
-      {orderToDelete && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[#2D1B19]/40 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl border border-white">
-            <div className="bg-rose-50/50 p-8 flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-rose-500 mb-5 border border-rose-100">
-                <AlertTriangle size={36} />
-              </div>
-              <h3 className="text-xl font-black text-[#3E2723]">Delete Order?</h3>
-              <p className="text-[11px] text-gray-500 mt-3">Delete <span className="text-rose-600">"{orderToDelete.orderNumber}"</span>?</p>
-            </div>
-            <div className="p-6 bg-white flex gap-3">
-              <button onClick={() => setOrderToDelete(null)} className="flex-1 py-4 rounded-2xl text-[10px] font-black text-gray-400">Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
