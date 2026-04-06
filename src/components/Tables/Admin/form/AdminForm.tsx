@@ -21,7 +21,7 @@ import {
 } from '../../../../store/modules/admin/admin.slice';
 import { setAuthUser } from '../../../../store/modules/auth/auth.slice';
 import { useAppDispatch } from '../../../../store/hooks';
-import { adminSchema } from '../../../../validations/adminValidation';
+import { adminCreateSchema, adminUpdateSchema } from '../../../../validations/adminValidation';
 
 interface AdminFormModalProps {
   admin: Admin | null;
@@ -92,56 +92,46 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-      const result = adminSchema.safeParse({
-    name: formData.name,
-    email: formData.email,
-    password: newPassword,
-  });
-
-  if (!result.success) {
-    const fieldErrors: any = {};
-
-    result.error.issues.forEach((err) => {
-      const field = err.path[0];
-      fieldErrors[field] = err.message;
+    const trimmedName = formData.name.trim();
+    const trimmedEmail = formData.email.trim();
+    const schema = isCreateMode ? adminCreateSchema : adminUpdateSchema;
+    const result = schema.safeParse({
+      name: trimmedName,
+      email: trimmedEmail,
+      password: isCreateMode ? newPassword : newPassword || undefined,
     });
 
-    setErrors(fieldErrors);
-    return;
-  }
+    if (!result.success) {
+      const fieldErrors: any = {};
+
+      result.error.issues.forEach((err) => {
+        const field = err.path[0];
+        fieldErrors[field] = err.message;
+      });
+
+      setErrors(fieldErrors);
+      return;
+    }
 
     setErrors({});
-    
-    if (!formData.name.trim()) {
-      showAlert('error', "Name cannot be empty");
-      return;
-    }
-    if (isCreateMode && !formData.email.trim()) {
-      showAlert('error', "Email cannot be empty");
-      return;
-    }
-    if (isCreateMode && newPassword.length < 6) {
-      showAlert('error', "Password must be at least 6 characters");
-      return;
-    }
 
     setLoading(true);
     try {
       if (isProfileMode) {
-        const updatedProfile = await dispatch(updateAdminProfile({ name: formData.name })).unwrap();
+        const updatedProfile = await dispatch(updateAdminProfile({ name: trimmedName })).unwrap();
         dispatch(setAuthUser( updatedProfile as any));
       } else if (isCreateMode) {
         await dispatch(createAdminUser({
-          name: formData.name,
-          email: formData.email,
+          name: trimmedName,
+          email: trimmedEmail,
           password: newPassword,
           role: 'admin',
           isActive: true,
         } as any)).unwrap();
       } else if (admin?._id) {
         const payload: Record<string, unknown> = {
-          name: formData.name,
-          email: formData.email,
+          name: trimmedName,
+          email: trimmedEmail,
           role: formData.role,
           isActive: formData.isActive,
         };
@@ -317,7 +307,7 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                       type={showPassword ? 'text' : 'password'}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder={isCreateMode ? 'Minimum  characters' : 'Leave blank to keep current password'}
+                      placeholder={isCreateMode ? 'Minimum 6 characters' : 'Leave blank to keep current password'}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
                     />
                     {errors.password && (

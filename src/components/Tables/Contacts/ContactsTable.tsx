@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Eye, Trash2 } from 'lucide-react';
+import { Eye, Trash2, Search } from 'lucide-react';
 import { contactService } from '../../../services/contacts-api';
 import { Contact } from '../../../types/contacts';
 import ContactViewModal from './details/ContactsDetails';
 import Alert from '../../../pages/UiElements/Alerts';
 import Pagination from '../../../pages/UiElements/Pagination';
-import SearchInput from '../../../pages/UiElements/SearchBar';
 import TableLoaderRow from '../../../pages/UiElements/TableLoaderRow';
  
 const Contacts = () => {
@@ -34,6 +33,9 @@ const Contacts = () => {
     type: 'success',
     message: '',
   });
+
+  const controlBaseClass =
+    'h-[48px] w-full bg-gray-50/60 border-none rounded-2xl text-[12px] outline-none shadow-sm text-[#3E2723] transition-all focus:ring-2 focus:ring-[#3E2723]/5 appearance-none';
  
   const showNotification = (
     type: 'success' | 'error' | 'info' | 'warning',
@@ -122,19 +124,31 @@ const Contacts = () => {
       )}
  
       <div className="mx-auto w-full max-w-8xl overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-3 shadow-sm sm:p-4 md:p-8">
-        <div className="mb-8 flex flex-col items-stretch justify-between gap-6 px-1 sm:px-0 xl:flex-row xl:items-center">
-          <div className="w-full min-w-0 sm:w-auto">
-            <h1 className="text-2xl md:text-3xl font-black text-[#3E2723] tracking-tight">
-              Contacts Management
-            </h1>
+        <div className="mb-6 flex flex-col gap-4">
+          <div className="flex w-full min-w-0 justify-between border-b border-gray-50 pb-3">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-black tracking-tight text-[#3E2723] md:text-3xl">
+                Contacts Management
+              </h1>
+            </div>
           </div>
- 
-          <div className="w-full min-w-0 sm:w-auto sm:max-w-md">
-            <SearchInput
-              value={searchTerm}
-              onChange={setSearchTerm}
-              placeholder="Search by name, email or phone..."
-            />
+
+          <div className="flex flex-col items-stretch justify-between gap-3 lg:flex-row lg:items-center">
+            <div className="flex w-full min-w-0 flex-col items-stretch gap-3 md:flex-row md:items-center lg:w-auto">
+              <div className="relative w-full min-w-0 md:w-72">
+                <Search
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={16}
+                />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by name, email or phone..."
+                  className={`${controlBaseClass} pl-11 pr-4 bg-gray-50/80`}
+                />
+              </div>
+            </div>
           </div>
         </div>
  
@@ -188,22 +202,22 @@ const Contacts = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 bg-gray-50/50 rounded-r-2xl text-center">
-                      <div className="flex justify-center gap-1">
+                      <div className="flex items-center justify-center gap-3">
                         <button
                           onClick={() => openViewModal(contact)}
-                          className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-xl transition-all"
+                          className="flex items-center justify-center rounded-lg p-2 text-gray-500 transition-all hover:bg-teal-50 hover:text-teal-600 active:scale-95"
                           title="View Details"
                         >
-                          <Eye size={16} />
+                          <Eye size={18} className="sm:size-5" />
                         </button>
                         <button
                           onClick={() =>
                             contact._id && confirmDelete(contact._id, contact.name)
                           }
-                          className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                          className="flex items-center justify-center rounded-lg p-2 text-gray-500 transition-all hover:bg-rose-50 hover:text-rose-600 active:scale-95"
                           title="Delete Contact"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={18} className="sm:size-5" />
                         </button>
                       </div>
                     </td>
