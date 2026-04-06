@@ -5,6 +5,8 @@ import {
   Filter,
   Trash2,
   AlertTriangle,
+  Check,
+  Copy,
 } from 'lucide-react';
 import {
   ORDER_STATUS_FILTER_OPTIONS,
@@ -38,7 +40,7 @@ const OrdersTable: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] =
-    useState<(typeof ORDER_STATUS_FILTER_OPTIONS)[number]>('All');
+    useState<(typeof ORDER_STATUS_FILTER_OPTIONS)[number] | 'Deleted'>('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);

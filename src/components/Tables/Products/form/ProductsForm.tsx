@@ -10,6 +10,7 @@ import {
   AlignLeft,
   UploadCloud,
 } from 'lucide-react';
+import { z } from 'zod';
 import { Modal } from '../../../../pages/UiElements/Modal';
 import {
   createProduct,
@@ -17,7 +18,6 @@ import {
 } from '../../../../store/modules/products/products.slice';
 import { useAppDispatch } from '../../../../store/hooks';
 import { productSchema } from '../../../../validations/productValidation';
-import { z } from 'zod';
 
 const emptyVariant = { weight: '', price: '', mrp: '', stock: '' };
 
@@ -310,7 +310,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
           if (issue.path.length >= 3 && issue.path[0] === 'variants') {
             const [_, index, field] = issue.path;
-            fieldErrors[`variants.${index}.${field}`] = issue.message;
+            fieldErrors[`variants.${String(index)}.${String(field)}`] = issue.message;
           }
         });
 
@@ -339,7 +339,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="w-full max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col h-auto max-h-[92vh] overflow-hidden border border-white my-auto">
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl flex flex-col h-auto max-h-[92vh] overflow-hidden my-auto">
         <div className="bg-[#2D1B19] p-5 md:p-6 flex justify-between items-center text-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
@@ -391,9 +391,9 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
               <div className="flex-1 w-full space-y-3">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-gray-400 ml-2">
+                  <h3 className="text-[11px] font-black text-gray-400 ml-2">
                     Product Name
-                  </label>
+                  </h3>
                   <input
                     name="name"
                     value={formData.name}
@@ -409,9 +409,9 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-gray-400 ml-2">
+                    <h3 className="text-[11px] font-black text-gray-400 ml-2">
                       Brand
-                    </label>
+                    </h3>
                     <input
                       name="brand"
                       value={formData.brand}
@@ -426,9 +426,9 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-gray-400 ml-2">
+                    <h3 className="text-[11px] font-black text-gray-400 ml-2">
                       Category
-                    </label>
+                    </h3>
                     <input
                       name="category"
                       value={formData.category}
@@ -447,7 +447,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-[10px] font-black text-[#3E2723]/40 tracking-[0.25em] flex items-center gap-2">
+            <h3 className="text-[11px] font-black text-[#3E2723]/60 tracking-[0.25em] flex items-center gap-2">
               <AlignLeft size={12} /> Narratives
             </h3>
 
@@ -457,7 +457,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
               { name: 'usage', label: 'Usage', as: 'input' },
             ].map((field) => (
               <div key={field.name} className="space-y-1">
-                <label className="text-[9px] font-black text-gray-400 ml-2">
+                <label className="text-[12px] font-black text-gray-400 ml-2">
                   {field.label}
                 </label>
                 {field.as === 'textarea' ? (
@@ -486,13 +486,13 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-[10px] font-black text-[#3E2723]/40 tracking-[0.25em] flex items-center gap-2">
+              <h3 className="text-[12px] font-black text-[#3E2723]/50 tracking-[0.25em] flex items-center gap-2">
                 <Layers size={12} /> Pricing & Variants
               </h3>
               <button
                 type="button"
                 onClick={addVariant}
-                className="text-[9px] font-black text-blue-600 flex items-center gap-1.5 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-all"
+                className="text-[11px] font-black text-blue-600 flex items-center gap-1.5 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-all"
               >
                 <PlusCircle size={14} /> ADD SIZE
               </button>
@@ -505,7 +505,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                   className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end bg-white p-4 rounded-[1.5rem] border border-gray-100 shadow-sm"
                 >
                   <div className="col-span-1 space-y-1">
-                    <label className="text-[8px] font-black text-gray-300 block mb-1">
+                    <label className="text-[11px] font-black text-gray-500 block mb-1">
                       Weight
                     </label>
                     <input
@@ -523,7 +523,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                   </div>
 
                   <div className="col-span-1 space-y-1">
-                    <label className="text-[8px] font-black text-gray-300 block mb-1">
+                    <label className="text-[11px] font-black text-gray-500 block mb-1">
                       MRP
                     </label>
                     <input
@@ -542,7 +542,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                   </div>
 
                   <div className="col-span-1 space-y-1">
-                    <label className="text-[8px] font-black text-gray-300 block mb-1">
+                    <label className="text-[11px] font-black text-gray-500 block mb-1">
                       Price
                     </label>
                     <input
@@ -561,7 +561,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                   </div>
 
                   <div className="col-span-1 space-y-1">
-                    <label className="text-[8px] font-black text-gray-300 block mb-1">
+                    <label className="text-[11px] font-black text-gray-500 block mb-1">
                       Stock
                     </label>
                     <input
@@ -598,12 +598,12 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
             {['features', 'benefits', 'ingredients', 'tags'].map((id) => (
               <div key={id} className="space-y-1">
-                <label className="text-[9px] font-black text-gray-400 tracking-widest px-2">
+                <h3 className="text-[12px] font-black text-[#3E2723]/50 tracking-widest px-2 uppercase">
                   {id}
-                </label>
+                </h3>
                 <textarea
                   name={id}
-                  value={formData[id]}
+                  value={formData[id as string]}
                   onChange={handleChange}
                   placeholder={`Separate ${id} with commas...`}
                   className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold min-h-[80px] outline-none shadow-sm"
@@ -640,4 +640,3 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 };
 
 export default ProductFormModal;
-
