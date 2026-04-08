@@ -2,10 +2,8 @@ import React, { useEffect, useState } from 'react';
 import {
   X,
   Package,
-  CreditCard,
   FileText,
   Calendar,
-  Activity,
   User,
   MapPin,
   ShoppingBag,
@@ -28,32 +26,27 @@ interface OrderViewModalProps {
 
 const formatDate = (dateValue?: string | null) => {
   if (!dateValue) return 'N/A';
-
   const parsedDate = new Date(dateValue);
-  if (Number.isNaN(parsedDate.getTime())) {
-    return 'Invalid Date';
-  }
+  if (Number.isNaN(parsedDate.getTime())) return 'Invalid Date';
 
-  return parsedDate.toLocaleString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
+  return parsedDate.toLocaleDateString('en-IN', {
     year: 'numeric',
+    month: 'short',
+    day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });
 };
 
 const formatCurrency = (amount?: number | null) =>
-  `Rs ${Number(amount ?? 0).toLocaleString()}`;
+  `₹${Number(amount ?? 0).toLocaleString()}`;
 
-const getItemImage = (item: OrderItem) => item.productImage || item.image || '';
+const getItemImage = (item: OrderItem) =>
+  item.productImage || item.image || '';
 
 const buildAddress = (order: Order) => {
   const address = order.shippingAddress;
-
-  if (!address) {
-    return 'N/A';
-  }
+  if (!address) return 'N/A';
 
   return [
     address.addressLine1,
@@ -62,20 +55,20 @@ const buildAddress = (order: Order) => {
     address.postalCode,
     address.country,
   ]
-    .filter((value) => typeof value === 'string' && value.trim().length > 0)
+    .filter((v) => v?.toString().trim())
     .join(', ');
 };
 
 const getStatusStyle = (statusValue?: string) => {
   switch (normalizeOrderStatus(statusValue)) {
     case 'delivered':
-      return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+      return 'bg-green-100 text-green-700';
     case 'cancelled':
-      return 'bg-rose-50 text-rose-600 border-rose-100';
+      return 'bg-red-100 text-red-600';
     case 'dispatched':
-      return 'bg-blue-50 text-blue-600 border-blue-100';
+      return 'bg-blue-100 text-blue-600';
     default:
-      return 'bg-amber-50 text-amber-600 border-amber-100';
+      return 'bg-yellow-100 text-yellow-700';
   }
 };
 
@@ -101,10 +94,8 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
         return;
       }
 
-      if (order.isDeleted === true) {
+      if (order.isDeleted) {
         setOrderDetails(order);
-        setError(null);
-        setLoading(false);
         return;
       }
 
@@ -113,249 +104,184 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
 
       try {
         const response = await getAdminOrderById(order._id);
-        if (isMounted) {
-          setOrderDetails(response);
-        }
-      } catch (fetchError) {
+        if (isMounted) setOrderDetails(response);
+      } catch (err: any) {
         if (isMounted) {
           setOrderDetails(order);
-          setError(
-            fetchError instanceof Error
-              ? fetchError.message
-              : 'Failed to load order details.',
-          );
+          setError(err?.message || 'Failed to load order');
         }
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     };
 
-    void fetchOrderDetails();
-
+    fetchOrderDetails();
     return () => {
       isMounted = false;
     };
   }, [isOpen, order]);
 
   const displayOrder = orderDetails ?? order;
-
-  if (!isOpen || !displayOrder) {
-    return null;
-  }
+  if (!isOpen || !displayOrder) return null;
 
   const normalizedStatus = normalizeOrderStatus(displayOrder.orderStatus);
-  const paymentLabel = displayOrder.paymentMethod
-    ? `${displayOrder.paymentMethod.toUpperCase()} (${
-        displayOrder.paymentStatus || 'pending'
-      })`
-    : displayOrder.paymentStatus || 'N/A';
   const customerName =
     displayOrder.user?.name ||
     displayOrder.shippingAddress?.fullName ||
     'Guest';
   const shippingPhone =
-    displayOrder.shippingAddress?.phone || displayOrder.user?.phone || 'N/A';
+    displayOrder.shippingAddress?.phone ||
+    displayOrder.user?.phone ||
+    'N/A';
   const shippingAddress = buildAddress(displayOrder);
   const itemsCount = displayOrder.items?.length ?? 0;
+  const heroImage = getItemImage(displayOrder.items?.[0] as OrderItem);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="w-full mx-auto  shadow-2xl flex flex-col max-h-[90vh] overflow-hidden my-auto min-h-0">
-        {/* Header - Reduced padding */}
-        <div className="bg-[#3E2723] px-5 py-3 flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="bg-white/10 p-1.5 rounded-lg shrink-0">
-              <Package className="text-white" size={16} />
+      <div className="mx-auto flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center justify-between bg-[#4E342E] px-5 py-4 text-white">
+          <div className="flex items-center gap-2">
+            <div className="rounded-lg bg-white/10 p-2">
+              <Package className="text-white" size={18} />
             </div>
-            <div className="min-w-0">
-              <h2 className="text-white font-bold tracking-tight text-base leading-tight">
-                Order Details
-              </h2>
-            </div>
+            <h2 className="text-lg font-semibold">Order Details</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-white/10 rounded-lg transition-all text-white/80 shrink-0"
+            className="rounded-full p-2 transition hover:bg-white/10"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Content - Reduced padding and gaps */}
-        <div className="flex-1 overflow-y-auto p-4 bg-white custom-scrollbar space-y-4 min-h-0">
-          {loading && (
-            <div className="flex items-center justify-center gap-2 py-4 text-[#A69080]">
-              <Loader2 size={16} className="animate-spin" />
-              <span className="text-[10px] font-black tracking-[0.2em] uppercase">
-                Loading Order
-              </span>
-            </div>
-          )}
-
-          {error && (
-            <div className="bg-rose-50/40 border border-rose-100 rounded-xl px-3 py-2 flex items-center gap-2 text-rose-700">
-              <AlertCircle size={14} className="shrink-0" />
-              <p className="text-[10px] font-bold uppercase tracking-wider">
-                {error}
-              </p>
-            </div>
-          )}
-
-          {/* Order Info Section - Reduced padding */}
-          <div className="bg-white rounded-xl p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-              <InfoItem
-                label="Order ID"
-                value={displayOrder._id || displayOrder.orderNumber || 'N/A'}
-                icon={<Package size={12} />}
-              />
-              <div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Activity size={12} className="text-[#A69080] opacity-60" />
-                  <p className="text-[8px] font-black text-[#A69080] tracking-widest uppercase">
-                    Order Status
-                  </p>
+        <div className="flex-1 overflow-y-auto space-y-6 p-5 pb-10 md:p-6">
+          <div className="overflow-hidden rounded-2xl shadow-sm">
+            <div className="relative flex min-h-[240px] items-center justify-center p-4 sm:min-h-[320px]">
+              <div className="absolute inset-0" />
+              {heroImage ? (
+                <img
+                  src={heroImage}
+                  alt={displayOrder.items?.[0]?.name || 'Order item'}
+                  className="relative z-10 max-h-[280px] w-full max-w-[420px] object-contain drop-shadow-2xl sm:max-h-[340px]"
+                />
+              ) : (
+                <div className="relative z-10 flex flex-col items-center gap-3 text-[#6D4C41]">
+                  <div className="rounded-full bg-white p-4 shadow-sm">
+                    <Package size={28} />
+                  </div>
+                  <p className="text-sm font-medium">No product image available</p>
                 </div>
+              )}
+            </div>
+
+            <div className="space-y-4 px-5 py-5 md:px-6">
+              <div className="flex flex-wrap items-center gap-2">
                 <span
-                  className={`inline-flex items-center px-3 py-1 rounded-lg font-black text-[9px] tracking-widest border uppercase ${getStatusStyle(
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusStyle(
                     normalizedStatus,
                   )}`}
                 >
                   {normalizedStatus}
                 </span>
+                <span className="rounded-full bg-[#F5F5F5] px-3 py-1 text-xs text-[#6D4C41]">
+                  {itemsCount} item{itemsCount === 1 ? '' : 's'}
+                </span>
               </div>
-              <InfoItem
-                label="Placed At"
-                value={formatDate(
-                  displayOrder.placedAt || displayOrder.createdAt,
-                )}
-                icon={<Calendar size={12} />}
-              />
-              <InfoItem
-                label="Payment Method"
-                value={paymentLabel}
-                icon={<CreditCard size={12} />}
-              />
-              <InfoItem
-                label="Customer"
-                value={customerName}
-                icon={<User size={12} />}
-              />
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <InfoItem
+                  label="Order ID"
+                  value={displayOrder._id}
+                  icon={<Package size={14} />}
+                />
+                <InfoItem
+                  label="Date"
+                  value={formatDate(displayOrder.createdAt)}
+                  icon={<Calendar size={14} />}
+                />
+                <InfoItem
+                  label="Customer"
+                  value={customerName}
+                  icon={<User size={14} />}
+                />
+                <InfoItem
+                  label="Phone"
+                  value={shippingPhone}
+                  icon={<MapPin size={14} />}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Order Items Section - Reduced padding */}
-          <div className="bg-white rounded-xl p-4">
-            <div className="flex items-center gap-1.5 pb-3 mb-3 border-b border-[#EFE4D5]">
-              <ShoppingBag size={14} className="text-[#A69080]" />
-              <h3 className="text-[9px] font-black text-[#A69080] tracking-[0.2em] uppercase">
-                Ordered Items ({itemsCount})
-              </h3>
+          {loading && (
+            <div className="flex items-center justify-center gap-2 text-gray-500">
+              <Loader2 size={16} className="animate-spin" />
+              <span className="text-sm">Loading...</span>
             </div>
+          )}
+
+          {error && (
+            <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+              <AlertCircle size={14} />
+              {error}
+            </div>
+          )}
+
+          <div>
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
+              <ShoppingBag size={14} /> Items ({itemsCount})
+            </h3>
+
             <div className="space-y-3">
-              {itemsCount > 0 ? (
-                displayOrder.items.map((item, idx) => (
-                  <div
-                    key={
-                      item._id ||
-                      `${item.productId || item.name || 'item'}-${idx}`
-                    }
-                    className="flex items-center justify-between gap-3 p-3 bg-[#FDFBF9] rounded-xl transition-colors"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {getItemImage(item) ? (
-                        <img
-                          src={getItemImage(item)}
-                          alt={item.name || 'Order item'}
-                          className="w-10 h-10 rounded-xl object-cover bg-white border border-[#EFE4D5] shrink-0"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-xl bg-white border border-[#EFE4D5] shrink-0 flex items-center justify-center text-[#A69080]">
-                          <Package size={16} />
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <h4 className="text-[12px] font-black text-[#3E2723] truncate">
-                          {item.name || 'Unnamed Product'}
-                        </h4>
-                        <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                          {item.weight && (
-                            <span className="text-[9px] font-bold text-[#A69080] bg-white px-1.5 py-0.5 rounded-md border border-[#EFE4D5]">
-                              {item.weight}
-                            </span>
-                          )}
-                          <span className="text-[9px] font-black text-[#3E2723]/60">
-                            QTY: {item.quantity ?? 0}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[9px] text-[#A69080] font-bold">
-                        {formatCurrency(item.unitPrice)} / unit
+              {displayOrder.items?.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-[#FAF8F6] p-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-[#3E2723]">
+                        {item.name}
                       </p>
-                      <p className="text-[13px] font-black text-[#3E2723]">
-                        {formatCurrency(item.totalPrice)}
+                      <p className="text-xs text-gray-500">
+                        {item.weight} • Qty: {item.quantity}
                       </p>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="p-4 bg-[#FDFBF9] rounded-xl text-center">
-                  <p className="text-[10px] font-black text-[#A69080] uppercase tracking-wider">
-                    No Items Available
-                  </p>
+
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">
+                      {formatCurrency(item.unitPrice)}
+                    </p>
+                    <p className="text-sm font-medium text-[#3E2723]">
+                      {formatCurrency(item.totalPrice)}
+                    </p>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
           </div>
 
-          {/* Delivery Address Section - Reduced padding */}
-          <div className="bg-white rounded-xl p-4">
-            <div className="flex items-center gap-1.5 border-b border-[#EFE4D5] pb-3 mb-3">
-              <MapPin size={14} className="text-[#A69080]" />
-              <h3 className="text-[9px] font-black text-[#A69080] tracking-[0.2em] uppercase">
-                Delivery Address
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-0.5">
-                <p className="text-[9px] font-black text-[#A69080] uppercase tracking-widest">
-                  Recipient
-                </p>
-                <p className="text-[13px] font-black text-[#3E2723]">
-                  {customerName}
-                </p>
-                <p className="text-[11px] font-bold text-[#3E2723]/70 flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-[#A69080]" />
-                  {shippingPhone}
-                </p>
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-[9px] font-black text-[#A69080] uppercase tracking-widest">
-                  Location
-                </p>
-                <p className="text-[11px] font-bold text-[#3E2723]/80 leading-relaxed break-words">
-                  {shippingAddress}
-                </p>
-              </div>
+          <div>
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
+              <MapPin size={14} /> Delivery Address
+            </h3>
+
+            <div className="rounded-xl bg-[#FAF8F6] p-4 text-sm">
+              <p className="font-medium text-[#3E2723]">{customerName}</p>
+              <p className="text-gray-600">{shippingPhone}</p>
+              <p className="mt-1 text-gray-600">{shippingAddress}</p>
             </div>
           </div>
 
-          {/* Admin Notes Section - Reduced padding */}
           {(displayOrder.adminNote || displayOrder.notes) && (
-            <div className="bg-rose-50/30 border border-rose-100 rounded-xl p-4">
-              <div className="flex items-center gap-1.5 mb-2 text-rose-800">
-                <FileText size={13} />
-                <h3 className="text-[9px] font-black tracking-[0.2em] uppercase">
-                  Admin Instructions
-                </h3>
+            <div className="rounded-xl bg-yellow-50 p-4 text-sm">
+              <div className="mb-1 flex items-center gap-2">
+                <FileText size={14} />
+                <span className="font-medium">Note</span>
               </div>
-              <p className="text-[11px] font-medium text-[#3E2723] italic leading-relaxed break-words">
-                "{displayOrder.adminNote || displayOrder.notes}"
-              </p>
+              {displayOrder.adminNote || displayOrder.notes}
             </div>
           )}
         </div>
@@ -373,16 +299,11 @@ const InfoItem = ({
   value: string;
   icon: React.ReactNode;
 }) => (
-  <div className="space-y-1 min-w-0">
-    <div className="flex items-center gap-1.5">
-      <span className="text-[#A69080] opacity-60 shrink-0">{icon}</span>
-      <p className="text-[8px] font-black text-[#A69080] tracking-widest uppercase">
-        {label}
-      </p>
-    </div>
-    <p className="text-[12px] font-black text-[#3E2723] tracking-tight break-words">
-      {value}
+  <div className="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-gray-100">
+    <p className="flex items-center gap-1 text-xs text-gray-500">
+      {icon} {label}
     </p>
+    <p className="mt-1 text-sm font-medium text-[#3E2723]">{value}</p>
   </div>
 );
 

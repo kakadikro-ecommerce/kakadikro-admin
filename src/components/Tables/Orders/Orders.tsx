@@ -34,7 +34,7 @@ const OrdersTable: React.FC = () => {
   } = useAppSelector((state) => state.orders);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('pending');
+  const [selectedStatus, setSelectedStatus] = useState<string>('All');
   const [selectedActiveStatus, setSelectedActiveStatus] = useState<string>('active');
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -61,7 +61,7 @@ const OrdersTable: React.FC = () => {
       : selectedActiveStatus === 'active'
         ? true
         : undefined;
-  const statusOptions = ['pending', 'confirmed', 'dispatched', 'delivered', 'cancelled'];
+  const statusOptions = ['All','pending', 'confirmed', 'dispatched', 'delivered', 'cancelled'];
   const activeStatusOptions = ['active', 'inactive'];
 
   useEffect(() => {
@@ -155,7 +155,8 @@ const OrdersTable: React.FC = () => {
     const searchTarget = `${order._id} ${order.orderNumber} ${order.user?.name || ''} ${order.user?.email || ''}`.toLowerCase();
     const matchesSearch = searchTermLower === '' || searchTarget.includes(searchTermLower);
     const normalizedStatus = normalizeOrderStatus(order.orderStatus);
-    const matchesOrderStatus = normalizedStatus === selectedStatus;
+    const matchesOrderStatus =
+      selectedStatus === 'All' || normalizedStatus === selectedStatus;
     const matchesActiveStatus = 
       (selectedActiveStatus === 'active' && order.isActive === true) ||
       (selectedActiveStatus === 'inactive' && order.isActive === false);
@@ -200,13 +201,9 @@ const OrdersTable: React.FC = () => {
 
           <div className="flex w-full flex-col items-stretch justify-between gap-4 lg:flex-row lg:items-center">
             <div className="flex w-full min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center lg:w-auto">
-              
-              {/* Search Input */}
               <div className="w-full min-w-0 sm:w-80">
                 <SearchInput value={searchTerm} onChange={setSearchTerm} placeholder="Search orders..." />
               </div>
-
-              {/* Order Status Filter */}
               <div className="relative w-full min-w-0 sm:w-44">
                 <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <select
@@ -221,8 +218,6 @@ const OrdersTable: React.FC = () => {
                   ))}
                 </select>
               </div>
-
-              {/* Active Status Filter */}
               <div className="relative w-full min-w-0 sm:w-44">
                 <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <select
@@ -297,7 +292,7 @@ const OrdersTable: React.FC = () => {
                     </td>
 
                     <td className="px-6 py-4 bg-gray-50/50">
-                      <span className={`px-3 py-1 text-xs font-black rounded-full border bg-white ${getStatusStyle(order.orderStatus)}`}>
+                      <span className={`px-3 py-1 text-xs font-bold rounded-full border bg-white ${getStatusStyle(order.orderStatus)}`}>
                         {normalizeOrderStatus(order.orderStatus).toUpperCase() || 'PENDING'}
                       </span>
                     </td>

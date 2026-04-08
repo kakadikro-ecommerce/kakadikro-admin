@@ -54,12 +54,9 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
               <Shield className="text-white" size={18} />
             </div>
             <div>
-              <h2 className="text-white font-bold tracking-tight text-xl">
+              <h2 className="text-white font-bold tracking-tight text-xl md:text-2xl">
                 Admin Details
               </h2>
-              <p className="text-sm md:text-base text-orange-200/70 uppercase tracking-wide">
-                System Administrator Profile
-              </p>
             </div>
           </div>
           <button

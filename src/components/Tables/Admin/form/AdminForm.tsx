@@ -21,7 +21,7 @@ import {
 } from '../../../../store/modules/admin/admin.slice';
 import { setAuthUser } from '../../../../store/modules/auth/auth.slice';
 import { useAppDispatch } from '../../../../store/hooks';
-import { adminCreateSchema, adminUpdateSchema } from '../../../../validations/adminValidation';
+import { adminCreateSchema, adminUpdateSchema, changePasswordSchema } from '../../../../validations/adminValidation';
 
 interface AdminFormModalProps {
   admin: Admin | null;
@@ -61,6 +61,8 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
     name?: string;
     email?: string;
     password?: string;
+    currentPassword?: string;
+    newPassword?: string;
   }>({});
 
   useEffect(() => {
@@ -121,7 +123,7 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
     try {
       if (isProfileMode) {
         const updatedProfile = await dispatch(updateAdminProfile({ name: trimmedName })).unwrap();
-        dispatch(setAuthUser( updatedProfile as any));
+        dispatch(setAuthUser(updatedProfile as any));
       } else if (isCreateMode) {
         await dispatch(createAdminUser({
           name: trimmedName,
@@ -162,7 +164,9 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
         setAlertConfig(null);
       }, 1500);
     } catch (error: any) {
-      showAlert('error', error?.message || "Failed to update profile");
+      setErrors({
+        email: error?.message || "Something went wrong",
+      });
     } finally {
       setLoading(false);
     }
@@ -170,18 +174,24 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isProfileMode) {
+
+    const result = changePasswordSchema.safeParse({
+      currentPassword,
+      newPassword,
+    });
+
+    if (!result.success) {
+      const fieldErrors: any = {};
+      result.error.issues.forEach((err) => {
+        fieldErrors[err.path[0]] = err.message;
+      });
+      setErrors(fieldErrors);
       return;
     }
-    if (!currentPassword) {
-      showAlert('error', "Please enter your current password");
-      return;
-    }
-    if (newPassword.length < 10) {
-      showAlert('error', "New password must be at least 10 characters");
-      return;
-    }
+
+    setErrors({});
     setPassLoading(true);
+
     try {
       await dispatch(updateAdminPassword({
         currentPassword,
@@ -190,9 +200,12 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
 
       setCurrentPassword('');
       setNewPassword('');
+
       showAlert('success', "Password updated successfully!");
     } catch (error: any) {
-      showAlert('error', error?.message || "Failed to change password");
+      setErrors({
+        currentPassword: error?.message || "Failed to change password",
+      });
     } finally {
       setPassLoading(false);
     }
@@ -216,11 +229,10 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
           <div className="bg-[#3E2723] p-4 flex justify-between items-center text-white shrink-0 sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-                <Shield size={20} className="text-orange-200" />
+                <Shield size={20} className="text-white" />
               </div>
               <div>
-                <h2 className="text-base sm:text-lg font-bold tracking-tight ">Admin Settings</h2>
-                <p className="text-sm md:text-base text-orange-200/60  tracking-widest font-bold">Security & Profile</p>
+                <h2 className="text-lg md:text-xl font-bold tracking-tight ">Admin Settings</h2>
               </div>
             </div>
             <button onClick={onClose} className="p-1.5 bg-white/5 hover:bg-white/20 rounded-full transition-all">
@@ -230,7 +242,7 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
 
           <div className="p-5 sm:p-8 space-y-8 bg-white overflow-y-auto">
 
-            <form onSubmit={handleProfileSubmit} className="space-y-4">
+            <form onSubmit={handleProfileSubmit} className="space-y-4" autoComplete='off'>
               <h3 className="text-sm md:text-base font-bold text-[#3E2723]  tracking-widest flex items-center gap-2">
                 <UserIcon size={12} /> Personal Details
               </h3>
@@ -240,8 +252,11 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[12px] font-bold text-[#3E2723] outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      setErrors((prev) => ({ ...prev, name: "" }));
+                    }}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-[12px] font-bold text-[#3E2723] outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
                   />
                   {errors.name && (
                     <p className="text-red-500 text-[10px] ml-2">{errors.name}</p>
@@ -252,16 +267,20 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                   <input
                     type="email"
                     value={formData.email}
+                    autoComplete='off'
                     disabled={!isCreateMode}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      setErrors((prev) => ({ ...prev, email: "" }));
+                    }}
                     className={`w-full rounded-xl border px-4 py-3 text-[12px] font-bold outline-none transition-all ${isCreateMode
-                      ? 'bg-gray-50 text-[#3E2723] border-gray-100 focus:ring-2 focus:ring-[#3E2723]/5'
-                      : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
-                      }`}
-                  />
-                  {errors.email && (
-                    <p className="text-red-500 text-[10px] ml-2">{errors.email}</p>
-                  )}
+                      ? 'bg-gray-50 text-[#3E2723] border-gray-300 focus:ring-2 focus:ring-[#3E2723]/5'
+                      : 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                    }`}
+                    />
+                    {errors.email && (
+                      <p className="text-red-500 text-[10px] ml-2">{errors.email}</p>
+                    )}
                 </div>
               </div>
 
@@ -301,13 +320,14 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder={isCreateMode ? 'Minimum 6 characters' : 'Leave blank to keep current password'}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
+                      autoComplete='off'
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        setErrors((prev) => ({ ...prev, newPassword: "" }));
+                      }}
+                      placeholder={isCreateMode ? ' ' : 'Leave blank to keep current password'}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
                     />
-                    {errors.password && (
-                      <p className="text-red-500 text-[10px] ml-2">{errors.password}</p>
-                    )}
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
@@ -316,6 +336,9 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
+                  {errors.password && (
+                    <p className="text-red-500 text-[10px] ml-2">{errors.password}</p>
+                  )}
                 </div>
               )}
               <button
@@ -332,7 +355,7 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
               <>
                 <div className="h-px bg-gray-100 w-full" />
 
-                <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <form onSubmit={handlePasswordSubmit} className="space-y-4" autoComplete="off">
                   <h3 className="text-sm font-bold text-[#3E2723]  tracking-widest flex items-center gap-2">
                     <KeyRound size={12} /> Change Credentials
                   </h3>
@@ -344,7 +367,11 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                         <input
                           type={showCurrentPassword ? 'text' : 'password'}
                           value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          autoComplete='off'
+                          onChange={(e) => {
+                            setCurrentPassword(e.target.value);
+                            setErrors((prev) => ({ ...prev, currentPassword: "" }));
+                          }}
                           placeholder="Current password"
                           className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
                         />
@@ -356,6 +383,9 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                           {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                       </div>
+                      {errors.currentPassword && (
+                        <p className="text-red-500 text-[10px] ml-2">{errors.currentPassword}</p>
+                      )}
                     </div>
 
                     <div className="space-y-1">
@@ -364,7 +394,11 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                         <input
                           type={showPassword ? 'text' : 'password'}
                           value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
+                          autoComplete='off'
+                          onChange={(e) => {
+                            setNewPassword(e.target.value);
+                            setErrors((prev) => ({ ...prev, newPassword: "" }));
+                          }}
                           placeholder="New password"
                           className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#3E2723]/5 transition-all"
                         />
@@ -376,6 +410,9 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                           {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                       </div>
+                      {errors.newPassword && (
+                        <p className="text-red-500 text-[10px] ml-2">{errors.newPassword}</p>
+                      )}
                     </div>
                   </div>
 

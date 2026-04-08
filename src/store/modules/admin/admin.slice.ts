@@ -287,7 +287,6 @@ const adminSlice = createSlice({
       .addCase(createAdminUser.fulfilled, (state) => {
         state.createState.status = 'succeeded';
         state.totalCount += 1;
-        state.newCount += 1;
       })
       .addCase(createAdminUser.rejected, (state, action) => {
         state.createState.status = 'failed';

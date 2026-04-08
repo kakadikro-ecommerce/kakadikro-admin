@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Eye, Trash2, Search } from 'lucide-react';
+import { Eye, Trash2, Search, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { contactService } from '../../../services/contacts-api';
 import { Contact } from '../../../types/contacts';
 import ContactViewModal from './details/ContactsDetails';
@@ -11,11 +11,9 @@ const Contacts = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -36,7 +34,7 @@ const Contacts = () => {
 
   const controlBaseClass =
     'h-[48px] w-full bg-gray-50/60 border-none rounded-2xl text-[12px] outline-none shadow-sm text-[#3E2723] transition-all focus:ring-2 focus:ring-[#3E2723]/5 appearance-none';
- 
+
   const showNotification = (
     type: 'success' | 'error' | 'info' | 'warning',
     message: string,
@@ -127,7 +125,7 @@ const Contacts = () => {
         <div className="mb-6 flex flex-col gap-4">
           <div className="flex w-full min-w-0 justify-between border-b border-gray-50 pb-3">
             <div className="min-w-0">
-              <h1 className="text-2xl font-black tracking-tight text-[#3E2723] md:text-3xl">
+              <h1 className="text-2xl font-bold tracking-tight text-[#3E2723] md:text-3xl">
                 Contacts Management
               </h1>
             </div>
@@ -239,46 +237,59 @@ const Contacts = () => {
       </div>
 
       {contactToDelete && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[#2D1B19]/40 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl border border-white animate-in fade-in zoom-in duration-200">
-            <div className="bg-rose-50/50 p-8 flex flex-col items-center text-center relative">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl border border-gray-100 animate-in fade-in zoom-in duration-200">
+            <div className="relative flex flex-col items-center text-center px-6 pt-8 pb-6 bg-rose-50/40 rounded-t-3xl">
               <button
                 onClick={() => setContactToDelete(null)}
-                className="absolute top-4 right-4 p-2 text-rose-300 hover:text-rose-500 transition-colors"
+                className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-rose-100 transition"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
-              <div className="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center text-rose-500 mb-5 border border-rose-100">
-                <span className="text-4xl">⚠️</span>
+              <div className="mb-4 flex items-center justify-center w-16 h-16 rounded-2xl bg-white shadow-sm border border-rose-100">
+                <AlertTriangle className="w-8 h-8 text-rose-500" />
               </div>
-              <h3 className="text-xl font-bold text-[#3E2723] tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
                 Delete Contact?
               </h3>
-              <p className="text-[11px] text-gray-500  tracking-wider mt-3 leading-relaxed px-4 opacity-70">
-                You are about to delete <br />
-                <span className="text-rose-600 font-bold">
+              <p className="mt-2 text-sm text-gray-500 max-w-xs leading-relaxed">
+                This action will permanently delete the contact{" "}
+                <span className="font-semibold text-rose-600">
                   "{contactToDelete.name}"
-                </span>
+                </span>.
+                <br />
+                This cannot be undone.
               </p>
             </div>
-            <div className="p-6 bg-white flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 p-5 sm:p-6">
               <button
                 onClick={() => setContactToDelete(null)}
-                className="flex-1 py-4 rounded-2xl text-[10px] font-bold text-gray-400 border border-transparent hover:border-gray-100 transition-all"
+                className="flex-1 py-3 rounded-xl text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={processDelete}
                 disabled={isDeleting}
-                className="flex-1 py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-bold shadow-xl flex justify-center items-center gap-2 transition-all active:scale-95"
+                className={`flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition
+          ${isDeleting
+                    ? "bg-rose-400 cursor-not-allowed"
+                    : "bg-rose-600 hover:bg-rose-700 active:scale-[0.98]"
+                  }`}
               >
                 {isDeleting ? (
-                  <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
                 ) : (
-                  'Delete Now'
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </>
                 )}
               </button>
+
             </div>
           </div>
         </div>

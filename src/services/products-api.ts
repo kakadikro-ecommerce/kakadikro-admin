@@ -95,6 +95,11 @@ export const productService = {
   return api.put(`/v1/admin/products/status/${id}`, { isActive });
 },
 
+  getById: async (id: string): Promise<Product> => {
+    const response = await api.get(`/v1/admin/products/${id}`);
+    return response.data?.product ?? response.data?.data ?? response.data;
+  },
+
 };
 
 export const getAllProducts = (

@@ -160,11 +160,11 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
       >
         <div className="bg-[#2D1B19] p-6 md:p-3 flex justify-between items-center text-white shrink-0">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-              <Package size={24} className="text-orange-200" />
+            <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center">
+              <Package size={20} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-black tracking-tight">
+              <h2 className="text-xl md:text-2xl font-bold tracking-tight">
                 Edit Order
               </h2> 
             </div>
@@ -180,9 +180,8 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
 
         <div className="p-6 md:p-8 space-y-6 overflow-y-auto bg-gray-50/50 flex-1">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Order Status - Fixed select options */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 tracking-widest">
+              <label className="text-xs md:text-sm font-bold text-gray-900 ml-2 flex items-center gap-2 tracking-widest">
                 <Activity size={12} /> Order Status
               </label>
               <div className="relative">
@@ -208,7 +207,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
               </p>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 tracking-widest">
+              <label className="text-xs md:text-sm font-bold text-gray-900 ml-2 flex items-center gap-2 tracking-widest">
                 <Truck size={12} /> Courier Name
               </label>
               <input
@@ -226,9 +225,8 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Tracking ID */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 tracking-widest">
+              <label className="text-xs md:text-sm font-bold text-gray-900 ml-2 flex items-center gap-2 tracking-widest">
                 <Truck size={12} /> Tracking ID
               </label>
               <input
@@ -248,17 +246,15 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 </p>
               )}
             </div>
-
-            {/* Admin Note */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 ml-2 flex items-center gap-2 tracking-widest">
+              <label className="text-xs md:text-sm font-bold text-gray-900 ml-2 flex items-center gap-2 tracking-widest">
                 <FileText size={10} /> Admin Note
               </label>
               <textarea
                 name="adminNote"
                 value={formData.adminNote || ''}
                 onChange={handleChange}
-                rows={2}
+                rows={1}
                 placeholder="Internal order notes..."
                 className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm resize-none focus:ring-2 focus:ring-[#3E2723]/20"
               />
@@ -268,19 +264,12 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
 
         <div className="px-6 py-4 bg-white border-t flex justify-center gap-3">
           <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-3.5 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center gap-2 hover:bg-gray-200 transition-all"
-          >
-            <span className="font-black text-[10px]">Cancel</span>
-          </button>
-          <button
             type="submit"
             disabled={loading}
             className="flex-1 max-w-[200px] py-3.5 bg-[#3E2723] text-white rounded-full flex items-center justify-center gap-4 hover:bg-[#2D1B19] transition-all disabled:opacity-50"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-            <span className="font-black text-[10px] tracking-wider">
+            <span className="font-bold text-xs md:text-sm tracking-wider">
               {loading ? 'Processing...' : 'Save Changes'}
             </span>
           </button>

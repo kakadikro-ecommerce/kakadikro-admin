@@ -1,6 +1,7 @@
 import React from 'react';
 import { Contact } from '../../../../types/contacts';
 import { Modal } from '../../../../pages/UiElements/Modal';
+import { Phone } from 'lucide-react';
 
 interface ContactViewModalProps {
   contact: Contact | null;
@@ -32,6 +33,9 @@ const ContactViewModal: React.FC<ContactViewModalProps> = ({
       <div className="w-full max-w-2xl mx-auto bg-white rounded-[2rem] shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
         <div className="bg-[#3E2723] px-6 py-3 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
+            <div className="bg-white/10 p-2 rounded-lg">
+              <Phone className="text-white" size={18} />
+            </div>
             <h2 className="text-white font-bold tracking-tight text-xl md:text-2xl">
               Contact Details
             </h2>
@@ -91,5 +95,5 @@ const InfoItem = ({ label, value }: { label: string; value: string }) => (
     </p>
   </div>
 );
- 
+
 export default ContactViewModal; 

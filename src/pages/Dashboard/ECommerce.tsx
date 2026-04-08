@@ -186,7 +186,7 @@ const ECommerce: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead className="bg-[#F3E5D3]/50 border-b border-[#E8DBC8]">
               <tr>
-                <th className="px-6 py-4 text-[10px] font-bold text-[#8B5A2B] uppercase tracking-wider">Order Number</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#8B5A2B] uppercase tracking-wider">Order ID</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#8B5A2B] uppercase tracking-wider">Customer</th>
                 <th className="px-4 py-4 text-[10px] font-bold text-[#8B5A2B] uppercase text-center tracking-wider">Status</th>
               </tr>

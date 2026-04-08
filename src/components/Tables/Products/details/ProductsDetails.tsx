@@ -3,7 +3,6 @@ import {
   Box,
   Tag,
   Info,
-  Scale,
   X,
   Heart,
   Layers,
@@ -33,10 +32,6 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
   if (!product) return null;
 
   const variants = (product.variants || []) as unknown as LocalVariant[];
-  const firstVariant =
-    variants.length > 0
-      ? variants[0]
-      : { price: 0, mrp: 0, stock: 0, weight: 'N/A' };
 
   const getDisplayImage = (): string => {
     const rawImages = product.images as unknown as Array<string | { url?: string }>;
@@ -55,194 +50,166 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
     0,
   );
 
+  const benefits = [
+    ...(Array.isArray(product.features) ? product.features : []),
+    ...(Array.isArray(product.benefits) ? product.benefits : []),
+  ];
+
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="mx-auto flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
-        <div className="flex shrink-0 items-center justify-between bg-[#2D1B18] px-6 py-4">
+      <div className="mx-auto flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center justify-between bg-[#4E342E] px-6 py-4 text-white">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-[#3E2723] p-1.5 text-white shadow-sm">
-              <Box size={14} />
+            <div className="rounded-lg bg-white/10 p-2">
+              <Box className="text-white" size={18} />
             </div>
-            <h2 className="text-lg font-bold tracking-widest text-white">
+            <h2 className="text-lg font-semibold tracking-wide">
               Product Details
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-1.5 text-[#A69080] transition-all hover:bg-[#F3EBE1]"
+            className="rounded-full p-1.5 transition hover:bg-white/10"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="custom-scrollbar min-h-0 flex-1 space-y-8 overflow-y-auto p-4 md:p-6">
-          <div className="flex flex-col items-center gap-8 md:flex-row md:items-start">
-            <div className="relative h-40 w-40 flex-shrink-0 md:h-48 md:w-48">
-              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[1.5rem] bg-white p-4">
-                <img
-                  src={getDisplayImage()}
-                  alt={product.name}
-                  className="h-full w-full object-contain"
-                />
-              </div>
+        <div className="overflow-y-auto space-y-6 p-5 pb-10 md:p-6">
+          <div className="overflow-hidden rounded-2xl shadow-sm">
+            <div className="relative flex min-h-[240px] items-center justify-center p-4 sm:min-h-[320px]">
+              <div className="absolute inset-0" />
+              <img
+                src={getDisplayImage()}
+                alt={product.name}
+                className="relative z-10 max-h-[280px] w-full max-w-[420px] object-contain drop-shadow-2xl sm:max-h-[340px]"
+              />
             </div>
 
-            <div className="flex-1 space-y-2 text-center md:text-left">
-              <div className="flex items-center justify-center gap-2 md:justify-start">
-                <span className="rounded bg-[#F3EBE1] px-2 py-0.5 text-[9px] font-bold tracking-tighter text-[#A69080]">
-                  {product.brand || 'KD Masale'}
+            <div className="space-y-4 px-5 py-5 md:px-6">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-[#F5F5F5] px-3 py-1 text-xs text-[#6D4C41]">
+                  {product.brand || 'Brand'}
                 </span>
                 <span
-                  className={`rounded px-2 py-0.5 text-[9px] font-bold ${
-                    product.isActive
-                      ? 'bg-[#E7F8F2] text-[#00A36C]'
-                      : 'bg-red-50 text-red-600'
-                  }`}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${product.isActive
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-600'
+                    }`}
                 >
                   {product.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
-              <h1 className="text-xl font-black tracking-tight text-[#3E2723] md:text-1xl">
-                {product.name}
-              </h1>
-              <p className="text-[11px] font-medium text-[#A69080] opacity-80">
-                "{product.shortDescription || 'Authentic Spice Blend'}"
-              </p>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="space-y-6 rounded-[1.5rem] p-5 lg:col-span-2">
-              <div className="flex items-center gap-2 pb-2 text-[13px] font-bold tracking-widest text-[#A69080]">
-                <Layers size={12} />
-                <span>Spice Profile</span>
+              <div className="space-y-1">
+                <h1 className="text-2xl font-semibold text-[#3E2723] md:text-3xl">
+                  {product.name}
+                </h1>
+                <p className="max-w-3xl text-sm leading-6 text-gray-600">
+                  {product.shortDescription}
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <h3 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#A69080]">
-                    <Tag size={11} /> Category
-                  </h3>
-                  <div className="text-[13px] font-bold text-[#3E2723]">
-                    {product.category || 'Spices'}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <h3 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#A69080]">
-                    <Scale size={11} /> Sizes
-                  </h3>
-                  <div className="text-[13px] font-bold text-[#3E2723]">
-                    {variants.length > 0
-                      ? variants.map((v) => v.weight).join(' | ')
-                      : 'Standard'}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A69080]">
-                    Stock Count
-                  </h3>
-                  <div className="text-[13px] font-bold text-[#3E2723]">
-                    {totalStock} Units
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A69080]">
-                    Rating
-                  </h3>
-                  <div className="text-[13px] font-bold text-[#3E2723]">
-                    {product.rating || 5}.0 / 5.0
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3 rounded-[1.5rem] p-5">
-                <h3 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#A69080]">
-                  Tags
-                </h3>
-
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {Array.isArray(product.tags) &&
-                    product.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-md border border-gray-50 bg-white px-2 py-0.5 text-[13px] tracking-tighter text-[#A69080] shadow-sm"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col justify-center space-y-4 rounded-[1.5rem] p-5">
-              <h3 className="pb-2 text-[9px] font-black tracking-[0.2em] text-[#A69080]">
-                Pricing & Variants
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="mb-0.5 text-[11px] font-black tracking-widest text-[#A69080]">
-                    Our Price
-                  </p>
-                  <p className="text-xl font-black tracking-tight text-[#3E2723]">
-                    Rs {firstVariant.price}
+              <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                <div className="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-gray-100">
+                  <p className="text-xs text-gray-500">Category</p>
+                  <p className="mt-1 font-medium text-[#3E2723]">
+                    {product.category || '—'}
                   </p>
                 </div>
-                <div>
-                  <p className="mb-0.5 text-[11px] font-black tracking-widest text-[#A69080]">
-                    Market Price
+                <div className="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-gray-100">
+                  <p className="text-xs text-gray-500">Sizes</p>
+                  <p className="mt-1 font-medium text-[#3E2723]">
+                    {variants.map(v => v.weight).join(', ') || '—'}
                   </p>
-                  <p className="text-[12px] font-bold text-[#A69080] line-through">
-                    Rs {firstVariant.mrp}
+                </div>
+                <div className="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-gray-100">
+                  <p className="text-xs text-gray-500">Stock</p>
+                  <p className="mt-1 font-medium text-[#3E2723]">{totalStock}</p>
+                </div>
+                <div className="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-gray-100">
+                  <p className="text-xs text-gray-500">Rating</p>
+                  <p className="mt-1 font-medium text-[#3E2723]">
+                    {product.rating}0
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 divide-y divide-gray-100 pb-2">
-            <div className="flex flex-col gap-3 rounded-[1.5rem] py-5">
-              <h3 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#A69080]">
-                <Heart size={12} className="text-red-400" /> Benefits
-              </h3>
-              <div className="flex flex-col gap-2">
-                {(Array.isArray(product.features) ? product.features : [])
-                  .concat(
-                    Array.isArray(product.benefits) ? product.benefits : [],
-                  )
-                  .map((item: string, i) => (
-                    <div
-                      key={i}
-                      title={item}
-                      className="rounded-md border border-gray-100 bg-gray-50 px-2 py-1 text-[11px] font-bold text-[#3E2723]"
-                    >
-                      {item.length > 15 ? `${item.substring(0, 15)}...` : item}
-                    </div>
-                  ))}
-              </div>
-            </div>
+          <div>
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
+              <Layers size={14} /> Variants
+            </h3>
 
-            <div className="flex flex-col gap-3 rounded-[1.5rem] py-5">
-              <h3 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#A69080]">
-                <ClipboardList size={12} /> Ingredients
-              </h3>
-              <div className="text-[13px] font-bold leading-relaxed text-[#3E2723]/70">
-                {Array.isArray(product.ingredients)
-                  ? product.ingredients.join(' | ')
-                  : 'Natural Spices Selection'}
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <div className="grid grid-cols-4 bg-[#F9F6F4] px-3 py-2 text-xs font-medium text-[#6D4C41]">
+                <span>Size</span>
+                <span>Price</span>
+                <span>MRP</span>
+                <span>Stock</span>
               </div>
-            </div>
 
-            <div className="flex flex-col gap-3 rounded-[1.5rem] py-5">
-              <h3 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#A69080]">
-                <Info size={12} /> Description
-              </h3>
-              <div className="text-[13px] font-medium leading-normal text-[#3E2723] opacity-80">
-                {product.description || 'Verified traditional blend.'}
-              </div>
+              {variants.map((v, i) => (
+                <div
+                  key={i}
+                  className="grid grid-cols-4 border-t px-3 py-3 text-sm text-[#3E2723]"
+                >
+                  <span>{v.weight}</span>
+                  <span className="font-medium">₹{v.price}</span>
+                  <span className="text-gray-400 line-through">₹{v.mrp}</span>
+                  <span>{v.stock}</span>
+                </div>
+              ))}
             </div>
+          </div>
+
+          <div>
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
+              <Tag size={14} /> Tags
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {product.tags?.map(tag => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-[#F5F5F5] px-3 py-1 text-xs text-[#6D4C41]"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
+              <Heart size={14} /> Benefits
+            </h3>
+
+            <ul className="list-disc space-y-1 pl-5 text-sm text-[#3E2723]">
+              {benefits.length > 0 ? (
+                benefits.map((item, i) => <li key={i}>{item}</li>)
+              ) : (
+                <li>No benefits listed</li>
+              )}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
+              <ClipboardList size={14} /> Ingredients
+            </h3>
+            <p className="text-sm text-[#3E2723]">
+              {product.ingredients?.join(', ') || '—'}
+            </p>
+          </div>
+
+          <div>
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
+              <Info size={14} /> Description
+            </h3>
+            <p className="mb-4 text-sm text-[#3E2723]">
+              {product.description || '—'}
+            </p>
           </div>
         </div>
       </div>
