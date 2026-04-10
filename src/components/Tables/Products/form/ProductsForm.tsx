@@ -17,9 +17,9 @@ import {
 } from '../../../../store/modules/products/products.slice';
 import { useAppDispatch } from '../../../../store/hooks';
 import {
-  productSchema,
   variantSchema,
-  type ProductFormValues,
+  createProductSchema,
+  updateProductSchema,
 } from '../../../../validations/productValidation';
 
 const emptyVariant = { weight: '', price: '', mrp: '', stock: '' };
@@ -107,9 +107,9 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
   const splitClean = (value: any) =>
     typeof value === 'string'
       ? value
-          .split(',')
-          .map((item) => item.trim())
-          .filter(Boolean)
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
       : Array.isArray(value)
         ? value
         : [];
@@ -152,8 +152,14 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
       return;
     }
 
-    const schemaField = (productSchema.shape as Record<string, any>)[name];
+    const schema = isEdit ? updateProductSchema : createProductSchema;
+    const schemaField = (schema.shape as Record<string, any>)[name];
     if (!schemaField?.safeParse) return;
+
+    if (isEdit && typeof value === 'string' && value.trim() === '') {
+      setFieldError(name);
+      return;
+    }
 
     const result = schemaField.safeParse(value);
     if (result.success) {
@@ -167,7 +173,6 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev: any) => ({ ...prev, [name]: value }));
-    setFieldError(name);
     validateSingleField(name, value);
   };
 
@@ -211,7 +216,6 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
       return { ...prev, variants };
     });
 
-    setFieldError(`variants.${index}.${field}`);
     validateSingleField(`variants.${index}.${field}`, value);
   };
 
@@ -221,9 +225,9 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
     const result = variantSchema.safeParse({
       weight: lastVariant?.weight || '',
-      price: Number(lastVariant?.price || 0),
-      mrp: Number(lastVariant?.mrp || 0),
-      stock: Number(lastVariant?.stock || 0),
+      price: lastVariant?.price === '' ? undefined : Number(lastVariant.price),
+      mrp: lastVariant?.mrp === '' ? undefined : Number(lastVariant.mrp),
+      stock: lastVariant?.stock === '' ? undefined : Number(lastVariant.stock),
     });
 
     if (!result.success) {
@@ -251,11 +255,14 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
     }));
 
     setErrors((prev) => {
-      const next = { ...prev };
-      delete next[`variants.${index}.weight`];
-      delete next[`variants.${index}.price`];
-      delete next[`variants.${index}.mrp`];
-      delete next[`variants.${index}.stock`];
+      const next: Errors = {};
+
+      Object.keys(prev).forEach((key) => {
+        if (!key.startsWith('variants.')) {
+          next[key] = prev[key];
+        }
+      });
+
       return next;
     });
   };
@@ -309,7 +316,23 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
     try {
       setLoading(true);
 
-      const payload: ProductFormValues = {
+      if (!selectedFile && !isEdit) {
+        setErrors((prev) => ({
+          ...prev,
+          images: 'Product image is required',
+        }));
+        return;
+      }
+
+      if (!formData.variants.length) {
+        setErrors((prev) => ({
+          ...prev,
+          variants: 'At least one variant is required',
+        }));
+        return;
+      }
+
+      const payload = {
         name: formData.name,
         brand: formData.brand,
         category: formData.category,
@@ -322,13 +345,14 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
         tags: splitClean(formData.tags),
         variants: (formData.variants || []).map((variant: any) => ({
           weight: String(variant.weight || '').trim(),
-          price: Number(variant.price),
-          mrp: Number(variant.mrp),
-          stock: Number(variant.stock),
+          price: variant.price === '' ? undefined : Number(variant.price),
+          mrp: variant.mrp === '' ? undefined : Number(variant.mrp),
+          stock: variant.stock === '' ? undefined : Number(variant.stock),
         })),
       };
 
-      const result = productSchema.safeParse(payload);
+      const schema = isEdit ? updateProductSchema : createProductSchema;
+      const result = schema.safeParse(payload);
       if (!result.success) {
         setErrors(mapValidationErrors(result.error.issues));
         return;
@@ -340,13 +364,13 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
       data.append('name', payload.name);
       data.append('brand', payload.brand);
       data.append('category', payload.category);
-      data.append('shortDescription', payload.shortDescription || '');
-      data.append('description', payload.description || '');
-      data.append('usage', payload.usage || '');
-      data.append('ingredients', JSON.stringify(payload.ingredients || []));
-      data.append('features', JSON.stringify(payload.features || []));
-      data.append('benefits', JSON.stringify(payload.benefits || []));
-      data.append('tags', JSON.stringify(payload.tags || []));
+      data.append('shortDescription', payload.shortDescription);
+      data.append('description', payload.description);
+      data.append('usage', payload.usage);
+      data.append('ingredients', JSON.stringify(payload.ingredients));
+      data.append('features', JSON.stringify(payload.features));
+      data.append('benefits', JSON.stringify(payload.benefits));
+      data.append('tags', JSON.stringify(payload.tags));
       data.append('variants', JSON.stringify(payload.variants));
 
       if (selectedFile) {
@@ -388,7 +412,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="mx-auto flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
-        <div className="flex shrink-0 items-center justify-between bg-[#2D1B19] px-5 py-4 text-white md:px-7 md:py-5">
+        <div className="flex shrink-0 items-center justify-between bg-[#3e2723] px-5 py-4 text-white md:px-7 md:py-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
               <Layers3 size={20} className="text-white" />
@@ -421,9 +445,8 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                 }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
-                className={`group relative flex min-h-[220px] cursor-pointer items-center justify-center overflow-hidden rounded-[1.5rem] border-2 border-dashed transition sm:min-h-[280px] ${
-                  isDragging ? 'border-[#7A330F] bg-[#7A330F]/5' : 'border-slate-200 bg-slate-50'
-                }`}
+                className={`group relative flex min-h-[220px] cursor-pointer items-center justify-center overflow-hidden rounded-[1.5rem] border-2 border-dashed transition sm:min-h-[280px] ${isDragging ? 'border-[#7A330F] bg-[#7A330F]/5' : 'border-slate-200 bg-slate-50'
+                  }`}
               >
                 {imagePreview ? (
                   <>
@@ -463,81 +486,84 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                   </div>
                 )}
 
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept="image/*"
-              />
-            </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept="image/*"
+                />
+              </div>
+                {errors.images && (
+                  <p className="mt-2 text-xs text-rose-500">{errors.images}</p>
+                )}
 
               <div className="mt-5 space-y-4">
+                <div className="space-y-2">
+                  <label className={sectionLabelClass}>Product Name</label>
+                  <input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter product name"
+                    className={baseInputClass}
+                  />
+                  {errors.name && <p className="pl-1 text-xs text-rose-500">{errors.name}</p>}
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <label className={sectionLabelClass}>Product Name</label>
+                    <label className={sectionLabelClass}>Brand</label>
                     <input
-                      name="name"
-                      value={formData.name}
+                      name="brand"
+                      value={formData.brand}
                       onChange={handleChange}
-                      placeholder="Enter product name"
+                      placeholder="Enter brand"
                       className={baseInputClass}
                     />
-                    {errors.name && <p className="pl-1 text-xs text-rose-500">{errors.name}</p>}
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className={sectionLabelClass}>Brand</label>
-                      <input
-                        name="brand"
-                        value={formData.brand}
-                        onChange={handleChange}
-                        placeholder="Enter brand"
-                        className={baseInputClass}
-                      />
-                      {errors.brand && <p className="pl-1 text-xs text-rose-500">{errors.brand}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className={sectionLabelClass}>Category</label>
-                      <input
-                        name="category"
-                        value={formData.category}
-                        onChange={handleChange}
-                        placeholder="Enter category"
-                        className={baseInputClass}
-                      />
-                      {errors.category && <p className="pl-1 text-xs text-rose-500">{errors.category}</p>}
-                    </div>
+                    {errors.brand && <p className="pl-1 text-xs text-rose-500">{errors.brand}</p>}
                   </div>
 
                   <div className="space-y-2">
-                    <label className={sectionLabelClass}>Usage</label>
+                    <label className={sectionLabelClass}>Category</label>
                     <input
-                      name="usage"
-                      value={formData.usage}
+                      name="category"
+                      value={formData.category}
                       onChange={handleChange}
-                      placeholder="How should the product be used?"
+                      placeholder="Enter category"
                       className={baseInputClass}
                     />
-                    {errors.usage && <p className="pl-1 text-xs text-rose-500">{errors.usage}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className={sectionLabelClass}>Short Description</label>
-                    <textarea
-                      name="shortDescription"
-                      value={formData.shortDescription}
-                      onChange={handleChange}
-                      placeholder="Write a short description"
-                      className={`${baseInputClass} min-h-[110px] resize-none`}
-                    />
-                    {errors.shortDescription && (
-                      <p className="pl-1 text-xs text-rose-500">{errors.shortDescription}</p>
-                    )}
+                    {errors.category && <p className="pl-1 text-xs text-rose-500">{errors.category}</p>}
                   </div>
                 </div>
+
+                <div className="space-y-2">
+                  <label className={sectionLabelClass}>Usage</label>
+                  <input
+                    name="usage"
+                    value={formData.usage}
+                    onChange={handleChange}
+                    placeholder="How should the product be used?"
+                    className={baseInputClass}
+                  />
+                  {errors.usage && <p className="pl-1 text-xs text-rose-500">{errors.usage}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <label className={sectionLabelClass}>Short Description</label>
+                  <textarea
+                    name="shortDescription"
+                    value={formData.shortDescription}
+                    onChange={handleChange}
+                    placeholder="Write a short description"
+                    className={`${baseInputClass} min-h-[110px] resize-none`}
+                  />
+                  {errors.shortDescription && (
+                    <p className="pl-1 text-xs text-rose-500">{errors.shortDescription}</p>
+                  )}
+                </div>
               </div>
+            </div>
 
             <div className={sectionCardClass}>
               <div className="space-y-2">
@@ -583,7 +609,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                 {formData.variants.map((variant: any, index: number) => (
                   <div
                     key={index}
-                    className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4 sm:p-5"
+                    className="rounded-[1.5rem] p-4 sm:p-5"
                   >
                     <div className="mb-3 flex items-center justify-between">
                       <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
@@ -715,12 +741,12 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
               </div>
             </div>
 
-            <div className="flex justify-end rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex justify-center rounded-[1.5rem] p-4">
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#2D1B19] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#1f1211] disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#3e2723] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#1f1211] disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
               >
                 {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                 {loading ? 'Saving...' : isEdit ? 'Update Product' : 'Create Product'}

@@ -7,7 +7,6 @@ import {
   CreditCard,
   MessageSquare,
   UserPlus,
-  Eye,
   ShoppingCart,
   Mail,
 } from 'lucide-react';
@@ -280,7 +279,7 @@ const DashboardTable: React.FC<{
         <h3 className="text-sm font-bold text-[#5C3E2E] uppercase tracking-wider">{title}</h3>
       </div>
       <button onClick={onViewAll} className="flex items-center gap-1.5 px-3 py-1 bg-white/80 hover:bg-white text-[#5C3E2E] rounded-lg text-[10px] font-bold border border-[#D7C4A9] transition-all active:scale-95 shadow-sm">
-        <Eye size={12} /> VIEW ALL
+      VIEW ALL
       </button>
     </div>
     <div className="overflow-x-auto flex-grow min-h-[280px]">

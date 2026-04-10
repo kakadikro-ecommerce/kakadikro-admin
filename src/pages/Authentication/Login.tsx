@@ -83,8 +83,7 @@ export default function Login() {
                 <label className="block text-xs font-semibold text-gray-900 mb-2">
                   Email
                 </label>
-
-                <div className="relative mb-8">
+                <div className="relative">
                   <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
                   <input
                     type="email"
@@ -94,13 +93,12 @@ export default function Login() {
                       setEmail(e.target.value);
                       setErrors((prev) => ({ ...prev, email: "" }));
                     }}
-                    className={`w-full pl-10 pr-3 py-4 text-sm bg-stone-50 border rounded-lg outline-none transition
+                    className={`w-full pl-10 pr-3 py-4 text-xs md:text-sm text-gray-900 bg-stone-50 border rounded-lg outline-none transition
         ${errors.email ? "border-red-500" : "border-stone-200 focus:border-[#7A330F]"}`}
                   />
                 </div>
-
                 {errors.email && (
-                  <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                  <p className="text-red-500 text-xs md:text-sm mt-2">{errors.email}</p>
                 )}
               </div>
 
@@ -109,7 +107,7 @@ export default function Login() {
                   Password
                 </label>
 
-                <div className="relative mb-8">
+                <div className="relative">
                   <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
                   <input
                     type={showPassword ? "text" : "password"}
@@ -119,7 +117,7 @@ export default function Login() {
                       setPassword(e.target.value);
                       setErrors((prev) => ({ ...prev, password: "" }));
                     }}
-                    className={`w-full pl-10 pr-10 py-4 text-sm bg-stone-50 border rounded-lg outline-none transition
+                    className={`w-full pl-10 pr-10 py-4 text-xs md:text-sm text-gray-900 bg-stone-50 border rounded-lg outline-none transition
         ${errors.password ? "border-red-500" : "border-stone-200 focus:border-[#7A330F]"}`}
                   />
 
@@ -131,9 +129,8 @@ export default function Login() {
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-
                 {errors.password && (
-                  <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                  <p className="text-red-500 text-xs md:text-sm mt-2">{errors.password}</p>
                 )}
               </div>
 

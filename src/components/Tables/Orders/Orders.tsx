@@ -61,7 +61,7 @@ const OrdersTable: React.FC = () => {
       : selectedActiveStatus === 'active'
         ? true
         : undefined;
-  const statusOptions = ['All','pending', 'confirmed', 'dispatched', 'delivered', 'cancelled'];
+  const statusOptions = ['All', 'pending', 'confirmed', 'dispatched', 'delivered', 'cancelled'];
   const activeStatusOptions = ['active', 'inactive'];
 
   useEffect(() => {
@@ -127,19 +127,19 @@ const OrdersTable: React.FC = () => {
 
     try {
       const newActiveStatus = !order.isActive;
-      
+
       await dispatch(
         toggleOrderActiveStatusThunk({
           orderId: order._id,
           isActive: newActiveStatus,
         }),
       ).unwrap();
-      
+
       showNotification(
         'success',
         `Order ${order.orderNumber || order._id} is now ${newActiveStatus ? 'active' : 'inactive'}.`,
       );
-      
+
       await dispatch(fetchOrders({ page: currentPage, limit: 10, isActive: selectedIsActive }));
     } catch (toggleError: any) {
       console.error('Toggle status error:', toggleError);
@@ -157,7 +157,7 @@ const OrdersTable: React.FC = () => {
     const normalizedStatus = normalizeOrderStatus(order.orderStatus);
     const matchesOrderStatus =
       selectedStatus === 'All' || normalizedStatus === selectedStatus;
-    const matchesActiveStatus = 
+    const matchesActiveStatus =
       (selectedActiveStatus === 'active' && order.isActive === true) ||
       (selectedActiveStatus === 'inactive' && order.isActive === false);
     return matchesSearch && matchesOrderStatus && matchesActiveStatus;
@@ -176,6 +176,13 @@ const OrdersTable: React.FC = () => {
       case 'pending': return 'bg-amber-50 text-amber-600 border-amber-100';
       default: return 'bg-gray-50 text-gray-600 border-gray-100';
     }
+  };
+
+  const isEditDisabled = (order: Order) => {
+    return (
+      order.isActive === false ||
+      normalizeOrderStatus(order.orderStatus) === "delivered"
+    );
   };
 
   return (
@@ -256,13 +263,12 @@ const OrdersTable: React.FC = () => {
                 <tr>
                   <td colSpan={6} className="text-center py-20">
                     <div className="flex flex-col items-center gap-2">
-                      <div className="text-gray-300 text-5xl">📦</div>
-                      <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">
+                      <p className="text-gray-400 text-xs md:text-sm font-semibold uppercase tracking-wider">
                         NO ORDERS FOUND
                       </p>
                     </div>
-                   </td>
-                 </tr>
+                  </td>
+                </tr>
               ) : (
                 visibleOrders.map((order, i) => (
                   <tr key={order._id} className="group transition-all">
@@ -309,16 +315,21 @@ const OrdersTable: React.FC = () => {
 
                         <button
                           onClick={() => {
-                            if (order.isActive === false) return;
+                            if (isEditDisabled(order)) return;
                             handleOpenOrderEdit(order._id);
                           }}
-                          disabled={order.isActive === false}
-                          className={`flex items-center justify-center rounded-lg p-2 text-gray-500 transition-all active:scale-95 ${
-                            order.isActive === false
+                          disabled={isEditDisabled(order)}
+                          className={`flex items-center justify-center rounded-lg p-2 text-gray-500 transition-all active:scale-95 ${isEditDisabled(order)
                               ? 'opacity-30 cursor-not-allowed'
                               : 'hover:bg-blue-50 hover:text-blue-600'
-                          }`}
-                          title={order.isActive === false ? "Cannot edit inactive order" : "Edit Order"}
+                            }`}
+                          title={
+                            order.isActive === false
+                              ? "Cannot edit inactive order"
+                              : normalizeOrderStatus(order.orderStatus) === "delivered"
+                                ? "Delivered orders cannot be edited"
+                                : "Edit Order"
+                          }
                         >
                           <Edit3 size={18} className="sm:size-5" />
                         </button>
@@ -327,24 +338,21 @@ const OrdersTable: React.FC = () => {
                           type="button"
                           onClick={() => handleToggleStatus(order)}
                           disabled={updatingOrderId === order._id}
-                          className={`relative flex h-6 w-11 sm:h-7 sm:w-12 items-center rounded-full transition-all duration-300 ${
-                            order.isActive !== false
+                          className={`relative flex h-6 w-11 sm:h-7 sm:w-12 items-center rounded-full transition-all duration-300 ${order.isActive !== false
                               ? "bg-emerald-500"
                               : "bg-rose-500"
-                          } ${
-                            updatingOrderId === order._id
+                            } ${updatingOrderId === order._id
                               ? "cursor-not-allowed opacity-50"
                               : "hover:shadow-md cursor-pointer"
-                          }`}
+                            }`}
                           aria-label={`Toggle ${order._id} status`}
                           aria-pressed={order.isActive !== false}
                         >
                           <span
-                            className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
-                              order.isActive !== false
+                            className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${order.isActive !== false
                                 ? "translate-x-5 sm:translate-x-6"
                                 : "translate-x-1"
-                            }`}
+                              }`}
                           />
                         </button>
                       </div>

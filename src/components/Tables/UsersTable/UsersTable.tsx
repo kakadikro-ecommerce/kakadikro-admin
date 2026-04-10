@@ -198,8 +198,9 @@ const UserTable: React.FC<UserTableProps> = ({
               ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-20">
-                    <UsersIcon className="mx-auto text-gray-300 mb-2" size={48} />
-                    <p className="text-gray-400 text-xs">NO USERS FOUND</p>
+                    <p className="text-gray-400 text-xs md:text-sm font-semibold uppercase tracking-wider">
+                      NO USERS FOUND
+                    </p>
                   </td>
                 </tr>
               ) : (

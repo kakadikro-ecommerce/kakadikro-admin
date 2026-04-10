@@ -20,6 +20,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const newProducts = useAppSelector((state) => state.products?.newCount ?? 0);
   const newAdmins = 0;
   const newOrders = useAppSelector((state) => state.orders?.newCount ?? 0);
+  const newContacts = useAppSelector((state) => state.contacts?.newCount ?? 0);
 
   useEffect(() => {
     const clickHandler = ({ target }: MouseEvent) => {
@@ -43,7 +44,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     { id: 'users', path: '/users', name: 'Users', icon: <UsersIcon />, badge: newUsers }, 
     { id: 'products', path: '/products', name: 'Products', icon: <ProductsIcon />, badge: newProducts },
     { id: 'orders', path: '/orders', name: 'Orders', icon: <OrdersIcon />, badge: newOrders },
-    { id: 'contacts', path: '/contacts', name: 'Contacts', icon: <ContactsIcon />, badge: 0 },
+    { id: 'contacts', path: '/contacts', name: 'Contacts', icon: <ContactsIcon />, badge: newContacts },
     { id: 'payments', path: '/payments', name: 'Payments', icon: <PaymentsIcon />, badge: 0 },
   ];
 

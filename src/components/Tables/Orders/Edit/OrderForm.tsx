@@ -5,7 +5,6 @@ import {
   Loader2,
   Package,
   Truck,
-  FileText,
   ChevronDown,
   Activity,
 } from 'lucide-react';
@@ -26,6 +25,10 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
   onSave,
 }) => {
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{
+    courierName?: string;
+    trackingId?: string;
+  }>({});
 
   const buildChangedPayload = (
     originalOrder: Order | null,
@@ -52,15 +55,11 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
       const courierName = nextFormData.shipment?.courierName?.trim();
 
       if (trackingId || courierName) {
-        payload.shipment = {};
-
-        if (trackingId) {
-          payload.shipment.trackingId = trackingId;
-        }
-
-        if (courierName) {
-          payload.shipment.courierName = courierName;
-        }
+        payload.shipment = {
+          ...(originalOrder.shipment || {}),
+          ...(trackingId && { trackingId }),
+          ...(courierName && { courierName }),
+        };
       }
     }
 
@@ -81,7 +80,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
   useEffect(() => {
     if (order && isOpen) {
       const normalizedStatus = normalizeOrderStatus(order.orderStatus);
-      
+
       setFormData({
         orderStatus: normalizedStatus,
         adminNote: order.adminNote || '',
@@ -102,17 +101,43 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
   ) => {
     const { name, value } = e.target;
 
-    if (name === 'trackingId' || name === 'courierName') {
+    if (name === 'courierName') {
+      const isValid = /^[A-Za-z\s]*$/.test(value);
+
+      setErrors((prev) => ({
+        ...prev,
+        courierName: isValid ? '' : 'Courier name must contain only letters',
+      }));
+
       setFormData((prev) => ({
         ...prev,
         shipment: {
           ...(prev.shipment as any),
-          [name]: value,
+          courierName: value,
         },
       }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+
+      return;
     }
+
+    if (name === 'trackingId') {
+      setErrors((prev) => ({
+        ...prev,
+        trackingId: value.trim() ? '' : 'Tracking ID is required',
+      }));
+
+      setFormData((prev) => ({
+        ...prev,
+        shipment: {
+          ...(prev.shipment as any),
+          trackingId: value,
+        },
+      }));
+
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -124,8 +149,20 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
         const trackingId = formData.shipment?.trackingId?.trim();
         const courierName = formData.shipment?.courierName?.trim();
 
-        if (!trackingId || !courierName) {
-          alert('Tracking ID and Courier Name are required for dispatch');
+        const newErrors: any = {};
+
+        if (!trackingId) {
+          newErrors.trackingId = 'Tracking ID is required';
+        }
+
+        if (!courierName) {
+          newErrors.courierName = 'Courier name is required';
+        } else if (!/^[A-Za-z\s]+$/.test(courierName)) {
+          newErrors.courierName = 'Courier name must contain only letters';
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+          setErrors(newErrors);
           setLoading(false);
           return;
         }
@@ -133,14 +170,8 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
 
       const changedPayload = buildChangedPayload(order, formData);
 
-      // Only send if there are changes
-      if (Object.keys(changedPayload).length === 0) {
-        alert('No changes to save');
-        setLoading(false);
-        return;
-      }
-
       await onSave(changedPayload);
+
       onClose();
     } catch (error) {
       console.error('Form submission error:', error);
@@ -166,7 +197,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
             <div>
               <h2 className="text-xl md:text-2xl font-bold tracking-tight">
                 Edit Order
-              </h2> 
+              </h2>
             </div>
           </div>
           <button
@@ -195,7 +226,6 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   <option value="confirmed">CONFIRMED</option>
                   <option value="dispatched">DISPATCHED</option>
                   <option value="delivered">DELIVERED</option>
-                  <option value="cancelled">CANCELLED</option>
                 </select>
                 <ChevronDown
                   size={16}
@@ -217,10 +247,14 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 onChange={handleChange}
                 disabled={!isDispatched}
                 placeholder={isDispatched ? "BlueDart, FedEx, etc." : "Enable 'DISPATCHED' status first"}
-                className={`w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm ${
-                  !isDispatched ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-xs md:text-sm font-semibold outline-none shadow-sm ${!isDispatched ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               />
+              {errors.courierName && (
+                <p className="text-xs text-red-500 ml-2">
+                  {errors.courierName}
+                </p>
+              )}
             </div>
           </div>
 
@@ -236,28 +270,14 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 onChange={handleChange}
                 disabled={!isDispatched}
                 placeholder={isDispatched ? "TRK123456789" : "Enable 'DISPATCHED' status first"}
-                className={`w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm ${
-                  !isDispatched ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-xs md:text-sm font-semibold outline-none shadow-sm ${!isDispatched ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               />
-              {isDispatched && (
-                <p className="text-[8px] text-amber-600 ml-2">
-                  Tracking details are required for dispatched orders
+              {errors.trackingId && (
+                <p className="text-xs text-red-500 ml-2">
+                  {errors.trackingId}
                 </p>
               )}
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs md:text-sm font-bold text-gray-900 ml-2 flex items-center gap-2 tracking-widest">
-                <FileText size={10} /> Admin Note
-              </label>
-              <textarea
-                name="adminNote"
-                value={formData.adminNote || ''}
-                onChange={handleChange}
-                rows={1}
-                placeholder="Internal order notes..."
-                className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none shadow-sm resize-none focus:ring-2 focus:ring-[#3E2723]/20"
-              />
             </div>
           </div>
         </div>

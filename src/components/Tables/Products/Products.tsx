@@ -263,7 +263,7 @@ const Products = () => {
                 <TableLoaderRow colSpan={6} />
               ) : visibleProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-xs tracking-wider text-gray-400">
+                  <td colSpan={6} className="py-16 text-center text-xs md:text-sm tracking-wider text-gray-400 font-semibold uppercase">
                     No products found
                   </td>
                 </tr>

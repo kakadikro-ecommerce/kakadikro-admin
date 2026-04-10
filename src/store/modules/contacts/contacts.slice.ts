@@ -20,6 +20,7 @@ interface ContactsState {
   selectedContact: Contact | null;
   loading: boolean;
   searchTerm: string;
+  newCount: number;
   pagination: PaginationInfo;
   notification: NotificationState;
   deleteModal: {
@@ -37,6 +38,7 @@ const initialState: ContactsState = {
   selectedContact: null,
   loading: false,
   searchTerm: '',
+  newCount: 0,
   pagination: {
     currentPage: 1,
     totalPages: 1,
@@ -79,6 +81,9 @@ const contactsSlice = createSlice({
     },
     setCurrentPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
+    },
+    resetContactsNewCount: (state) => {
+      state.newCount = 0;
     },
     clearNotification: (state) => {
       state.notification.show = false;
@@ -150,6 +155,7 @@ const contactsSlice = createSlice({
 export const {
   setSearchTerm,
   setCurrentPage,
+  resetContactsNewCount,
   clearNotification,
   showNotification,
   openViewModal,

@@ -81,7 +81,6 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
                   ? 'bg-purple-50 text-purple-700 border-purple-100'
                   : 'bg-indigo-50 text-indigo-700 border-indigo-100'
                   }`}>
-                  <Shield size={12} />
                   {admin.role === 'super_admin' ? 'SUPER ADMIN' : 'ADMIN'}
                 </span>
               </div>
@@ -94,7 +93,7 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Activity size={14} className="text-[#A69080] opacity-60" />
-                  <p className="text-[9px] font-bold text-[#A69080] tracking-widest">Account Status</p>
+                  <p className="text-xs md:text-sm font-semibold text-[#A69080] tracking-widest">Account Status</p>
                 </div>
                 <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-xl font-bold text-xs md:text-sm tracking-wide border ${admin.isActive
                   ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
@@ -109,7 +108,7 @@ const AdminViewModal: React.FC<AdminViewModalProps> = ({
             </div>
 
             {onEdit && (
-              <div className="flex justify-end border-t border-[#EFE4D5]/60 pt-6">
+              <div className="flex justify-center border-t border-[#EFE4D5]/60 pt-6">
                 <button
                   onClick={() => onEdit(admin)}
                   className="inline-flex items-center gap-2 rounded-xl bg-[#3E2723] px-5 py-3 text-sm md:text-base tracking-wide font-bold uppercase text-white transition-all hover:bg-[#2D1B19]"

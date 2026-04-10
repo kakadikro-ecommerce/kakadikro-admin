@@ -108,12 +108,12 @@ export const Modal = ({ closeModal, onSubmit, defaultValue }: ModalProps) => {
       <div className="modal rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark overflow-auto">
         <div className="border-b border-stroke py-4 px-7 dark:border-strokedark">
           <div className="w-full flex justify-end">
-            <strong
+            <span
               className="text-xl align-center cursor-pointer"
               onClick={closeModal}
             >
               &times;
-            </strong>
+            </span>
           </div>
           <form>
             <div className="grid grid-cols-3 gap-5 justify-normal">

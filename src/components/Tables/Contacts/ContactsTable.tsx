@@ -6,8 +6,11 @@ import ContactViewModal from './details/ContactsDetails';
 import Alert from '../../../pages/UiElements/Alerts';
 import Pagination from '../../../pages/UiElements/Pagination';
 import TableLoaderRow from '../../../pages/UiElements/TableLoaderRow';
+import { resetContactsNewCount } from '../../../store/modules/contacts/contacts.slice';
+import { useAppDispatch } from '../../../store/hooks';
 
 const Contacts = () => {
+  const dispatch = useAppDispatch();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,8 +68,9 @@ const Contacts = () => {
   };
 
   useEffect(() => {
+    dispatch(resetContactsNewCount());
     loadContacts(currentPage);
-  }, [currentPage]);
+  }, [currentPage, dispatch]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -168,7 +172,7 @@ const Contacts = () => {
                 <tr>
                   <td colSpan={5} className="text-center py-20">
                     <div className="flex flex-col items-center gap-2">
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-gray-400 text-xs md:text-sm uppercase font-semibold tracking-wider">
                         No contacts found
                       </p>
                     </div>

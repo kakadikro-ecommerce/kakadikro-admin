@@ -165,7 +165,7 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
       }, 1500);
     } catch (error: any) {
       setErrors({
-        email: error?.message || "Something went wrong",
+        email: error || "Something went wrong",
       });
     } finally {
       setLoading(false);
@@ -276,11 +276,11 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
                     className={`w-full rounded-xl border px-4 py-3 text-[12px] font-bold outline-none transition-all ${isCreateMode
                       ? 'bg-gray-50 text-[#3E2723] border-gray-300 focus:ring-2 focus:ring-[#3E2723]/5'
                       : 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
-                    }`}
-                    />
-                    {errors.email && (
-                      <p className="text-red-500 text-[10px] ml-2">{errors.email}</p>
-                    )}
+                      }`}
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-[10px] ml-2">{errors.email}</p>
+                  )}
                 </div>
               </div>
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Eye, Filter, Plus, Shield } from 'lucide-react';
+import { Eye, Filter, Plus} from 'lucide-react';
 import type { Admin } from '../../../types/Admin';
 import AdminFormModal from './form/AdminForm';
 import AdminViewModal from './details/Admindetails';
@@ -207,8 +207,7 @@ const AdminTable: React.FC<AdminTableProps> = ({ onView }) => {
               ) : filteredAdmins.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-20 text-center">
-                    <Shield className="mx-auto mb-3 text-gray-300" size={48} />
-                    <p className="text-xs uppercase tracking-wider text-gray-400">
+                    <p className="text-xs md:text-sm uppercase tracking-wider text-gray-400 font-semibold">
                       No admins found
                     </p>
                   </td>
@@ -229,7 +228,6 @@ const AdminTable: React.FC<AdminTableProps> = ({ onView }) => {
                       <span
                         className={`flex w-fit items-center gap-1 rounded-full border px-3 py-1 text-[9px] font-bold ${getRoleBadgeColor(admin.role)}`}
                       >
-                        <Shield size={10} />
                         {admin.role === 'super_admin' ? 'SUPER ADMIN' : 'ADMIN'}
                       </span>
                     </td>
