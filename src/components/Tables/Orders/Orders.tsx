@@ -183,7 +183,7 @@ const OrdersTable: React.FC = () => {
       order.isActive === false ||
       normalizeOrderStatus(order.orderStatus) === "delivered"
     );
-  };
+  }; 
 
   return (
     <div className="relative min-h-screen font-sans">

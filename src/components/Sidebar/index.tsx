@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import LOGO from '../../images/logo/kde-logo-1.png';
+import LOGO from '../../images/logo/kde-logo.png';
 import logo2 from '../../images/logo/kaka-dikro-icon.png';
 import { logout } from '../../store/modules/auth/auth.slice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';

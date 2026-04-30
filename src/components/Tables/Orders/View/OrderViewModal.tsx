@@ -9,11 +9,14 @@ import {
   ShoppingBag,
   Loader2,
   AlertCircle,
+  Printer,
+  Truck,
 } from 'lucide-react';
 import { Modal } from '../../../../pages/UiElements/Modal';
 import {
   getAdminOrderById,
   normalizeOrderStatus,
+  openOrderLabel,
   type Order,
   type OrderItem,
 } from '../../../../services/Orders-api';
@@ -79,6 +82,7 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
 }) => {
   const [orderDetails, setOrderDetails] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
+  const [labelPrinting, setLabelPrinting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -135,7 +139,56 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
     'N/A';
   const shippingAddress = buildAddress(displayOrder);
   const itemsCount = displayOrder.items?.length ?? 0;
+  const hasMultipleItems = itemsCount > 1;
   const heroImage = getItemImage(displayOrder.items?.[0] as OrderItem);
+  const shipment = displayOrder.shipment;
+  const hasShipmentDetails = Boolean(
+    shipment?.courierName ||
+      shipment?.trackingId ||
+      shipment?.dispatchedAt ||
+      shipment?.deliveredAt,
+  );
+
+  const handlePrintLabel = async (orderId: string) => {
+    setLabelPrinting(true);
+    setError(null);
+
+    try {
+      const printWindow = await openOrderLabel(orderId);
+
+      if (!printWindow) {
+        setError('Popup blocked. Please allow popups to print the label.');
+        return;
+      }
+
+      const printLabel = () => {
+        printWindow.focus();
+        printWindow.print();
+      };
+
+      if (printWindow.document.readyState === 'complete') {
+        printLabel();
+      } else {
+        printWindow.addEventListener('load', printLabel, { once: true });
+      }
+    } catch (printError: any) {
+      setError(
+        printError?.response?.data?.message ||
+          printError?.message ||
+          'Failed to generate order label.',
+      );
+    } finally {
+      setLabelPrinting(false);
+    }
+  };
+
+  const handlePrintButtonClick = () => {
+    if (labelPrinting || !displayOrder?._id) {
+      return;
+    }
+
+    void handlePrintLabel(displayOrder._id);
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -157,23 +210,27 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
 
         <div className="flex-1 overflow-y-auto space-y-6 p-5 pb-10 md:p-6">
           <div className="overflow-hidden rounded-2xl shadow-sm">
-            <div className="relative flex min-h-[240px] items-center justify-center p-4 sm:min-h-[320px]">
-              <div className="absolute inset-0" />
-              {heroImage ? (
-                <img
-                  src={heroImage}
-                  alt={displayOrder.items?.[0]?.name || 'Order item'}
-                  className="relative z-10 max-h-[280px] w-full max-w-[420px] object-contain drop-shadow-2xl sm:max-h-[340px]"
-                />
-              ) : (
-                <div className="relative z-10 flex flex-col items-center gap-3 text-[#6D4C41]">
-                  <div className="rounded-full bg-white p-4 shadow-sm">
-                    <Package size={28} />
+            {!hasMultipleItems && (
+              <div className="relative flex min-h-[240px] items-center justify-center p-4 sm:min-h-[320px]">
+                <div className="absolute inset-0" />
+                {heroImage ? (
+                  <img
+                    src={heroImage}
+                    alt={displayOrder.items?.[0]?.name || 'Order item'}
+                    className="relative z-10 max-h-[280px] w-full max-w-[420px] object-contain drop-shadow-2xl sm:max-h-[340px]"
+                  />
+                ) : (
+                  <div className="relative z-10 flex flex-col items-center gap-3 text-[#6D4C41]">
+                    <div className="rounded-full bg-white p-4 shadow-sm">
+                      <Package size={28} />
+                    </div>
+                    <p className="text-sm font-medium">
+                      No product image available
+                    </p>
                   </div>
-                  <p className="text-sm font-medium">No product image available</p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-4 px-5 py-5 md:px-6">
               <div className="flex flex-wrap items-center gap-2">
@@ -230,36 +287,92 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
 
           <div>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
+              <Truck size={14} /> Shipment Details
+            </h3>
+
+            <div className="rounded-xl bg-[#FAF8F6] p-4">
+              {hasShipmentDetails ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <InfoItem
+                    label="Courier Company"
+                    value={shipment?.courierName || 'N/A'}
+                    icon={<Truck size={14} />}
+                  />
+                  <InfoItem
+                    label="Tracking ID"
+                    value={shipment?.trackingId || 'N/A'}
+                    icon={<Package size={14} />}
+                  />
+                  <InfoItem
+                    label="Dispatched At"
+                    value={formatDate(shipment?.dispatchedAt)}
+                    icon={<Calendar size={14} />}
+                  />
+                  <InfoItem
+                    label="Delivered At"
+                    value={formatDate(shipment?.deliveredAt)}
+                    icon={<Calendar size={14} />}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 rounded-lg bg-white px-3 py-3 text-sm text-gray-500 shadow-sm ring-1 ring-gray-100">
+                  <Truck size={16} className="shrink-0 text-[#6D4C41]" />
+                  <span>No shipment details added yet</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
               <ShoppingBag size={14} /> Items ({itemsCount})
             </h3>
 
             <div className="space-y-3">
-              {displayOrder.items?.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-[#FAF8F6] p-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <p className="text-sm font-medium text-[#3E2723]">
-                        {item.name}
-                      </p>
+              {displayOrder.items?.map((item, idx) => {
+                const itemImage = getItemImage(item);
+
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-[#FAF8F6] p-3"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      {hasMultipleItems && (
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-100">
+                          {itemImage ? (
+                            <img
+                              src={itemImage}
+                              alt={item.name || 'Order item'}
+                              className="h-full w-full object-contain p-1"
+                            />
+                          ) : (
+                            <Package size={22} className="text-[#6D4C41]" />
+                          )}
+                        </div>
+                      )}
+
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-[#3E2723]">
+                          {item.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {item.weight} • Qty: {item.quantity}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 text-right">
                       <p className="text-xs text-gray-500">
-                        {item.weight} • Qty: {item.quantity}
+                        {formatCurrency(item.unitPrice)}
+                      </p>
+                      <p className="text-sm font-medium text-[#3E2723]">
+                        {formatCurrency(item.totalPrice)}
                       </p>
                     </div>
                   </div>
-
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">
-                      {formatCurrency(item.unitPrice)}
-                    </p>
-                    <p className="text-sm font-medium text-[#3E2723]">
-                      {formatCurrency(item.totalPrice)}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -284,6 +397,22 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
               {displayOrder.adminNote || displayOrder.notes}
             </div>
           )}
+        </div>
+        <div className="flex items-center justify-center border-t border-gray-100 px-5 pb-8 pt-5">
+          <button
+            type="button"
+            onClick={handlePrintButtonClick}
+            disabled={labelPrinting}
+            className="flex items-center justify-center gap-2 rounded-lg bg-[#4E342E] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#3E2723] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+            title="Print Label"
+          >
+            {labelPrinting ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Printer size={18} />
+            )}
+            Print Label
+          </button>
         </div>
       </div>
     </Modal>

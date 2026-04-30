@@ -492,10 +492,56 @@ export const getAdminOrderById = async (orderId: string): Promise<Order> => {
   return normalizeOrdersResponse(response.data) as Order;
 };
 
+export const fetchOrderLabelBlob = async (orderId: string): Promise<Blob> => {
+  const response = await axiosInstance.get(`/v1/admin/orders/label/${orderId}`, {
+    responseType: 'blob',
+  });
+
+  return response.data;
+};
+
+export const openOrderLabel = async (orderId: string): Promise<Window | null> => {
+  const newWindow = window.open('', '_blank');
+
+  if (!newWindow) {
+    return null;
+  }
+
+  try {
+    const labelBlob = await fetchOrderLabelBlob(orderId);
+    const labelUrl = URL.createObjectURL(labelBlob);
+
+    await new Promise<void>((resolve) => {
+      const timeout = window.setTimeout(resolve, 1500);
+
+      newWindow.addEventListener(
+        'load',
+        () => {
+          window.clearTimeout(timeout);
+          resolve();
+        },
+        { once: true },
+      );
+
+      newWindow.location.href = labelUrl;
+    });
+
+    window.setTimeout(() => URL.revokeObjectURL(labelUrl), 60000);
+  } catch (error) {
+    newWindow.close();
+    throw error;
+  }
+
+  return newWindow;
+};
+
+
 export const orderService = {
   adminGetAll: fetchAdminOrders,
   getById: getAdminOrderById,
   update: updateAdminOrderStatus,
+  getLabel: fetchOrderLabelBlob,
+  openLabel: openOrderLabel,
 };
 
 const ordersApi = {
