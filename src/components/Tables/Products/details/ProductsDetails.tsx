@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Tag,
@@ -7,16 +7,16 @@ import {
   Heart,
   Layers,
   ClipboardList,
+  ImageOff,
 } from 'lucide-react';
-import { Product } from '../../../../types/product';
+import {
+  Product,
+  ProductVariant,
+  formatProductTypeLabel,
+  getVariantDisplayName,
+} from '../../../../types/product';
 import { Modal } from '../../../../pages/UiElements/Modal';
-
-interface LocalVariant {
-  weight: string;
-  price: number;
-  mrp: number;
-  stock: number;
-}
+import { getProductDisplayImage } from '../../../../utils/productMedia';
 
 interface ProductViewModalProps {
   product: Product | null;
@@ -29,21 +29,16 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const displayImage = getProductDisplayImage(product?.images);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [product?._id, displayImage]);
+
   if (!product) return null;
 
-  const variants = (product.variants || []) as unknown as LocalVariant[];
-
-  const getDisplayImage = (): string => {
-    const rawImages = product.images as unknown as Array<string | { url?: string }>;
-    if (!Array.isArray(rawImages) || rawImages.length === 0) {
-      return '/placeholder-spice.png';
-    }
-
-    const firstImg = rawImages[0];
-    return typeof firstImg === 'string'
-      ? firstImg
-      : firstImg?.url || '/placeholder-spice.png';
-  };
+  const variants = (product.variants || []) as ProductVariant[];
 
   const totalStock = variants.reduce(
     (acc, curr) => acc + (Number(curr.stock) || 0),
@@ -54,6 +49,15 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
     ...(Array.isArray(product.features) ? product.features : []),
     ...(Array.isArray(product.benefits) ? product.benefits : []),
   ];
+
+  const variantLabels = variants
+    .map((variant) => getVariantDisplayName(variant))
+    .filter(Boolean);
+
+  const specifications =
+    product.specifications && typeof product.specifications === 'object'
+      ? Object.entries(product.specifications)
+      : [];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -79,23 +83,32 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
           <div className="overflow-hidden rounded-2xl shadow-sm">
             <div className="relative flex min-h-[240px] items-center justify-center p-4 sm:min-h-[320px]">
               <div className="absolute inset-0" />
-              <img
-                src={getDisplayImage()}
-                alt={product.name}
-                className="relative z-10 max-h-[280px] w-full max-w-[420px] object-contain drop-shadow-2xl sm:max-h-[340px]"
-              />
+              {displayImage && !imageFailed ? (
+                <img
+                  src={displayImage}
+                  alt={product.name}
+                  className="relative z-10 max-h-[280px] w-full max-w-[420px] object-contain drop-shadow-2xl sm:max-h-[340px]"
+                  onError={() => setImageFailed(true)}
+                />
+              ) : (
+                <div className="relative z-10 flex flex-col items-center gap-2 text-gray-400">
+                  <ImageOff size={36} />
+                  <p className="text-sm">Image unavailable</p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-4 px-5 py-5 md:px-6">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-[#F5F5F5] px-3 py-1 text-xs text-[#6D4C41]">
-                  {product.brand || 'Brand'}
+                  {formatProductTypeLabel(product.productType)}
                 </span>
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${product.isActive
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    product.isActive
                       ? 'bg-green-100 text-green-700'
                       : 'bg-red-100 text-red-600'
-                    }`}
+                  }`}
                 >
                   {product.isActive ? 'Active' : 'Inactive'}
                 </span>
@@ -118,9 +131,9 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
                   </p>
                 </div>
                 <div className="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-gray-100">
-                  <p className="text-xs text-gray-500">Sizes</p>
+                  <p className="text-xs text-gray-500">Variants</p>
                   <p className="mt-1 font-medium text-[#3E2723]">
-                    {variants.map(v => v.weight).join(', ') || '—'}
+                    {variantLabels.join(', ') || '—'}
                   </p>
                 </div>
                 <div className="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-gray-100">
@@ -130,7 +143,7 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
                 <div className="rounded-xl bg-white px-3 py-3 shadow-sm ring-1 ring-gray-100">
                   <p className="text-xs text-gray-500">Rating</p>
                   <p className="mt-1 font-medium text-[#3E2723]">
-                    {product.rating}0
+                    {product.rating ?? 0}
                   </p>
                 </div>
               </div>
@@ -144,7 +157,7 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
 
             <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
               <div className="grid grid-cols-4 bg-[#F9F6F4] px-3 py-2 text-xs font-medium text-[#6D4C41]">
-                <span>Size</span>
+                <span>Name</span>
                 <span>Price</span>
                 <span>MRP</span>
                 <span>Stock</span>
@@ -155,7 +168,7 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
                   key={i}
                   className="grid grid-cols-4 border-t px-3 py-3 text-sm text-[#3E2723]"
                 >
-                  <span>{v.weight}</span>
+                  <span>{getVariantDisplayName(v) || '—'}</span>
                   <span className="font-medium">₹{v.price}</span>
                   <span className="text-gray-400 line-through">₹{v.mrp}</span>
                   <span>{v.stock}</span>
@@ -164,12 +177,31 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
             </div>
           </div>
 
+          {specifications.length > 0 && (
+            <div>
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
+                <Info size={14} /> Specifications
+              </h3>
+              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                {specifications.map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="grid grid-cols-2 border-t px-3 py-3 text-sm text-[#3E2723] first:border-t-0"
+                  >
+                    <span className="text-gray-500">{key}</span>
+                    <span className="font-medium">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div>
             <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
               <Tag size={14} /> Tags
             </h3>
             <div className="flex flex-wrap gap-2">
-              {product.tags?.map(tag => (
+              {product.tags?.map((tag) => (
                 <span
                   key={tag}
                   className="rounded-full bg-[#F5F5F5] px-3 py-1 text-xs text-[#6D4C41]"
@@ -194,14 +226,16 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
             </ul>
           </div>
 
-          <div>
-            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
-              <ClipboardList size={14} /> Ingredients
-            </h3>
-            <p className="text-sm text-[#3E2723]">
-              {product.ingredients?.join(', ') || '—'}
-            </p>
-          </div>
+          {String(product.productType || 'GROCERY').toUpperCase() !== 'ELECTRONICS' ? (
+            <div>
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
+                <ClipboardList size={14} /> Ingredients
+              </h3>
+              <p className="text-sm text-[#3E2723]">
+                {product.ingredients?.join(', ') || '—'}
+              </p>
+            </div>
+          ) : null}
 
           <div>
             <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">

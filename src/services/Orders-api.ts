@@ -415,7 +415,7 @@ export const fetchAdminOrders = async (
   }
 
   const response = await axiosInstance.get(
-    `/v1/admin/orders?${params.toString()}`,
+    `/admin/orders?${params.toString()}`,
   );
   return normalizeOrdersResponse(response.data) as OrdersListResponse;
 };
@@ -469,7 +469,7 @@ export const updateAdminOrderStatus = async (
   }
 
   const response = await axiosInstance.put(
-    `/v1/admin/orders/status/${orderId}`,
+    `/admin/orders/status/${orderId}`,
     cleanPayload,
   );
   return normalizeOrdersResponse(response.data) as Order;
@@ -481,19 +481,19 @@ export const toggleOrderActiveStatus = async (
 ): Promise<Order> => {
   const payload = { isActive };
   const response = await axiosInstance.put(
-    `/v1/admin/orders/active/${orderId}`,
+    `/admin/orders/active/${orderId}`,
     payload,
   );
   return normalizeOrdersResponse(response.data) as Order;
 };
 
 export const getAdminOrderById = async (orderId: string): Promise<Order> => {
-  const response = await axiosInstance.get(`/v1/admin/orders/${orderId}`);
+  const response = await axiosInstance.get(`/admin/orders/${orderId}`);
   return normalizeOrdersResponse(response.data) as Order;
 };
 
 export const fetchOrderLabelBlob = async (orderId: string): Promise<Blob> => {
-  const response = await axiosInstance.get(`/v1/admin/orders/label/${orderId}`, {
+  const response = await axiosInstance.get(`/admin/orders/label/${orderId}`, {
     responseType: 'blob',
   });
 

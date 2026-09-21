@@ -1,12 +1,16 @@
-import { SetStateAction, useDeferredValue, useEffect, useState } from 'react';
+import { SetStateAction, useDeferredValue, useEffect, useRef, useState } from 'react';
 import { Edit2, Plus, Eye, ImageOff, Filter } from 'lucide-react';
-import { Product } from '../../../types/product';
+import {
+  Product,
+  ProductType,
+  formatProductTypeLabel,
+} from '../../../types/product';
 import ProductFormModal from './form/ProductsForm';
 import ProductViewModal from './details/ProductsDetails';
 import Alert from '../../../pages/UiElements/Alerts';
 import Pagination from '../../../pages/UiElements/Pagination';
 import TableLoaderRow from '../../../pages/UiElements/TableLoaderRow';
-import Search from '../../../pages/UiElements/SearchBar'; 
+import Search from '../../../pages/UiElements/SearchBar';
 import { productService } from '../../../services/products-api';
 import {
   fetchProducts,
@@ -15,6 +19,9 @@ import {
 } from '../../../store/modules/products/products.slice';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import Loader from '../../../common/Loader';
+import { getProductDisplayImage } from '../../../utils/productMedia';
+
+const PRODUCT_TYPE_FILTERS = ['All', 'GROCERY', 'ELECTRONICS'] as const;
 
 const Products = () => {
   const dispatch = useAppDispatch();
@@ -25,6 +32,7 @@ const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedStatus, setSelectedStatus] = useState<string>('Active');
+  const [selectedProductType, setSelectedProductType] = useState<string>('All');
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [allCategories, setAllCategories] = useState<string[]>(['All']);
   const [, setIsFilterDataLoading] = useState(true);
@@ -37,6 +45,8 @@ const Products = () => {
 
   const statuses = ['Active', 'Inactive'];
   const deferredSearchTerm = useDeferredValue(searchTerm);
+  const imageRefreshRequested = useRef(false);
+  const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
 
   const [notification, setNotification] = useState<{
     show: boolean;
@@ -52,20 +62,47 @@ const Products = () => {
     setTimeout(() => setNotification((prev) => ({ ...prev, show: false })), 4000);
   };
 
+  const getProductTypeParam = (): ProductType | undefined => {
+    if (selectedProductType === 'GROCERY' || selectedProductType === 'ELECTRONICS') {
+      return selectedProductType;
+    }
+    return undefined;
+  };
+
+  const refreshProducts = (page = currentPage) => {
+    const isActive = selectedStatus === 'Active';
+    dispatch(
+      fetchProducts({
+        page,
+        limit: 10,
+        isActive,
+        productType: getProductTypeParam(),
+      }),
+    );
+  };
+
   useEffect(() => {
     dispatch(resetProductsNewCount());
   }, [dispatch]);
 
   useEffect(() => {
-    const isActive = selectedStatus === 'Active';
-    dispatch(fetchProducts({ page: currentPage, limit: 10, isActive }));
-  }, [currentPage, dispatch, selectedStatus]);
+    imageRefreshRequested.current = false;
+    setFailedImageIds(new Set());
+    refreshProducts(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, dispatch, selectedStatus, selectedProductType]);
+
+  useEffect(() => {
+    if (status === 'succeeded') {
+      setFailedImageIds(new Set());
+    }
+  }, [status, products]);
 
   useEffect(() => {
     const loadFilterData = async () => {
       setIsFilterDataLoading(true);
       try {
-        const response = await productService.adminGetAll(1, 1000);
+        const response = await productService.adminGetAll({ page: 1, limit: 1000 });
         const catalog = response.products ?? [];
         const uniqueCategories = Array.from(
           new Set(
@@ -79,6 +116,8 @@ const Products = () => {
         setAllCategories(['All', ...uniqueCategories]);
       } catch (err) {
         console.error('Failed to load filters', err);
+      } finally {
+        setIsFilterDataLoading(false);
       }
     };
     loadFilterData();
@@ -86,19 +125,36 @@ const Products = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedCategory, selectedStatus]);
+  }, [searchTerm, selectedCategory, selectedStatus, selectedProductType]);
 
   const handleFormRefresh = () => {
-    const isActive = selectedStatus === 'Active';
-    dispatch(fetchProducts({ page: currentPage, limit: 10, isActive }));
+    imageRefreshRequested.current = false;
+    setFailedImageIds(new Set());
+    refreshProducts(currentPage);
+    productService.adminGetAll({ page: 1, limit: 1000 }).then((response) => {
+      setAllProducts(response.products ?? []);
+    });
     const action = selectedProduct ? 'updated' : 'added';
     const productName = selectedProduct ? selectedProduct.name : 'New product';
     showNotification('success', `${productName} was ${action} successfully!`);
   };
 
+  const resolveListedProduct = (productId: string) =>
+    allProducts.find((p) => p._id === productId) ||
+    products.find((p) => p._id === productId);
+
+  const loadFreshProduct = async (productId: string): Promise<Product | null> => {
+    try {
+      return await productService.getById(productId);
+    } catch (err) {
+      console.error('Failed to load product details', err);
+      return resolveListedProduct(productId) ?? null;
+    }
+  };
+
   const handleOpenProductView = async (productId: string) => {
     setModalLoading(true);
-    const product = allProducts.find((p) => p._id === productId);
+    const product = await loadFreshProduct(productId);
     if (!product) {
       showNotification('error', 'Product not found.');
       setModalLoading(false);
@@ -110,22 +166,35 @@ const Products = () => {
   };
 
   const handleOpenProductEdit = async (productId: string) => {
-    const product = allProducts.find((p) => p._id === productId);
-    
-    if (!product) {
+    const listedProduct = resolveListedProduct(productId);
+
+    if (!listedProduct) {
       showNotification('error', 'Product not found.');
       return;
     }
 
-    if (!product.isActive) {
+    if (!listedProduct.isActive) {
       showNotification('warning', 'Cannot edit an inactive product. Please activate it first.');
       return;
     }
 
     setModalLoading(true);
+    const product = (await loadFreshProduct(productId)) ?? listedProduct;
     setSelectedProduct(product);
     setIsFormOpen(true);
     setModalLoading(false);
+  };
+
+  const handleProductImageError = (productId: string) => {
+    setFailedImageIds((prev) => {
+      const next = new Set(prev);
+      next.add(productId);
+      return next;
+    });
+
+    if (imageRefreshRequested.current) return;
+    imageRefreshRequested.current = true;
+    refreshProducts(currentPage);
   };
 
   const loading = status === 'loading' || modalLoading;
@@ -136,14 +205,22 @@ const Products = () => {
     const matchesSearch = p.name.toLowerCase().includes(deferredSearchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
     const matchesStatus = selectedStatus === 'Active' ? p.isActive : !p.isActive;
-    return matchesSearch && matchesCategory && matchesStatus;
+    const productType = String(p.productType || 'GROCERY').toUpperCase();
+    const matchesProductType =
+      selectedProductType === 'All' || productType === selectedProductType;
+    return matchesSearch && matchesCategory && matchesStatus && matchesProductType;
   });
 
   const effectiveTotalItems = hasClientFilters ? filteredProducts.length : pagination.total || 0;
-  const effectiveTotalPages = hasClientFilters ? Math.ceil(effectiveTotalItems / 10) : pagination.totalPages || 1;
-  const visibleProducts = hasClientFilters ? filteredProducts.slice((currentPage - 1) * 10, currentPage * 10) : filteredProducts;
+  const effectiveTotalPages = hasClientFilters
+    ? Math.ceil(effectiveTotalItems / 10)
+    : pagination.totalPages || 1;
+  const visibleProducts = hasClientFilters
+    ? filteredProducts.slice((currentPage - 1) * 10, currentPage * 10)
+    : filteredProducts;
 
-  const controlBaseClass = 'h-[48px] w-full bg-gray-50/60 border-none rounded-2xl text-[12px] outline-none shadow-sm text-[#3E2723] transition-all focus:ring-2 focus:ring-[#3E2723]/5 appearance-none cursor-pointer';
+  const controlBaseClass =
+    'h-[48px] w-full bg-gray-50/60 border-none rounded-2xl text-[12px] outline-none shadow-sm text-[#3E2723] transition-all focus:ring-2 focus:ring-[#3E2723]/5 appearance-none cursor-pointer';
 
   const handleToggleStatus = async (product: Product) => {
     try {
@@ -151,10 +228,13 @@ const Products = () => {
       const newStatus = !product.isActive;
       await dispatch(toggleProductStatus({ id: product._id, isActive: newStatus })).unwrap();
 
-      showNotification('success', `Product "${product.name}" ${newStatus ? 'activated' : 'deactivated'} successfully!`);
+      showNotification(
+        'success',
+        `Product "${product.name}" ${newStatus ? 'activated' : 'deactivated'} successfully!`,
+      );
 
       if (selectedStatus === 'Active' && !newStatus) {
-        dispatch(fetchProducts({ page: currentPage, limit: 10, isActive: true }));
+        refreshProducts(currentPage);
       }
     } catch (err) {
       showNotification('error', `Failed to update status for ${product.name}`);
@@ -191,17 +271,30 @@ const Products = () => {
 
           <div className="flex flex-col items-stretch justify-between gap-3 lg:flex-row lg:items-center">
             <div className="flex w-full min-w-0 flex-col items-stretch gap-3 md:flex-row md:items-center lg:w-auto">
-              
-              {/* Using your custom Search component here */}
               <div className="w-full md:w-72">
-                <Search 
-                  value={searchTerm} 
-                  onChange={(val: SetStateAction<string>) => setSearchTerm(val)} 
-                  placeholder="Search products..." 
+                <Search
+                  value={searchTerm}
+                  onChange={(val: SetStateAction<string>) => setSearchTerm(val)}
+                  placeholder="Search products..."
                 />
               </div>
 
-              <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:flex md:w-auto md:items-center">
+              <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 md:flex md:w-auto md:items-center">
+                <div className="relative min-w-0 md:w-40">
+                  <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                  <select
+                    value={selectedProductType}
+                    onChange={(e) => setSelectedProductType(e.target.value)}
+                    className={`${controlBaseClass} pl-10 pr-8`}
+                  >
+                    {PRODUCT_TYPE_FILTERS.map((type) => (
+                      <option key={type} value={type}>
+                        {type === 'All' ? 'All Types' : formatProductTypeLabel(type)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="relative min-w-0 md:w-40">
                   <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                   <select
@@ -247,12 +340,13 @@ const Products = () => {
         </div>
 
         <div className="table-scroll-wrapper -mx-3 overflow-x-auto px-3 sm:-mx-4 sm:px-4">
-          <table className="min-w-[700px] w-full border-separate border-spacing-y-2 text-left">
+          <table className="min-w-[820px] w-full border-separate border-spacing-y-2 text-left">
             <thead>
               <tr className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#3E2723]">
                 <th className="w-16 px-6 py-2 text-center">ID</th>
                 <th className="w-24 px-6 py-2 text-center">Images</th>
                 <th className="px-6 py-2">Name</th>
+                <th className="hidden px-6 py-2 md:table-cell">Type</th>
                 <th className="hidden px-6 py-2 lg:table-cell">Category</th>
                 <th className="px-6 py-2">Status</th>
                 <th className="px-6 py-2 text-center">Actions</th>
@@ -260,17 +354,20 @@ const Products = () => {
             </thead>
             <tbody>
               {loading ? (
-                <TableLoaderRow colSpan={6} />
+                <TableLoaderRow colSpan={7} />
               ) : visibleProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-xs md:text-sm tracking-wider text-gray-400 font-semibold uppercase">
+                  <td
+                    colSpan={7}
+                    className="py-16 text-center text-xs md:text-sm tracking-wider text-gray-400 font-semibold uppercase"
+                  >
                     No products found
                   </td>
                 </tr>
               ) : (
                 visibleProducts.map((item, i) => {
-                  const firstImg = item.images?.[0];
-                  const displayImage = typeof firstImg === 'object' && firstImg !== null ? (firstImg as any).url : firstImg;
+                  const displayImage = getProductDisplayImage(item.images);
+                  const imageFailed = failedImageIds.has(item._id);
                   return (
                     <tr key={item._id || i}>
                       <td className="px-6 py-3 text-center text-sm font-bold text-gray-900">
@@ -278,21 +375,36 @@ const Products = () => {
                       </td>
                       <td className="bg-gray-50/40 px-6 py-3">
                         <div className="mx-auto flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-white bg-white p-0.5 shadow-sm">
-                          {displayImage ? (
-                            <img src={displayImage} alt="" className="h-full w-full object-contain" />
+                          {displayImage && !imageFailed ? (
+                            <img
+                              src={displayImage}
+                              alt=""
+                              className="h-full w-full object-contain"
+                              onError={() => handleProductImageError(item._id)}
+                            />
                           ) : (
                             <ImageOff size={14} className="text-gray-200" />
                           )}
                         </div>
                       </td>
-                      <td className="max-w-[200px] truncate px-6 py-3 text-sm font-bold text-gray-900">{item.name}</td>
-                      <td className="hidden max-w-[200px] truncate px-6 py-3 text-sm font-bold text-gray-900 lg:table-cell">{item.category}</td>
+                      <td className="max-w-[200px] truncate px-6 py-3 text-sm font-bold text-gray-900">
+                        {item.name}
+                      </td>
+                      <td className="hidden px-6 py-3 md:table-cell">
+                        <span className="inline-flex rounded-xl border border-slate-100 bg-slate-50 px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-[#3E2723]">
+                          {formatProductTypeLabel(item.productType)}
+                        </span>
+                      </td>
+                      <td className="hidden max-w-[200px] truncate px-6 py-3 text-sm font-bold text-gray-900 lg:table-cell">
+                        {item.category}
+                      </td>
                       <td className="bg-gray-50/40 px-6 py-3">
                         <span
-                          className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest ${item.isActive
+                          className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest ${
+                            item.isActive
                               ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                               : 'bg-rose-50 text-rose-600 border-rose-100'
-                            }`}
+                          }`}
                         >
                           {item.isActive ? 'ACTIVE' : 'INACTIVE'}
                         </span>
@@ -310,8 +422,8 @@ const Products = () => {
                             onClick={() => handleOpenProductEdit(item._id)}
                             disabled={!item.isActive}
                             className={`flex items-center justify-center rounded-lg p-2 transition-all active:scale-95 ${
-                              item.isActive 
-                                ? 'text-gray-500 hover:bg-blue-50 hover:text-blue-600' 
+                              item.isActive
+                                ? 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'
                                 : 'cursor-not-allowed text-gray-300 opacity-50 hover:bg-transparent'
                             }`}
                           >
@@ -324,11 +436,17 @@ const Products = () => {
                             disabled={updatingId === item._id}
                             className={`relative flex h-6 w-11 items-center rounded-full transition-all duration-300 sm:h-7 sm:w-12 ${
                               item.isActive ? 'bg-emerald-500' : 'bg-rose-500'
-                            } ${updatingId === item._id ? 'cursor-not-allowed opacity-50' : 'hover:shadow-md'}`}
+                            } ${
+                              updatingId === item._id
+                                ? 'cursor-not-allowed opacity-50'
+                                : 'hover:shadow-md'
+                            }`}
                           >
                             <span
                               className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300 sm:h-5 sm:w-5 ${
-                                item.isActive ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+                                item.isActive
+                                  ? 'translate-x-5 sm:translate-x-6'
+                                  : 'translate-x-1'
                               }`}
                             />
                           </button>

@@ -84,6 +84,7 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [labelPrinting, setLabelPrinting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failedImageKeys, setFailedImageKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let isMounted = true;
@@ -94,6 +95,7 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
           setOrderDetails(null);
           setError(null);
           setLoading(false);
+          setFailedImageKeys(new Set());
         }
         return;
       }
@@ -108,7 +110,10 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
 
       try {
         const response = await getAdminOrderById(order._id);
-        if (isMounted) setOrderDetails(response);
+        if (isMounted) {
+          setFailedImageKeys(new Set());
+          setOrderDetails(response);
+        }
       } catch (err: any) {
         if (isMounted) {
           setOrderDetails(order);
@@ -213,11 +218,14 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
             {!hasMultipleItems && (
               <div className="relative flex min-h-[240px] items-center justify-center p-4 sm:min-h-[320px]">
                 <div className="absolute inset-0" />
-                {heroImage ? (
+                {heroImage && !failedImageKeys.has('hero') ? (
                   <img
                     src={heroImage}
                     alt={displayOrder.items?.[0]?.name || 'Order item'}
                     className="relative z-10 max-h-[280px] w-full max-w-[420px] object-contain drop-shadow-2xl sm:max-h-[340px]"
+                    onError={() =>
+                      setFailedImageKeys((prev) => new Set(prev).add('hero'))
+                    }
                   />
                 ) : (
                   <div className="relative z-10 flex flex-col items-center gap-3 text-[#6D4C41]">
@@ -340,11 +348,16 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
                     <div className="flex min-w-0 items-center gap-3">
                       {hasMultipleItems && (
                         <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-100">
-                          {itemImage ? (
+                          {itemImage && !failedImageKeys.has(`item-${idx}`) ? (
                             <img
                               src={itemImage}
                               alt={item.name || 'Order item'}
                               className="h-full w-full object-contain p-1"
+                              onError={() =>
+                                setFailedImageKeys((prev) =>
+                                  new Set(prev).add(`item-${idx}`),
+                                )
+                              }
                             />
                           ) : (
                             <Package size={22} className="text-[#6D4C41]" />

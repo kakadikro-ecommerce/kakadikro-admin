@@ -15,18 +15,22 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
+    const headers =
+      config.headers instanceof AxiosHeaders
+        ? config.headers
+        : new AxiosHeaders(config.headers);
+
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      headers.delete('Content-Type');
+    }
+
     const accessToken = localStorage.getItem('accessToken');
 
     if (accessToken) {
-      const headers =
-        config.headers instanceof AxiosHeaders
-          ? config.headers
-          : new AxiosHeaders(config.headers);
-
       headers.set('Authorization', `Bearer ${accessToken}`);
-      config.headers = headers;
     }
 
+    config.headers = headers;
     return config;
   },
   (error) => Promise.reject(error),

@@ -1,5 +1,5 @@
 import api from './axiosInstance';
-import { Product } from '../types/product';
+import { Product, ProductType, getVariantDisplayName } from '../types/product';
 
 export interface PaginatedResponse {
   total: number;
@@ -11,19 +11,45 @@ export interface PaginatedResponse {
     totalPages: number;
   };
 }
+
+export interface AdminProductsQuery {
+  page?: number;
+  limit?: number;
+  isActive?: boolean;
+  productType?: ProductType;
+}
+
+const buildAdminProductsQuery = ({
+  page = 1,
+  limit = 10,
+  isActive,
+  productType,
+}: AdminProductsQuery = {}) => {
+  let query = `/admin/products?page=${page}&limit=${limit}`;
+
+  if (isActive !== undefined) {
+    query += `&isActive=${isActive}`;
+  }
+
+  if (productType) {
+    query += `&productType=${encodeURIComponent(productType)}`;
+  }
+
+  return query;
+};
+
+const unwrapProduct = (data: any): Product =>
+  data?.product ?? data?.data ?? data;
+
 export const productService = {
-  adminGetAll: async (
+  adminGetAll: async ({
     page = 1,
     limit = 10,
-    isActive?: boolean,
-  ): Promise<PaginatedResponse> => {
+    isActive,
+    productType,
+  }: AdminProductsQuery = {}): Promise<PaginatedResponse> => {
     try {
-      let query = `/v1/admin/products?page=${page}&limit=${limit}`;
-
-      if (isActive !== undefined) {
-        query += `&isActive=${isActive}`;
-      }
-
+      const query = buildAdminProductsQuery({ page, limit, isActive, productType });
       const response = await api.get(query);
       const data = response.data;
 
@@ -39,12 +65,12 @@ export const productService = {
       };
     } catch (adminError) {
       try {
-        let fallbackQuery = `/v1/admin/products?page=${page}&limit=${limit}`;
-
-        if (isActive !== undefined) {
-          fallbackQuery += `&isActive=${isActive}`;
-        }
-
+        const fallbackQuery = buildAdminProductsQuery({
+          page,
+          limit,
+          isActive,
+          productType,
+        });
         const response = await api.get(fallbackQuery);
         const data = response.data;
 
@@ -69,59 +95,84 @@ export const productService = {
     }
   },
 
-  create: (data: any) => {
+  create: async (data: any) => {
     const isFormData = data instanceof FormData;
-    if (isFormData) {
-      return api.post<Product>('/v1/admin/products', data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-    }
-    const payload = formatPayload(data);
-    return api.post<Product>('/v1/admin/products', payload);
+    const response = isFormData
+      ? await api.post('/admin/products', data)
+      : await api.post('/admin/products', formatPayload(data));
+
+    return {
+      ...response,
+      data: unwrapProduct(response.data),
+    };
   },
 
-  update: (id: string, data: any) => {
+  update: async (id: string, data: any) => {
     const isFormData = data instanceof FormData;
-    if (isFormData) {
-      return api.put<Product>(`/v1/admin/products/${id}`, data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-    }
-    const payload = formatPayload(data);
-    return api.put<Product>(`/v1/admin/products/${id}`, payload);
+    const response = isFormData
+      ? await api.put(`/admin/products/${id}`, data)
+      : await api.put(`/admin/products/${id}`, formatPayload(data));
+
+    return {
+      ...response,
+      data: unwrapProduct(response.data),
+    };
   },
 
   toggleStatus: (id: string, isActive: boolean) => {
-  return api.put(`/v1/admin/products/status/${id}`, { isActive });
-},
-
-  getById: async (id: string): Promise<Product> => {
-    const response = await api.get(`/v1/admin/products/${id}`);
-    return response.data?.product ?? response.data?.data ?? response.data;
+    return api.put(`/admin/products/status/${id}`, { isActive });
   },
 
+  getById: async (id: string): Promise<Product> => {
+    const response = await api.get(`/admin/products/${id}`);
+    return unwrapProduct(response.data);
+  },
 };
 
 export const getAllProducts = (
   page = 1,
   limit = 10,
   isActive?: boolean,
-): Promise<PaginatedResponse> => productService.adminGetAll(page, limit, isActive);
+  productType?: ProductType,
+): Promise<PaginatedResponse> =>
+  productService.adminGetAll({ page, limit, isActive, productType });
 
 const formatPayload = (data: any) => {
-  const { _id, __v, ...cleanData } = data;
+  const { _id, __v, brand, ...cleanData } = data;
+  const productType =
+    typeof cleanData.productType === 'string'
+      ? cleanData.productType.trim().toUpperCase()
+      : 'GROCERY';
 
   return {
     ...cleanData,
+    productType,
     variants: Array.isArray(data.variants)
-      ? data.variants.map((v: any) => ({
-          weight: v.weight || '100g',
-          price: Number(v.price || 0),
-          mrp: Number(v.mrp || 0),
-          stock: Number(v.stock || 0),
-        }))
+      ? data.variants.map((v: any) => {
+          const name = getVariantDisplayName(v) || 'Default';
+          const attributes =
+            v.attributes && typeof v.attributes === 'object' && !Array.isArray(v.attributes)
+              ? { ...v.attributes }
+              : {};
+
+          if (productType === 'GROCERY' && !attributes.weight) {
+            attributes.weight = name;
+          }
+
+          return {
+            name,
+            price: Number(v.price || 0),
+            mrp: Number(v.mrp || 0),
+            stock: Number(v.stock || 0),
+            attributes,
+          };
+        })
       : [],
     ingredients: Array.isArray(data.ingredients) ? data.ingredients : [],
+    specifications:
+      data.specifications && typeof data.specifications === 'object'
+        ? data.specifications
+        : {},
     features: Array.isArray(data.features) ? data.features : [],
     benefits: Array.isArray(data.benefits) ? data.benefits : [],
     images: Array.isArray(data.images)

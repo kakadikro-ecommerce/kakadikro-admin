@@ -15,7 +15,7 @@ export interface PaginatedContactsResponse {
 export const contactService = {
   adminGetAll: async (page = 1, limit = 10): Promise<PaginatedContactsResponse> => {
     try {
-      const response = await api.get(`/v1/admin/contacts?page=${page}&limit=${limit}`);
+      const response = await api.get(`/admin/contacts?page=${page}&limit=${limit}`);
       const data = response.data;
  
       let contacts = [];
@@ -55,10 +55,10 @@ export const contactService = {
   },
  
   getById: async (id: string): Promise<Contact> => {
-    const response = await api.get(`/v1/admin/contacts/${id}`);
+    const response = await api.get(`/admin/contacts/${id}`);
     return response.data;
   },
  
-  delete: (id: string) => api.delete(`/v1/admin/contacts/${id}`),
+  delete: (id: string) => api.delete(`/admin/contacts/${id}`),
 };  
  

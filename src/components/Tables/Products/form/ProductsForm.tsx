@@ -21,14 +21,24 @@ import {
   createProductSchema,
   updateProductSchema,
 } from '../../../../validations/productValidation';
+import {
+  PRODUCT_TYPES,
+  ProductType,
+  getVariantDisplayName,
+} from '../../../../types/product';
+import {
+  getProductDisplayImage,
+  toExistingImagesPayload,
+} from '../../../../utils/productMedia';
 
-const emptyVariant = { weight: '', price: '', mrp: '', stock: '' };
+const emptyVariant = { name: '', price: '', mrp: '', stock: '' };
+const emptySpecification = { key: '', value: '' };
 
 type Errors = Record<string, string>;
 
 const initialForm = {
   name: '',
-  brand: '',
+  productType: 'GROCERY' as ProductType,
   category: '',
   shortDescription: '',
   description: '',
@@ -37,8 +47,72 @@ const initialForm = {
   features: '',
   benefits: '',
   tags: '',
+  specifications: [{ ...emptySpecification }],
   variants: [{ ...emptyVariant }],
 };
+
+const mapSpecificationsForForm = (specifications: Record<string, string> | undefined) => {
+  if (!specifications || typeof specifications !== 'object') {
+    return [{ ...emptySpecification }];
+  }
+
+  const entries = Object.entries(specifications).filter(
+    ([key, value]) => key && value != null && String(value).trim() !== '',
+  );
+
+  if (!entries.length) {
+    return [{ ...emptySpecification }];
+  }
+
+  return entries.map(([key, value]) => ({
+    key,
+    value: String(value),
+  }));
+};
+
+const buildSpecificationsPayload = (rows: Array<{ key: string; value: string }>) =>
+  rows.reduce<Record<string, string>>((acc, row) => {
+    const key = row.key.trim();
+    const value = row.value.trim();
+    if (key && value) {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+
+const mapVariantsForForm = (variants: any[] | undefined) => {
+  if (!Array.isArray(variants) || variants.length === 0) {
+    return [{ ...emptyVariant }];
+  }
+
+  return variants.map((variant) => ({
+    name: getVariantDisplayName(variant),
+    price: variant.price ?? '',
+    mrp: variant.mrp ?? '',
+    stock: variant.stock ?? '',
+  }));
+};
+
+const buildVariantPayload = (
+  variants: any[],
+  productType: ProductType,
+) =>
+  (variants || []).map((variant: any) => {
+    const name = String(variant.name || '').trim();
+    const attributes: Record<string, string> = {};
+
+    if (productType === 'GROCERY' && name) {
+      attributes.weight = name;
+    }
+
+    return {
+      name,
+      price: variant.price === '' ? undefined : Number(variant.price),
+      mrp: variant.mrp === '' ? undefined : Number(variant.mrp),
+      stock: variant.stock === '' ? undefined : Number(variant.stock),
+      ...(Object.keys(attributes).length ? { attributes } : {}),
+    };
+  });
 
 const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
   const dispatch = useAppDispatch();
@@ -55,15 +129,16 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
     if (!isOpen) return;
 
     if (product) {
-      const firstImage = Array.isArray(product.images) ? product.images[0] : product.images;
-      const imageUrl =
-        typeof firstImage === 'string'
-          ? firstImage
-          : firstImage?.url || '';
+      const imageUrl = getProductDisplayImage(product.images);
+
+      const productType =
+        String(product.productType || 'GROCERY').trim().toUpperCase() === 'ELECTRONICS'
+          ? 'ELECTRONICS'
+          : 'GROCERY';
 
       setFormData({
         name: product.name || '',
-        brand: product.brand || '',
+        productType,
         category: product.category || '',
         shortDescription: product.shortDescription || '',
         description: product.description || '',
@@ -80,7 +155,8 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
         tags: Array.isArray(product.tags)
           ? product.tags.join(', ')
           : product.tags || '',
-        variants: product.variants?.length ? product.variants : [{ ...emptyVariant }],
+        specifications: mapSpecificationsForForm(product.specifications),
+        variants: mapVariantsForForm(product.variants),
       });
       setPreviewUrl(imageUrl);
       setSelectedFile(null);
@@ -107,9 +183,9 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
   const splitClean = (value: any) =>
     typeof value === 'string'
       ? value
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean)
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)
       : Array.isArray(value)
         ? value
         : [];
@@ -132,7 +208,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
       const nextVariant = {
         ...currentVariant,
-        [field]: field === 'weight' ? value : value,
+        [field]: value,
       };
 
       const result = variantSchema.safeParse({
@@ -170,7 +246,9 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
     setFieldError(name, result.error.issues[0]?.message || 'Invalid value');
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData((prev: any) => ({ ...prev, [name]: value }));
     validateSingleField(name, value);
@@ -207,7 +285,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
   const handleVariantChange = (
     index: number,
-    field: 'weight' | 'price' | 'mrp' | 'stock',
+    field: 'name' | 'price' | 'mrp' | 'stock',
     value: string,
   ) => {
     setFormData((prev: any) => {
@@ -224,7 +302,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
     const lastVariant = currentVariants[currentVariants.length - 1];
 
     const result = variantSchema.safeParse({
-      weight: lastVariant?.weight || '',
+      name: lastVariant?.name || '',
       price: lastVariant?.price === '' ? undefined : Number(lastVariant.price),
       mrp: lastVariant?.mrp === '' ? undefined : Number(lastVariant.mrp),
       stock: lastVariant?.stock === '' ? undefined : Number(lastVariant.stock),
@@ -290,7 +368,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
     const messages: Errors = {};
 
     const responseData = error?.response?.data ?? error?.data ?? error?.message ?? error;
-    const fieldErrors = responseData?.errors ?? responseData?.error?.errors;
+    const fieldErrors = responseData?.errors ?? responseData?.error?.errors ?? responseData?.details;
 
     if (Array.isArray(fieldErrors)) {
       fieldErrors.forEach((item: any) => {
@@ -332,23 +410,24 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
         return;
       }
 
+      const productType =
+        String(formData.productType || 'GROCERY').trim().toUpperCase() === 'ELECTRONICS'
+          ? 'ELECTRONICS'
+          : 'GROCERY';
+
       const payload = {
         name: formData.name,
-        brand: formData.brand,
+        productType,
         category: formData.category,
         shortDescription: formData.shortDescription || '',
         description: formData.description || '',
         usage: formData.usage || '',
-        ingredients: splitClean(formData.ingredients),
+        ingredients: productType === 'GROCERY' ? splitClean(formData.ingredients) : [],
+        specifications: buildSpecificationsPayload(formData.specifications || []),
         features: splitClean(formData.features),
         benefits: splitClean(formData.benefits),
         tags: splitClean(formData.tags),
-        variants: (formData.variants || []).map((variant: any) => ({
-          weight: String(variant.weight || '').trim(),
-          price: variant.price === '' ? undefined : Number(variant.price),
-          mrp: variant.mrp === '' ? undefined : Number(variant.mrp),
-          stock: variant.stock === '' ? undefined : Number(variant.stock),
-        })),
+        variants: buildVariantPayload(formData.variants, productType),
       };
 
       const schema = isEdit ? updateProductSchema : createProductSchema;
@@ -362,12 +441,13 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
       const data = new FormData();
       data.append('name', payload.name);
-      data.append('brand', payload.brand);
+      data.append('productType', payload.productType);
       data.append('category', payload.category);
       data.append('shortDescription', payload.shortDescription);
       data.append('description', payload.description);
       data.append('usage', payload.usage);
       data.append('ingredients', JSON.stringify(payload.ingredients));
+      data.append('specifications', JSON.stringify(payload.specifications));
       data.append('features', JSON.stringify(payload.features));
       data.append('benefits', JSON.stringify(payload.benefits));
       data.append('tags', JSON.stringify(payload.tags));
@@ -375,9 +455,11 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
       if (selectedFile) {
         data.append('images', selectedFile);
-      } else if (isEdit && product?.images) {
-        const existing = Array.isArray(product.images) ? product.images : [product.images];
-        data.append('existingImages', JSON.stringify(existing));
+      } else if (isEdit) {
+        data.append(
+          'existingImages',
+          JSON.stringify(toExistingImagesPayload(product?.images)),
+        );
       }
 
       if (isEdit && product?._id) {
@@ -401,6 +483,37 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
   };
 
   const getVariantError = (index: number, field: string) => errors[`variants.${index}.${field}`];
+
+  const isGrocery = formData.productType === 'GROCERY';
+  const isElectronics = formData.productType === 'ELECTRONICS';
+  const variantNameLabel = isGrocery ? 'Name / Weight' : 'Variant Name';
+  const variantNamePlaceholder = isGrocery ? 'e.g. 250g' : 'e.g. 64GB Black';
+
+  const addSpecification = () => {
+    setFormData((prev: any) => ({
+      ...prev,
+      specifications: [...(prev.specifications || []), { ...emptySpecification }],
+    }));
+  };
+
+  const removeSpecification = (index: number) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      specifications: (prev.specifications || []).filter((_: any, i: number) => i !== index),
+    }));
+  };
+
+  const handleSpecificationChange = (
+    index: number,
+    field: 'key' | 'value',
+    value: string,
+  ) => {
+    setFormData((prev: any) => {
+      const next = [...(prev.specifications || [])];
+      next[index] = { ...next[index], [field]: value };
+      return { ...prev, specifications: next };
+    });
+  };
 
   const baseInputClass =
     'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#7A330F] focus:ring-4 focus:ring-[#7A330F]/10 disabled:cursor-not-allowed disabled:opacity-50';
@@ -454,6 +567,11 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                       src={imagePreview}
                       alt="Preview"
                       className="h-full w-full object-cover"
+                      onError={() => {
+                        if (!imagePreview.startsWith('blob:')) {
+                          setPreviewUrl('');
+                        }
+                      }}
                     />
                     <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
                       <div className="text-left">
@@ -494,9 +612,9 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                   accept="image/*"
                 />
               </div>
-                {errors.images && (
-                  <p className="mt-2 text-xs text-rose-500">{errors.images}</p>
-                )}
+              {errors.images && (
+                <p className="mt-2 text-xs text-rose-500">{errors.images}</p>
+              )}
 
               <div className="mt-5 space-y-4">
                 <div className="space-y-2">
@@ -513,15 +631,22 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <label className={sectionLabelClass}>Brand</label>
-                    <input
-                      name="brand"
-                      value={formData.brand}
+                    <label className={sectionLabelClass}>Product Type</label>
+                    <select
+                      name="productType"
+                      value={formData.productType}
                       onChange={handleChange}
-                      placeholder="Enter brand"
                       className={baseInputClass}
-                    />
-                    {errors.brand && <p className="pl-1 text-xs text-rose-500">{errors.brand}</p>}
+                    >
+                      {PRODUCT_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type === 'GROCERY' ? 'Grocery' : 'Electronics'}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.productType && (
+                      <p className="pl-1 text-xs text-rose-500">{errors.productType}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -593,7 +718,11 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                   <h3 className="text-sm font-bold tracking-[0.18em] text-slate-600 uppercase">
                     Variants
                   </h3>
-                  <p className="mt-1 text-xs text-slate-400">Add price, MRP and stock per variant</p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {isGrocery
+                      ? 'Add weight/name, price, MRP and stock per variant'
+                      : 'Add variant name, price, MRP and stock'}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -629,18 +758,18 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                       <div className="space-y-2">
-                        <label className={sectionLabelClass}>Weight</label>
+                        <label className={sectionLabelClass}>{variantNameLabel}</label>
                         <input
-                          value={variant.weight}
+                          value={variant.name}
                           onChange={(e) =>
-                            handleVariantChange(index, 'weight', e.target.value)
+                            handleVariantChange(index, 'name', e.target.value)
                           }
-                          placeholder="e.g. 250g"
+                          placeholder={variantNamePlaceholder}
                           className={baseInputClass}
                         />
-                        {getVariantError(index, 'weight') && (
+                        {getVariantError(index, 'name') && (
                           <p className="pl-1 text-xs text-rose-500">
-                            {getVariantError(index, 'weight')}
+                            {getVariantError(index, 'name')}
                           </p>
                         )}
                       </div>
@@ -717,9 +846,58 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                 </p>
               </div>
 
+              {isElectronics ? (
+                <div className="mb-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h4 className={sectionLabelClass}>Specifications</h4>
+                    <button
+                      type="button"
+                      onClick={addSpecification}
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-[#7A330F] hover:text-[#7A330F]"
+                    >
+                      <PlusCircle size={14} />
+                      Add Spec
+                    </button>
+                  </div>
+
+                  {(formData.specifications || []).map((spec: any, index: number) => (
+                    <div key={index} className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto]">
+                      <input
+                        value={spec.key}
+                        onChange={(e) =>
+                          handleSpecificationChange(index, 'key', e.target.value)
+                        }
+                        placeholder="e.g. Voltage"
+                        className={baseInputClass}
+                      />
+                      <input
+                        value={spec.value}
+                        onChange={(e) =>
+                          handleSpecificationChange(index, 'value', e.target.value)
+                        }
+                        placeholder="e.g. 220V"
+                        className={baseInputClass}
+                      />
+                      {(formData.specifications || []).length > 1 ? (
+                        <button
+                          type="button"
+                          onClick={() => removeSpecification(index)}
+                          className="rounded-full p-2 text-rose-500 transition hover:bg-rose-50"
+                          aria-label={`Remove specification ${index + 1}`}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {[
-                  { name: 'ingredients', label: 'Ingredients' },
+                  ...(isGrocery
+                    ? [{ name: 'ingredients', label: 'Ingredients' }]
+                    : []),
                   { name: 'features', label: 'Features' },
                   { name: 'benefits', label: 'Benefits' },
                   { name: 'tags', label: 'Tags' },

@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { productService } from '../../../services/products-api';
-import type { Product } from '../../../types/product';
+import type { Product, ProductType } from '../../../types/product';
 import {
   createInitialMutationState,
   initialPaginationState,
@@ -14,6 +14,7 @@ interface ProductsQueryParams {
   page?: number;
   limit?: number;
   isActive?: boolean;
+  productType?: ProductType;
 }
 
 interface ProductsState {
@@ -45,11 +46,16 @@ const initialState: ProductsState = {
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
   async (
-    { page = 1, limit = 10, isActive }: ProductsQueryParams = {},
+    { page = 1, limit = 10, isActive, productType }: ProductsQueryParams = {},
     { rejectWithValue },
   ) => {
     try {
-      return await productService.adminGetAll(page, limit, isActive);
+      return await productService.adminGetAll({
+        page,
+        limit,
+        isActive,
+        productType,
+      });
     } catch (error) {
       return rejectWithValue(getErrorMessage(error, 'Failed to load products'));
     }
