@@ -13,21 +13,13 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
-    "apexcharts": "^3.41.0",
     "axios": "^1.13.6",
-    "flatpickr": "^4.6.13",
-    "headlessui": "^0.0.0",
-    "jsvectormap": "^1.5.3",
     "lucide-react": "^0.577.0",
-    "match-sorter": "^6.3.1",
     "react": "^18.2.0",
-    "react-apexcharts": "^1.4.1",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
-    "react-icons": "^4.10.1",
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.14.2",
-    "sort-by": "^0.0.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -35,12 +27,10 @@
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",
     "autoprefixer": "^10.4.14",
-    "file-loader": "^6.2.0",
     "postcss": "^8.4.27",
     "prettier": "^3.0.0",
     "prettier-plugin-tailwindcss": "^0.4.1",
     "tailwindcss": "^3.4.1",
-    "vite": "^4.4.7",
-    "webpack": "^5.88.2"
+    "vite": "^4.4.7"
   }
 }

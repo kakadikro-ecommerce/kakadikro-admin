@@ -1,4 +1,4 @@
-import { BsFillTrashFill, BsFillPencilFill } from 'react-icons/bs';
+import { Pencil, Trash2 } from 'lucide-react';
 
 export interface AlertRow {
   id: string;
@@ -76,11 +76,11 @@ export const Table = ({ rows, deleteRow, editRow }: TableProps) => {
               </td>
               <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                 <span className="actions flex grid-cols-2 gap-4">
-                  <BsFillTrashFill
+                  <Trash2
                     className="delete-btn cursor-pointer"
                     onClick={() => deleteRow(idx)}
                   />
-                  <BsFillPencilFill
+                  <Pencil
                     className="edit-btn cursor-pointer"
                     onClick={() => editRow(idx)}
                   />
