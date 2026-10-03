@@ -17,12 +17,13 @@ import SearchInput from '../../../pages/UiElements/SearchBar';
 import TableLoaderRow from '../../../pages/UiElements/TableLoaderRow';
 import {
   fetchOrders,
-  resetOrdersNewCount,
   setSelectedOrder,
   toggleOrderActiveStatusThunk,
   updateOrderStatus,
 } from '../../../store/modules/orders/orders.slice';
+import { markSidebarSectionSeen } from '../../../store/modules/sidebarBadges/sidebarBadges.slice';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { parseApiError } from '../../../services/axiosError';
 
 const OrdersTable: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -65,7 +66,7 @@ const OrdersTable: React.FC = () => {
   const activeStatusOptions = ['active', 'inactive'];
 
   useEffect(() => {
-    dispatch(resetOrdersNewCount());
+    dispatch(markSidebarSectionSeen('orders'));
   }, [dispatch]);
 
   useEffect(() => {
@@ -96,10 +97,11 @@ const OrdersTable: React.FC = () => {
         updateOrderStatus({ orderId: selectedOrder._id, orderData: updatedData }),
       ).unwrap();
       setIsEditOpen(false);
-      showNotification('success', `Order ${selectedOrder._id || selectedOrder.orderNumber || 'N/A'} updated successfully!`);
+      showNotification('success', `Order ${selectedOrder._id || 'N/A'} updated successfully!`);
       dispatch(fetchOrders({ page: currentPage, limit: 10, isActive: selectedIsActive }));
     } catch (updateError) {
-      showNotification('error', String(updateError) || 'Update failed.');
+      const apiError = parseApiError(updateError, 'Update failed.');
+      showNotification('error', apiError.message);
     }
   };
 
@@ -116,7 +118,8 @@ const OrdersTable: React.FC = () => {
       dispatch(setSelectedOrder(order));
       setIsEditOpen(true);
     } catch (fetchError) {
-      showNotification('error', 'Failed to load order details.');
+      const apiError = parseApiError(fetchError, 'Failed to load order details.');
+      showNotification('error', apiError.message);
     } finally {
       setModalLoading(false);
     }
@@ -137,13 +140,13 @@ const OrdersTable: React.FC = () => {
 
       showNotification(
         'success',
-        `Order ${order.orderNumber || order._id} is now ${newActiveStatus ? 'active' : 'inactive'}.`,
+        `Order ${order._id} is now ${newActiveStatus ? 'active' : 'inactive'}.`,
       );
 
       await dispatch(fetchOrders({ page: currentPage, limit: 10, isActive: selectedIsActive }));
     } catch (toggleError: any) {
-      console.error('Toggle status error:', toggleError);
-      showNotification('error', toggleError?.message || 'Failed to update order status.');
+      const apiError = parseApiError(toggleError, 'Failed to update order status.');
+      showNotification('error', apiError.message);
     } finally {
       setUpdatingOrderId(null);
     }
@@ -152,7 +155,7 @@ const OrdersTable: React.FC = () => {
   const loading = status === 'loading' || modalLoading;
   const filteredOrders = orders.filter((order) => {
     const searchTermLower = searchTerm.toLowerCase();
-    const searchTarget = `${order._id} ${order.orderNumber} ${order.user?.name || ''} ${order.user?.email || ''}`.toLowerCase();
+    const searchTarget = `${order._id} ${order.user?.name || ''} ${order.user?.email || ''}`.toLowerCase();
     const matchesSearch = searchTermLower === '' || searchTarget.includes(searchTermLower);
     const normalizedStatus = normalizeOrderStatus(order.orderStatus);
     const matchesOrderStatus =
@@ -167,6 +170,28 @@ const OrdersTable: React.FC = () => {
   const startIndex = (currentPage - 1) * 10;
   const visibleOrders = filteredOrders.slice(startIndex, startIndex + 10);
 
+  const formatPaymentMethod = (method?: string) => {
+    const value = String(method || '').toLowerCase();
+    if (value === 'cod') return 'COD';
+    if (value === 'upi') return 'UPI';
+    if (value === 'card') return 'Card';
+    return value || '—';
+  };
+
+  const getPaymentStatusStyle = (statusValue?: string) => {
+    switch (String(statusValue || 'pending').toLowerCase()) {
+      case 'paid':
+      case 'success':
+        return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+      case 'failed':
+        return 'bg-rose-50 text-rose-600 border-rose-100';
+      case 'refunded':
+        return 'bg-slate-50 text-slate-600 border-slate-100';
+      default:
+        return 'bg-amber-50 text-amber-600 border-amber-100';
+    }
+  };
+
   const getStatusStyle = (statusValue?: string) => {
     switch (normalizeOrderStatus(statusValue)) {
       case 'delivered': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
@@ -178,17 +203,31 @@ const OrdersTable: React.FC = () => {
     }
   };
 
-  const isEditDisabled = (order: Order) => {
+  const canMarkCodPayment = (order: Order) => {
     return (
-      order.isActive === false ||
-      normalizeOrderStatus(order.orderStatus) === "delivered"
+      order.isActive !== false &&
+      String(order.paymentMethod || '').toLowerCase() === 'cod' &&
+      normalizeOrderStatus(order.orderStatus) === 'delivered' &&
+      String(order.paymentStatus || '').toLowerCase() !== 'paid'
     );
+  };
+
+  const isEditDisabled = (order: Order) => {
+    if (order.isActive === false) {
+      return true;
+    }
+
+    if (normalizeOrderStatus(order.orderStatus) === 'delivered') {
+      return !canMarkCodPayment(order);
+    }
+
+    return false;
   }; 
 
   return (
     <div className="relative min-h-screen font-sans">
       {notification.show && (
-        <div className="fixed top-6 right-6 z-[10000] w-full max-w-md animate-in slide-in-from-right duration-300">
+        <div className="contents">
           <Alert
             type={notification.type}
             message={notification.message}
@@ -245,23 +284,25 @@ const OrdersTable: React.FC = () => {
         </div>
 
         <div className="table-scroll-wrapper overflow-x-auto">
-          <table className="w-full text-left border-separate border-spacing-y-3 min-w-[1000px]">
+          <table className="w-full text-left border-separate border-spacing-y-3 min-w-[1100px]">
             <thead>
               <tr className="text-[#3E2723] text-[10px] font-bold uppercase tracking-[0.2em]">
                 <th className="px-6 py-2 w-16 text-center">ID</th>
                 <th className="px-6 py-2">Order ID</th>
                 <th className="px-6 py-2">Customer Name</th>
                 <th className="px-6 py-2">Amount</th>
+                <th className="px-6 py-2">Type</th>
+                <th className="px-6 py-2">Payment status</th>
                 <th className="px-6 py-2">Status</th>
                 <th className="px-6 py-2 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <TableLoaderRow colSpan={6} />
+                <TableLoaderRow colSpan={8} />
               ) : visibleOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-20">
+                  <td colSpan={8} className="text-center py-20">
                     <div className="flex flex-col items-center gap-2">
                       <p className="text-gray-400 text-xs md:text-sm font-semibold uppercase tracking-wider">
                         NO ORDERS FOUND
@@ -297,8 +338,20 @@ const OrdersTable: React.FC = () => {
                       Rs {order.totalAmount?.toLocaleString()}
                     </td>
 
-                    <td className="px-6 py-4 bg-gray-50/50">
-                      <span className={`px-3 py-1 text-xs font-bold rounded-full border bg-white ${getStatusStyle(order.orderStatus)}`}>
+                    <td className="px-6 py-4 align-middle bg-gray-50/50">
+                      <span className="inline-flex items-center whitespace-nowrap rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold uppercase text-slate-700">
+                        {formatPaymentMethod(order.paymentMethod)}
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-4 align-middle bg-gray-50/50">
+                      <span className={`inline-flex items-center whitespace-nowrap rounded-full border bg-white px-3 py-1 text-xs font-bold ${getPaymentStatusStyle(order.paymentStatus)}`}>
+                        {(order.paymentStatus || 'pending').toUpperCase()}
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-4 align-middle bg-gray-50/50">
+                      <span className={`inline-flex items-center whitespace-nowrap rounded-full border bg-white px-3 py-1 text-xs font-bold ${getStatusStyle(order.orderStatus)}`}>
                         {normalizeOrderStatus(order.orderStatus).toUpperCase() || 'PENDING'}
                       </span>
                     </td>
@@ -326,9 +379,11 @@ const OrdersTable: React.FC = () => {
                           title={
                             order.isActive === false
                               ? "Cannot edit inactive order"
-                              : normalizeOrderStatus(order.orderStatus) === "delivered"
-                                ? "Delivered orders cannot be edited"
-                                : "Edit Order"
+                              : canMarkCodPayment(order)
+                                ? "Mark cash received"
+                                : normalizeOrderStatus(order.orderStatus) === "delivered"
+                                  ? "Delivered orders cannot be edited"
+                                  : "Edit Order"
                           }
                         >
                           <Edit3 size={18} className="sm:size-5" />

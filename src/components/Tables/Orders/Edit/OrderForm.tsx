@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Modal } from '../../../../pages/UiElements/Modal';
 import { Order, normalizeOrderStatus } from '../../../../services/Orders-api';
+import { parseApiError } from '../../../../services/axiosError';
 
 interface OrderEditModalProps {
   isOpen: boolean;
@@ -44,6 +45,13 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
       payload.orderStatus = nextFormData.orderStatus;
     }
 
+    if (
+      nextFormData.paymentStatus === 'paid' &&
+      originalOrder.paymentStatus !== 'paid'
+    ) {
+      payload.paymentStatus = 'paid';
+    }
+
     if ((nextFormData.adminNote ?? '') !== (originalOrder.adminNote ?? '')) {
       payload.adminNote = nextFormData.adminNote ?? '';
     }
@@ -66,6 +74,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
     return payload;
   };
 
+  const [cashReceived, setCashReceived] = useState(false);
   const [formData, setFormData] = useState<Partial<Order>>({
     orderStatus: '',
     adminNote: '',
@@ -81,6 +90,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
     if (order && isOpen) {
       const normalizedStatus = normalizeOrderStatus(order.orderStatus);
 
+      setCashReceived(false);
       setFormData({
         orderStatus: normalizedStatus,
         adminNote: order.adminNote || '',
@@ -168,20 +178,36 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
         }
       }
 
-      const changedPayload = buildChangedPayload(order, formData);
+      const changedPayload = buildChangedPayload(order, {
+        ...formData,
+        ...(cashReceived ? { paymentStatus: 'paid' } : {}),
+      });
 
       await onSave(changedPayload);
 
       onClose();
     } catch (error) {
-      console.error('Form submission error:', error);
-      alert('Failed to save changes. Please try again.');
+      const apiError = parseApiError(error, 'Failed to save changes. Please try again.');
+      setErrors((prev) => ({
+        ...prev,
+        ...apiError.fieldErrors,
+        ...(Object.keys(apiError.fieldErrors).length
+          ? {}
+          : { courierName: apiError.message }),
+      }));
     } finally {
       setLoading(false);
     }
   };
 
   const isDispatched = formData.orderStatus === 'dispatched';
+  const savedStatus = normalizeOrderStatus(order?.orderStatus);
+  const isCod = String(order?.paymentMethod || '').toLowerCase() === 'cod';
+  const canMarkCashReceived =
+    isCod &&
+    savedStatus === 'delivered' &&
+    String(order?.paymentStatus || '').toLowerCase() !== 'paid';
+  const statusLocked = savedStatus === 'delivered';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -220,7 +246,8 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   name="orderStatus"
                   value={formData.orderStatus}
                   onChange={handleChange}
-                  className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none appearance-none cursor-pointer shadow-sm focus:ring-2 focus:ring-[#3E2723]/20 focus:border-[#3E2723]/30"
+                  disabled={statusLocked}
+                  className={`w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.25rem] text-[12px] font-bold outline-none appearance-none shadow-sm focus:ring-2 focus:ring-[#3E2723]/20 focus:border-[#3E2723]/30 ${statusLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                 >
                   <option value="pending">PENDING</option>
                   <option value="confirmed">CONFIRMED</option>
@@ -280,12 +307,31 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
               )}
             </div>
           </div>
+
+          {canMarkCashReceived ? (
+            <label className="flex items-start gap-3 rounded-[1.25rem] border border-gray-100 bg-white px-5 py-4 shadow-sm">
+              <input
+                type="checkbox"
+                checked={cashReceived}
+                onChange={(e) => setCashReceived(e.target.checked)}
+                className="mt-1 h-4 w-4 accent-[#3E2723]"
+              />
+              <span>
+                <span className="block text-sm font-bold text-gray-900">
+                  Cash received
+                </span>
+                <span className="mt-1 block text-xs text-gray-500">
+                  Mark this COD order paid after the customer has paid in cash.
+                </span>
+              </span>
+            </label>
+          ) : null}
         </div>
 
         <div className="px-6 py-4 bg-white border-t flex justify-center gap-3">
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (canMarkCashReceived && !cashReceived)}
             className="flex-1 max-w-[200px] py-3.5 bg-[#3E2723] text-white rounded-full flex items-center justify-center gap-4 hover:bg-[#2D1B19] transition-all disabled:opacity-50"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}

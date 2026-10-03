@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Printer,
   Truck,
+  CreditCard,
 } from 'lucide-react';
 import { Modal } from '../../../../pages/UiElements/Modal';
 import {
@@ -20,6 +21,7 @@ import {
   type Order,
   type OrderItem,
 } from '../../../../services/Orders-api';
+import { parseApiError } from '../../../../services/axiosError';
 
 interface OrderViewModalProps {
   order: Order | null;
@@ -60,6 +62,28 @@ const buildAddress = (order: Order) => {
   ]
     .filter((v) => v?.toString().trim())
     .join(', ');
+};
+
+const formatPaymentMethod = (method?: string) => {
+  const value = String(method || '').toLowerCase();
+  if (value === 'cod') return 'Cash on delivery';
+  if (value === 'upi') return 'UPI';
+  if (value === 'card') return 'Card';
+  return value || 'N/A';
+};
+
+const getPaymentStatusStyle = (statusValue?: string) => {
+  switch (String(statusValue || 'pending').toLowerCase()) {
+    case 'paid':
+    case 'success':
+      return 'bg-green-100 text-green-700';
+    case 'failed':
+      return 'bg-red-100 text-red-600';
+    case 'refunded':
+      return 'bg-slate-200 text-slate-700';
+    default:
+      return 'bg-amber-100 text-amber-700';
+  }
 };
 
 const getStatusStyle = (statusValue?: string) => {
@@ -117,7 +141,7 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
       } catch (err: any) {
         if (isMounted) {
           setOrderDetails(order);
-          setError(err?.message || 'Failed to load order');
+          setError(parseApiError(err, 'Failed to load order').message);
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -146,6 +170,8 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
   const itemsCount = displayOrder.items?.length ?? 0;
   const hasMultipleItems = itemsCount > 1;
   const heroImage = getItemImage(displayOrder.items?.[0] as OrderItem);
+  const paymentMethod = formatPaymentMethod(displayOrder.paymentMethod);
+  const paymentStatus = displayOrder.paymentStatus || displayOrder.payment?.status || 'pending';
   const shipment = displayOrder.shipment;
   const hasShipmentDetails = Boolean(
     shipment?.courierName ||
@@ -178,9 +204,7 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
       }
     } catch (printError: any) {
       setError(
-        printError?.response?.data?.message ||
-          printError?.message ||
-          'Failed to generate order label.',
+        parseApiError(printError, 'Failed to generate order label.').message,
       );
     } finally {
       setLabelPrinting(false);
@@ -249,6 +273,13 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
                 >
                   {normalizedStatus}
                 </span>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${getPaymentStatusStyle(
+                    paymentStatus,
+                  )}`}
+                >
+                  Payment {paymentStatus}
+                </span>
                 <span className="rounded-full bg-[#F5F5F5] px-3 py-1 text-xs text-[#6D4C41]">
                   {itemsCount} item{itemsCount === 1 ? '' : 's'}
                 </span>
@@ -292,6 +323,52 @@ const OrderViewModal: React.FC<OrderViewModalProps> = ({
               {error}
             </div>
           )}
+
+          <div>
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
+              <CreditCard size={14} /> Payment
+            </h3>
+            <div className="rounded-xl bg-[#FAF8F6] p-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <InfoItem
+                  label="Method"
+                  value={paymentMethod}
+                  icon={<CreditCard size={14} />}
+                />
+                <InfoItem
+                  label="Status"
+                  value={paymentStatus}
+                  icon={<CreditCard size={14} />}
+                />
+                <InfoItem
+                  label="Paid at"
+                  value={formatDate(displayOrder.paidAt)}
+                  icon={<Calendar size={14} />}
+                />
+                <InfoItem
+                  label="Amount"
+                  value={formatCurrency(
+                    displayOrder.payment?.amount ?? displayOrder.totalAmount,
+                  )}
+                  icon={<CreditCard size={14} />}
+                />
+                {displayOrder.payment?.razorpayPaymentId ? (
+                  <InfoItem
+                    label="Payment reference"
+                    value={displayOrder.payment.razorpayPaymentId}
+                    icon={<CreditCard size={14} />}
+                  />
+                ) : null}
+                {displayOrder.payment?.razorpayOrderId ? (
+                  <InfoItem
+                    label="Gateway order"
+                    value={displayOrder.payment.razorpayOrderId}
+                    icon={<CreditCard size={14} />}
+                  />
+                ) : null}
+              </div>
+            </div>
+          </div>
 
           <div>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">

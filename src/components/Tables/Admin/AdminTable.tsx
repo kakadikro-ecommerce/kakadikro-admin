@@ -14,6 +14,7 @@ import {
   toggleAdminUserStatus,
 } from '../../../store/modules/admin/admin.slice';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { parseApiError } from '../../../services/axiosError';
 
 interface AdminTableProps {
   onView?: (admin: Admin) => void;
@@ -117,7 +118,8 @@ const AdminTable: React.FC<AdminTableProps> = ({ onView }) => {
         `${admin.name} is now ${admin.isActive ? 'inactive' : 'active'}.`,
       );
     } catch (toggleError: any) {
-      showNotification('error', toggleError?.message || 'Failed to update admin status.');
+      const apiError = parseApiError(toggleError, 'Failed to update admin status.');
+      showNotification('error', apiError.message);
     } finally {
       setUpdatingAdminId(null);
     }
@@ -129,7 +131,7 @@ const AdminTable: React.FC<AdminTableProps> = ({ onView }) => {
   return (
     <div className="relative min-h-screen font-sans">
       {notification.show && (
-        <div className="fixed top-6 right-6 z-[10000] w-full max-w-md animate-in slide-in-from-right duration-300">
+        <div className="contents">
           <Alert
             type={notification.type}
             message={notification.message}

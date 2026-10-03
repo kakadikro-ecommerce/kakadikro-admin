@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import adminService from '../../../services/admin-api';
 import type { Admin, AdminFormData } from '../../../types/Admin';
 import type { User } from '../../../types/users';
+import { getErrorMessage } from '../../shared/helpers';
 
 interface PaginationState {
   total: number;
@@ -74,22 +75,6 @@ const initialState: AdminState = {
   passwordState: { ...initialAsyncState },
   deleteState: { ...initialAsyncState },
 };
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'response' in error &&
-    typeof (error as any).response?.data?.message === 'string'
-  ) {
-    return (error as any).response.data.message;
-  }
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-  return fallback;
-};
-
 
 export const fetchAdminProfile = createAsyncThunk(
   'admin/fetchAdminProfile',

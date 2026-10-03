@@ -4,6 +4,7 @@ import {
   Product,
   ProductType,
   formatProductTypeLabel,
+  normalizeProductType,
 } from '../../../types/product';
 import ProductFormModal from './form/ProductsForm';
 import ProductViewModal from './details/ProductsDetails';
@@ -14,14 +15,15 @@ import Search from '../../../pages/UiElements/SearchBar';
 import { productService } from '../../../services/products-api';
 import {
   fetchProducts,
-  resetProductsNewCount,
   toggleProductStatus,
 } from '../../../store/modules/products/products.slice';
+import { markSidebarSectionSeen } from '../../../store/modules/sidebarBadges/sidebarBadges.slice';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import Loader from '../../../common/Loader';
 import { getProductDisplayImage } from '../../../utils/productMedia';
+import { parseApiError } from '../../../services/axiosError';
 
-const PRODUCT_TYPE_FILTERS = ['All', 'GROCERY', 'ELECTRONICS'] as const;
+const PRODUCT_TYPE_FILTERS = ['All', 'CROSSLIFE', 'CROSSLINE'] as const;
 
 const Products = () => {
   const dispatch = useAppDispatch();
@@ -63,7 +65,7 @@ const Products = () => {
   };
 
   const getProductTypeParam = (): ProductType | undefined => {
-    if (selectedProductType === 'GROCERY' || selectedProductType === 'ELECTRONICS') {
+    if (selectedProductType === 'CROSSLIFE' || selectedProductType === 'CROSSLINE') {
       return selectedProductType;
     }
     return undefined;
@@ -82,7 +84,7 @@ const Products = () => {
   };
 
   useEffect(() => {
-    dispatch(resetProductsNewCount());
+    dispatch(markSidebarSectionSeen('products'));
   }, [dispatch]);
 
   useEffect(() => {
@@ -205,7 +207,7 @@ const Products = () => {
     const matchesSearch = p.name.toLowerCase().includes(deferredSearchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
     const matchesStatus = selectedStatus === 'Active' ? p.isActive : !p.isActive;
-    const productType = String(p.productType || 'GROCERY').toUpperCase();
+    const productType = normalizeProductType(p.productType);
     const matchesProductType =
       selectedProductType === 'All' || productType === selectedProductType;
     return matchesSearch && matchesCategory && matchesStatus && matchesProductType;
@@ -237,7 +239,8 @@ const Products = () => {
         refreshProducts(currentPage);
       }
     } catch (err) {
-      showNotification('error', `Failed to update status for ${product.name}`);
+      const apiError = parseApiError(err, `Failed to update status for ${product.name}`);
+      showNotification('error', apiError.message);
     } finally {
       setUpdatingId(null);
     }
@@ -246,7 +249,7 @@ const Products = () => {
   return (
     <div className="relative min-h-screen font-sans">
       {notification.show && (
-        <div className="fixed top-6 right-6 z-[10000] w-full max-w-md animate-in slide-in-from-right duration-300">
+        <div className="contents">
           <Alert
             type={notification.type}
             message={notification.message}

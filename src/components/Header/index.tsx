@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import DropdownUser from './DropdownUser';
-import LogoIcon from '../../images/logo/kaka-dikro-icon.png';
+import LogoIcon from "../../../public/assets/favicon.ico";
 
 const Header = (props: {
   sidebarOpen: string | boolean | undefined;

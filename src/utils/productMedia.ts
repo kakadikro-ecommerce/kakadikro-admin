@@ -14,6 +14,26 @@ export const getProductDisplayImage = (
   return getImageUrl(first);
 };
 
+export type ProductVideoValue =
+  | { url?: string; altText?: string }
+  | null
+  | undefined;
+
+export const toExistingVideoPayload = (
+  video: ProductVideoValue,
+): { url: string; altText: string } | null => {
+  const url = getImageUrl(video);
+  if (!url) return null;
+
+  return {
+    url,
+    altText:
+      video && typeof video === 'object' && typeof video.altText === 'string'
+        ? video.altText
+        : '',
+  };
+};
+
 export const toExistingImagesPayload = (
   images?: ProductImageValue[] | ProductImageValue,
 ): Array<{ url: string; altText: string }> => {

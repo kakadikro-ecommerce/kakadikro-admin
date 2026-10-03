@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ToastContainer, toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import woodBg from '../../images/brand/register.webp';
+import loginBg from "../../../public/assets/login.webp";
 import { login } from '../../store/modules/auth/auth.slice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import 'react-toastify/dist/ReactToastify.css';
 import '../../css/style.css';
 import { loginSchema } from '../../validations/adminValidation';
+import { parseApiError } from '../../services/axiosError';
 
 export default function Login() {
   const dispatch = useAppDispatch();
@@ -47,25 +47,27 @@ export default function Login() {
 
     try {
       await dispatch(login({ email, password })).unwrap();
-      toast.success(`Welcome back! Login successful`, {
-        className: 'custom-toast custom-toast-success',
-        position: 'top-right',
-        autoClose: 2500,
-      });
+      toast.success('Welcome back! Login successful', { duration: 2500 });
 
       setTimeout(() => navigate('/dashboard', { replace: true }), 2200);
     } catch (error: any) {
-      setErrors({
-        password: String(error) || "Login failed",
-      });
+      const apiError = parseApiError(error, 'Login failed');
+      const nextErrors: { email?: string; password?: string } = {
+        ...apiError.fieldErrors,
+      };
+
+      if (!nextErrors.email && !nextErrors.password) {
+        nextErrors.password = apiError.message;
+      }
+
+      setErrors(nextErrors);
+      toast.error(apiError.message, { duration: 3000 });
       loginSubmittedRef.current = false;
     }
   };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-stone-100 px-3">
-      <ToastContainer position="top-right" autoClose={2500} newestOnTop closeOnClick pauseOnFocusLoss={false} />
-
       <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg flex flex-col md:flex-row overflow-hidden">
 
         <div className="w-full md:w-1/2 flex items-center justify-center p-4 sm:p-6">
@@ -147,7 +149,7 @@ export default function Login() {
 
         <div className="w-full md:w-1/2 h-32 md:h-auto relative hidden md:block">
           <img
-            src={woodBg}
+            src={loginBg}
             alt="Background"
             className="w-full h-full object-cover"
           />

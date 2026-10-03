@@ -6,8 +6,9 @@ import ContactViewModal from './details/ContactsDetails';
 import Alert from '../../../pages/UiElements/Alerts';
 import Pagination from '../../../pages/UiElements/Pagination';
 import TableLoaderRow from '../../../pages/UiElements/TableLoaderRow';
-import { resetContactsNewCount } from '../../../store/modules/contacts/contacts.slice';
+import { markSidebarSectionSeen } from '../../../store/modules/sidebarBadges/sidebarBadges.slice';
 import { useAppDispatch } from '../../../store/hooks';
+import { parseApiError } from '../../../services/axiosError';
 
 const Contacts = () => {
   const dispatch = useAppDispatch();
@@ -60,7 +61,8 @@ const Contacts = () => {
       setTotalItems(res.pagination.total || 0);
       setCurrentPage(res.pagination.page || 1);
     } catch (err) {
-      console.error('Load error:', err);
+      const apiError = parseApiError(err, 'Failed to load contacts. Please try again.');
+      showNotification('error', apiError.message);
       setContacts([]);
     } finally {
       setLoading(false);
@@ -68,9 +70,13 @@ const Contacts = () => {
   };
 
   useEffect(() => {
-    dispatch(resetContactsNewCount());
+    dispatch(markSidebarSectionSeen('contacts'));
+  }, [dispatch]);
+
+  useEffect(() => {
     loadContacts(currentPage);
-  }, [currentPage, dispatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -94,7 +100,8 @@ const Contacts = () => {
       setContactToDelete(null);
       showNotification('success', 'Contact deleted successfully!');
     } catch (error) {
-      showNotification('error', 'Failed to delete contact. Please try again.');
+      const apiError = parseApiError(error, 'Failed to delete contact. Please try again.');
+      showNotification('error', apiError.message);
     } finally {
       setIsDeleting(false);
     }
@@ -116,7 +123,7 @@ const Contacts = () => {
   return (
     <div className="relative min-h-screen font-sans">
       {notification.show && (
-        <div className="fixed top-6 right-6 z-[10000] w-full max-w-md animate-in slide-in-from-right duration-300">
+        <div className="contents">
           <Alert
             type={notification.type}
             message={notification.message}

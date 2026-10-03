@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Tag,
@@ -8,15 +8,22 @@ import {
   Layers,
   ClipboardList,
   ImageOff,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   Product,
   ProductVariant,
   formatProductTypeLabel,
   getVariantDisplayName,
+  isCrossLineType,
 } from '../../../../types/product';
 import { Modal } from '../../../../pages/UiElements/Modal';
-import { getProductDisplayImage } from '../../../../utils/productMedia';
+import {
+  getImageUrl,
+  toExistingImagesPayload,
+  toExistingVideoPayload,
+} from '../../../../utils/productMedia';
 
 interface ProductViewModalProps {
   product: Product | null;
@@ -29,12 +36,42 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const displayImage = getProductDisplayImage(product?.images);
+  const mediaSlides = useMemo(() => {
+    if (!product) return [];
+
+    const slides: Array<{ key: string; kind: 'image' | 'video'; src: string }> =
+      toExistingImagesPayload(product.images).map((image, index) => ({
+        key: `image-${image.url}-${index}`,
+        kind: 'image',
+        src: getImageUrl(image),
+      }));
+
+    const video = toExistingVideoPayload(product.video);
+    if (video) {
+      slides.push({
+        key: `video-${video.url}`,
+        kind: 'video',
+        src: video.url,
+      });
+    }
+
+    return slides;
+  }, [product]);
+
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const [showAllThumbs, setShowAllThumbs] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const currentSlide = mediaSlides[previewIndex];
+
+  useEffect(() => {
+    setPreviewIndex(0);
+    setShowAllThumbs(false);
+    setImageFailed(false);
+  }, [product?._id]);
 
   useEffect(() => {
     setImageFailed(false);
-  }, [product?._id, displayImage]);
+  }, [currentSlide?.src]);
 
   if (!product) return null;
 
@@ -81,22 +118,109 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
 
         <div className="overflow-y-auto space-y-6 p-5 pb-10 md:p-6">
           <div className="overflow-hidden rounded-2xl shadow-sm">
-            <div className="relative flex min-h-[240px] items-center justify-center p-4 sm:min-h-[320px]">
-              <div className="absolute inset-0" />
-              {displayImage && !imageFailed ? (
-                <img
-                  src={displayImage}
-                  alt={product.name}
-                  className="relative z-10 max-h-[280px] w-full max-w-[420px] object-contain drop-shadow-2xl sm:max-h-[340px]"
-                  onError={() => setImageFailed(true)}
-                />
+            <div className="relative flex min-h-[240px] items-center justify-center bg-slate-50 p-4 sm:min-h-[320px]">
+              {currentSlide && !imageFailed ? (
+                currentSlide.kind === 'video' ? (
+                  <video
+                    key={currentSlide.key}
+                    src={currentSlide.src}
+                    controls
+                    className="relative z-10 max-h-[340px] w-full max-w-[640px] rounded-xl bg-black"
+                    onError={() => setImageFailed(true)}
+                  />
+                ) : (
+                  <img
+                    key={currentSlide.key}
+                    src={currentSlide.src}
+                    alt={product.name}
+                    className="relative z-10 max-h-[280px] w-full max-w-[420px] object-contain drop-shadow-2xl sm:max-h-[340px]"
+                    onError={() => setImageFailed(true)}
+                  />
+                )
               ) : (
                 <div className="relative z-10 flex flex-col items-center gap-2 text-gray-400">
                   <ImageOff size={36} />
-                  <p className="text-sm">Image unavailable</p>
+                  <p className="text-sm">Media unavailable</p>
                 </div>
               )}
+
+              {mediaSlides.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPreviewIndex((index) =>
+                        index === 0 ? mediaSlides.length - 1 : index - 1,
+                      )
+                    }
+                    className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/55 p-2 text-white"
+                    aria-label="Previous file"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPreviewIndex((index) =>
+                        index === mediaSlides.length - 1 ? 0 : index + 1,
+                      )
+                    }
+                    className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/55 p-2 text-white"
+                    aria-label="Next file"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </>
+              )}
             </div>
+
+            {mediaSlides.length > 0 && (
+              <div className="space-y-2 px-5 pb-4 md:px-6">
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>
+                    {currentSlide?.kind === 'video' ? 'Video' : 'Image'} {previewIndex + 1}/
+                    {mediaSlides.length}
+                  </span>
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {(showAllThumbs ? mediaSlides : mediaSlides.slice(0, 4)).map((slide) => {
+                    const selectedIndex = mediaSlides.findIndex((item) => item.key === slide.key);
+                    return (
+                      <button
+                        key={slide.key}
+                        type="button"
+                        onClick={() => setPreviewIndex(selectedIndex)}
+                        className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border ${
+                          selectedIndex === previewIndex
+                            ? 'border-[#4E342E]'
+                            : 'border-gray-200'
+                        }`}
+                      >
+                        {slide.kind === 'video' ? (
+                          <video src={slide.src} className="h-full w-full object-cover" muted />
+                        ) : (
+                          <img src={slide.src} alt="" className="h-full w-full object-cover" />
+                        )}
+                        {slide.kind === 'video' && (
+                          <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1 text-[10px] text-white">
+                            Video
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {mediaSlides.length > 4 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllThumbs((open) => !open)}
+                    className="text-xs font-semibold text-[#6D4C41]"
+                  >
+                    {showAllThumbs ? 'Show less' : `View more (${mediaSlides.length - 4})`}
+                  </button>
+                )}
+              </div>
+            )}
 
             <div className="space-y-4 px-5 py-5 md:px-6">
               <div className="flex flex-wrap items-center gap-2">
@@ -226,7 +350,7 @@ const ProductViewModal: React.FC<ProductViewModalProps> = ({
             </ul>
           </div>
 
-          {String(product.productType || 'GROCERY').toUpperCase() !== 'ELECTRONICS' ? (
+          {!isCrossLineType(product.productType) ? (
             <div>
               <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#6D4C41]">
                 <ClipboardList size={14} /> Ingredients

@@ -8,7 +8,7 @@ import {
   type MutationState,
   type PaginationState,
 } from '../../shared/types';
-import { getErrorMessage } from '../../shared/helpers';
+import { getErrorMessage, getRejectedErrorMessage, rejectApiError } from '../../shared/helpers';
 
 interface ProductsQueryParams {
   page?: number;
@@ -69,7 +69,7 @@ export const createProduct = createAsyncThunk(
       const response = await productService.create(payload);
       return response.data;
     } catch (error) {
-      return rejectWithValue(getErrorMessage(error, 'Failed to create product'));
+      return rejectWithValue(rejectApiError(error, 'Failed to create product'));
     }
   },
 );
@@ -84,7 +84,7 @@ export const updateProduct = createAsyncThunk(
       const response = await productService.update(id, data);
       return response.data;
     } catch (error) {
-      return rejectWithValue(getErrorMessage(error, 'Failed to update product'));
+      return rejectWithValue(rejectApiError(error, 'Failed to update product'));
     }
   },
 );
@@ -100,7 +100,7 @@ export const toggleProductStatus = createAsyncThunk(
       return { id, isActive };
     } catch (error) {
       return rejectWithValue(
-        getErrorMessage(error, 'Failed to update status'),
+        rejectApiError(error, 'Failed to update status'),
       );
     }
   },
@@ -153,8 +153,10 @@ const productsSlice = createSlice({
       })
       .addCase(createProduct.rejected, (state, action) => {
         state.createState.status = 'failed';
-        state.createState.error =
-          (action.payload as string) ?? 'Failed to create product';
+        state.createState.error = getRejectedErrorMessage(
+          action.payload,
+          'Failed to create product',
+        );
       })
       .addCase(updateProduct.pending, (state) => {
         state.updateState.status = 'loading';
@@ -165,8 +167,10 @@ const productsSlice = createSlice({
       })
       .addCase(updateProduct.rejected, (state, action) => {
         state.updateState.status = 'failed';
-        state.updateState.error =
-          (action.payload as string) ?? 'Failed to update product';
+        state.updateState.error = getRejectedErrorMessage(
+          action.payload,
+          'Failed to update product',
+        );
       })
       .addCase(toggleProductStatus.pending, (state) => {
         state.statusUpdateState.status = 'loading';
@@ -183,8 +187,10 @@ const productsSlice = createSlice({
       })
       .addCase(toggleProductStatus.rejected, (state, action) => {
         state.statusUpdateState.status = 'failed';
-        state.statusUpdateState.error =
-          (action.payload as string) ?? 'Failed to update status';
+        state.statusUpdateState.error = getRejectedErrorMessage(
+          action.payload,
+          'Failed to update status',
+        );
       })
   },
 });

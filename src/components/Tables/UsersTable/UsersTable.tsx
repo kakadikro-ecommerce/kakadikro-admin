@@ -13,10 +13,11 @@ import TableLoaderRow from '../../../pages/UiElements/TableLoaderRow';
 import {
   clearAdminError,
   fetchAllUsers,
-  resetAdminNewCount,
   toggleAdminUserStatus,
 } from '../../../store/modules/admin/admin.slice';
+import { markSidebarSectionSeen } from '../../../store/modules/sidebarBadges/sidebarBadges.slice';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { parseApiError } from '../../../services/axiosError';
 
 interface UserTableProps {
   onEdit?: (user: User) => void;
@@ -62,7 +63,7 @@ const UserTable: React.FC<UserTableProps> = ({
   };
 
   useEffect(() => {
-    dispatch(resetAdminNewCount());
+    dispatch(markSidebarSectionSeen('users'));
   }, [dispatch]);
 
   useEffect(() => {
@@ -127,7 +128,8 @@ const UserTable: React.FC<UserTableProps> = ({
         `${user.name} is now ${user.isActive ? 'inactive' : 'active'}.`,
       );
     } catch (toggleError: any) {
-      showNotification('error', toggleError?.message || 'Failed to update user status.');
+      const apiError = parseApiError(toggleError, 'Failed to update user status.');
+      showNotification('error', apiError.message);
     } finally {
       setUpdatingUserId(null);
     }
@@ -136,7 +138,7 @@ const UserTable: React.FC<UserTableProps> = ({
   return (
     <div className="relative min-h-screen font-sans">
       {notification.show && (
-        <div className="fixed top-6 right-6 z-[10000] w-full max-w-md animate-in slide-in-from-right duration-300">
+        <div className="contents">
           <Alert
             type={notification.type}
             message={notification.message}

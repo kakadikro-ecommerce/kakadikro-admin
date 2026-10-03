@@ -41,6 +41,15 @@ export interface OrderPaymentDetails {
   amount?: number;
 }
 
+export interface OrderPayment {
+  status?: string;
+  amount?: number;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  refundStatus?: string;
+  refundAmount?: number;
+}
+
 export interface OrderItem {
   _id?: string;
   productId?: string;
@@ -55,7 +64,6 @@ export interface OrderItem {
 
 export interface Order {
   _id: string;
-  orderNumber: string;
   user?: OrderUser | null;
   items: OrderItem[];
   shippingAddress?: OrderShippingAddress | null;
@@ -67,6 +75,8 @@ export interface Order {
   orderStatus?: string;
   paymentMethod?: string;
   paymentStatus?: string;
+  paidAt?: string | null;
+  payment?: OrderPayment | null;
   paymentDetails?: OrderPaymentDetails | null;
   adminNote?: string;
   notes?: string;
@@ -179,16 +189,13 @@ const normalizeOrder = (order: unknown): Order => {
     string,
     unknown
   >;
+  const rawPayment =
+    rawOrder.payment && typeof rawOrder.payment === 'object'
+      ? (rawOrder.payment as Record<string, unknown>)
+      : null;
 
   return {
     _id: typeof rawOrder._id === 'string' ? rawOrder._id : '',
-    orderNumber:
-      typeof rawOrder.orderNumber === 'string' &&
-      rawOrder.orderNumber.trim().length > 0
-        ? rawOrder.orderNumber
-        : typeof rawOrder._id === 'string'
-        ? `#${rawOrder._id.slice(-6).toUpperCase()}`
-        : 'N/A',
     user:
       Object.keys(rawUser).length > 0
         ? {
@@ -258,6 +265,29 @@ const normalizeOrder = (order: unknown): Order => {
       typeof rawOrder.paymentStatus === 'string'
         ? rawOrder.paymentStatus
         : undefined,
+    paidAt: typeof rawOrder.paidAt === 'string' ? rawOrder.paidAt : null,
+    payment: rawPayment
+      ? {
+          status:
+            typeof rawPayment.status === 'string'
+              ? rawPayment.status
+              : undefined,
+          amount: toNumber(rawPayment.amount),
+          razorpayOrderId:
+            typeof rawPayment.razorpayOrderId === 'string'
+              ? rawPayment.razorpayOrderId
+              : undefined,
+          razorpayPaymentId:
+            typeof rawPayment.razorpayPaymentId === 'string'
+              ? rawPayment.razorpayPaymentId
+              : undefined,
+          refundStatus:
+            typeof rawPayment.refundStatus === 'string'
+              ? rawPayment.refundStatus
+              : undefined,
+          refundAmount: toNumber(rawPayment.refundAmount),
+        }
+      : null,
     paymentDetails:
       Object.keys(rawPaymentDetails).length > 0
         ? {

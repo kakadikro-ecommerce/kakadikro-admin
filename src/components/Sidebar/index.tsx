@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import LOGO from '../../images/logo/kde-logo.png';
-import logo2 from '../../images/logo/kaka-dikro-icon.png';
+import LOGO from "../../../public/assets/logo.png";
+import logo from "../../../public/assets/favicon.ico";
 import { logout } from '../../store/modules/auth/auth.slice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 
@@ -16,11 +16,13 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const dispatch = useAppDispatch();
   const sidebarRef = useRef<HTMLElement>(null);
 
-  const newUsers = useAppSelector((state) => state.admin?.newCount ?? 0);
-  const newProducts = useAppSelector((state) => state.products?.newCount ?? 0);
+  const badges = useAppSelector((state) => state.sidebarBadges.badges);
+  const newUsers = badges.users;
+  const newProducts = badges.products;
   const newAdmins = 0;
-  const newOrders = useAppSelector((state) => state.orders?.newCount ?? 0);
-  const newContacts = useAppSelector((state) => state.contacts?.newCount ?? 0);
+  const newOrders = badges.orders;
+  const newContacts = badges.contacts;
+  const newPayments = badges.payments;
 
   useEffect(() => {
     const clickHandler = ({ target }: MouseEvent) => {
@@ -45,7 +47,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     { id: 'products', path: '/products', name: 'Products', icon: <ProductsIcon />, badge: newProducts },
     { id: 'orders', path: '/orders', name: 'Orders', icon: <OrdersIcon />, badge: newOrders },
     { id: 'contacts', path: '/contacts', name: 'Contacts', icon: <ContactsIcon />, badge: newContacts },
-    { id: 'payments', path: '/payments', name: 'Payments', icon: <PaymentsIcon />, badge: 0 },
+    { id: 'payments', path: '/payments', name: 'Payments', icon: <PaymentsIcon />, badge: newPayments },
   ];
 
   return (
@@ -77,7 +79,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
             {sidebarExpanded ? (
               <img src={LOGO} alt="Logo" className="h-36 w-full object-contain" />
             ) : (
-              <img src={logo2} alt="Icon" className="h-10 w-10 object-contain mx-auto" />
+              <img src={logo} alt="Icon" className="h-10 w-10 object-contain mx-auto" />
             )}
           </NavLink>
         </div>
@@ -111,7 +113,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
                   {sidebarExpanded && item.badge > 0 && (
                     <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-[#3E2723] text-[#EFE4D5] text-[10px] font-bold rounded-md shadow-sm">
-                      +{item.badge}
+                      +{item.badge > 99 ? '99' : item.badge}
                     </span>
                   )}
                 </NavLink>

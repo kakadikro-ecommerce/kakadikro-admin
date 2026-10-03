@@ -18,6 +18,7 @@ import {
   updateAdminUser,
 } from '../../../../store/modules/admin/admin.slice';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import { parseApiError } from '../../../../services/axiosError';
 
 interface UserFormModalProps {
   user: User | null;
@@ -111,7 +112,13 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
       onRefresh();
       onClose();
     } catch (error: any) {
-      console.error("Submission Error:", error);
+      const apiError = parseApiError(error, 'Something went wrong. Please try again.');
+      setErrors({
+        ...apiError.fieldErrors,
+        ...(Object.keys(apiError.fieldErrors).length
+          ? {}
+          : { email: apiError.message }),
+      });
     }
   };
 

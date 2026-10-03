@@ -22,6 +22,7 @@ import {
 import { setAuthUser } from '../../../../store/modules/auth/auth.slice';
 import { useAppDispatch } from '../../../../store/hooks';
 import { adminCreateSchema, adminUpdateSchema, changePasswordSchema } from '../../../../validations/adminValidation';
+import { parseApiError } from '../../../../services/axiosError';
 
 interface AdminFormModalProps {
   admin: Admin | null;
@@ -164,8 +165,12 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
         setAlertConfig(null);
       }, 1500);
     } catch (error: any) {
+      const apiError = parseApiError(error, 'Something went wrong. Please try again.');
       setErrors({
-        email: error || "Something went wrong",
+        ...apiError.fieldErrors,
+        ...(Object.keys(apiError.fieldErrors).length
+          ? {}
+          : { email: apiError.message }),
       });
     } finally {
       setLoading(false);
@@ -203,8 +208,12 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
 
       showAlert('success', "Password updated successfully!");
     } catch (error: any) {
+      const apiError = parseApiError(error, 'Failed to change password');
       setErrors({
-        currentPassword: error?.message || "Failed to change password",
+        ...apiError.fieldErrors,
+        ...(Object.keys(apiError.fieldErrors).length
+          ? {}
+          : { currentPassword: apiError.message }),
       });
     } finally {
       setPassLoading(false);
@@ -214,7 +223,7 @@ const AdminFormModal: React.FC<AdminFormModalProps> = ({
   return (
     <>
       {alertConfig && (
-        <div className="fixed top-4 right-4 z-[10000] w-[calc(100%-2rem)] max-w-sm">
+        <div className="contents">
           <Alert
             type={alertConfig.type}
             message={alertConfig.message}

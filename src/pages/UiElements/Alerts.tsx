@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { X, CheckCircle2, Info, AlertTriangle } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import toast from 'react-hot-toast';
 
 interface AlertProps {
   type: 'success' | 'error' | 'info' | 'warning';
@@ -7,91 +7,35 @@ interface AlertProps {
   onClose: () => void;
 }
 
-const Alert: React.FC<AlertProps> = ({ type, message, onClose }) => {
+const Alert = ({ type, message, onClose }: AlertProps) => {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
+    const duration = type === 'error' ? 3000 : 2500;
+    const id =
+      type === 'success'
+        ? toast.success(message, { duration })
+        : type === 'error'
+          ? toast.error(message, { duration })
+          : toast(message, {
+              duration,
+              icon: type === 'warning' ? '!' : 'i',
+              style:
+                type === 'warning'
+                  ? { background: '#fff8ef', color: '#8a5410' }
+                  : { background: '#f5f9ff', color: '#1f4c93' },
+            });
 
-  const config = {
-    success: {
-      container: "border-[#3E2723] bg-[#faf7f2]",
-      iconBg: "bg-[#3E2723]",
-      titleColor: "text-[#3E2723]",
-      title: "Success",
-      icon: <CheckCircle2 size={18} color="white" />
-    },
-    error: {
-      container: "border-[#b32b2b] bg-[#fff5f5]",
-      iconBg: "bg-[#b32b2b]",
-      titleColor: "text-[#b32b2b]",
-      title: "Error",
-      icon: <X size={18} color="white" />
-    },
-    warning: {
-      container: "border-[#9D5425] bg-[#fdfaf7]",
-      iconBg: "bg-[#9D5425]",
-      titleColor: "text-[#9D5425]",
-      title: "Warning",
-      icon: <AlertTriangle size={18} color="white" />
-    },
-    info: {
-      container: "border-[#3b82f6] bg-[#eff6ff]",
-      iconBg: "bg-[#3b82f6]",
-      titleColor: "text-[#1d4ed8]",
-      title: "Information",
-      icon: <Info size={18} color="white" />
-    }
-  };
+    const timer = window.setTimeout(() => onCloseRef.current(), duration);
 
-  const current = config[type];
+    return () => {
+      window.clearTimeout(timer);
+      toast.dismiss(id);
+    };
+  }, [message, type]);
 
-  return (
-    <>
-      <style>{`
-        @keyframes shrinkLine {
-          from { width: 100%; }
-          to { width: 0%; }
-        }
-        .animate-line {
-          animation: shrinkLine 4s linear forwards;
-        }
-      `}</style>
-
-      <div className="fixed bottom-6 right-6 z-[10000] w-full max-w-[380px] animate-in slide-in-from-right duration-300">
-        <div className={`flex w-full border-l-[6px] shadow-2xl rounded-2xl overflow-hidden bg-white p-5 items-start relative ${current.container}`}>
-
-          <div className={`flex h-8 w-8 items-center justify-center rounded-xl shrink-0 mt-0.5 ${current.iconBg}`}>
-            {current.icon}
-          </div>
-
-          <div className="ml-4 w-full pr-6">
-            <h5 className={`text-[13px] font-bold uppercase tracking-widest mb-1 ${current.titleColor}`}>
-              {current.title}
-            </h5>
-            <p className="text-sm font-bold text-gray-600 leading-snug">
-              {message}
-            </p>
-
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
-            >
-              <X size={16} />
-            </button>
-          </div>
-
-          <div className="absolute bottom-0 left-0 w-full h-[3px] bg-black/5">
-            <div
-              className={`h-full animate-line ${current.iconBg}`}
-            />
-          </div>
-        </div>
-      </div>
-    </>
-  );
+  return null;
 };
 
 export default Alert;

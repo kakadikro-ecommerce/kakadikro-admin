@@ -16,6 +16,7 @@ import getAllProducts from '../../services/products-api';
 import orders from '../../services/Orders-api';
 import { normalizeOrderStatus, type Order } from '../../services/Orders-api';
 import { contactService } from '../../services/contacts-api';
+import { fetchAdminPayments } from '../../services/payments-api';
 
 type PercentageKey = 'users' | 'products' | 'orders' | 'payments' | 'contacts';
 
@@ -27,6 +28,7 @@ const ECommerce: React.FC = () => {
     totalProducts: 0,
     totalOrders: 0,
     totalPayments: 0,
+    successfulPaymentAmount: 0,
     totalContacts: 0,
   });
 
@@ -64,11 +66,12 @@ const ECommerce: React.FC = () => {
           animatePercentage(key),
         );
 
-        const [uRes, pRes, cRes, oRes] = await Promise.all([
+        const [uRes, pRes, cRes, oRes, payRes] = await Promise.all([
           adminService.getAllUsers(1, 5, undefined, 'user'),
           getAllProducts(1, 5),
           contactService.adminGetAll(1, 5),
           orders.getAllOrders(1, 5),
+          fetchAdminPayments({ page: 1, limit: 1 }),
         ]);
 
         setStats({
@@ -76,7 +79,12 @@ const ECommerce: React.FC = () => {
           totalProducts: pRes.pagination?.total || pRes.total || 0,
           totalContacts: cRes.pagination?.total || cRes.total || cRes.contacts?.length || 0,
           totalOrders: oRes.pagination?.total || oRes.total || 0,
-          totalPayments: 0,
+          totalPayments:
+            payRes.summary?.totalPayments ||
+            payRes.pagination?.total ||
+            payRes.payments.length ||
+            0,
+          successfulPaymentAmount: payRes.summary?.successfulAmount || 0,
         });
 
         setRecentUsers(uRes.users || []);
@@ -98,7 +106,14 @@ const ECommerce: React.FC = () => {
     { title: 'Total Users', value: stats.totalUsers, icon: Users, route: '/users', sub: 'Active accounts', pKey: 'users' },
     { title: 'Total Products', value: stats.totalProducts, icon: Package, route: '/products', sub: 'In stock', pKey: 'products' },
     { title: 'Total Orders', value: stats.totalOrders, icon: ShoppingBag, route: '/orders', sub: 'Placed orders', pKey: 'orders' },
-    { title: 'Total Payments', value: stats.totalPayments, icon: CreditCard, route: '/payments', sub: 'Revenue', pKey: 'payments' },
+    {
+      title: 'Total Payments',
+      value: stats.totalPayments,
+      icon: CreditCard,
+      route: '/payments',
+      sub: `₹${stats.successfulPaymentAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })} collected`,
+      pKey: 'payments',
+    },
     { title: 'Total Contacts', value: stats.totalContacts, icon: MessageSquare, route: '/contacts', sub: 'Messages', pKey: 'contacts' },
   ];
 
@@ -123,7 +138,7 @@ const ECommerce: React.FC = () => {
               ) : (
                 <p className="text-2xl font-bold text-[#5C3E2E]">{card.value.toLocaleString()}</p>
               )}
-              <p className="text-[9px] font-medium text-[#A67B45] mt-1 opacity-70">{card.sub}</p>
+              <p className="text-[16px] font-medium text-[#5C3E2E] mt-1">{card.sub}</p>
             </div>
           </div>
         ))}
@@ -195,7 +210,7 @@ const ECommerce: React.FC = () => {
                 recentOrders.map((o, idx) => (
                   <tr key={o._id || idx} className="hover:bg-[#FAF6F0] transition-colors group">
                     <td className="px-6 py-4 text-sm font-mono font-bold text-[#5C3E2E]">
-                      {o.orderNumber || `#${o._id?.slice(-6).toUpperCase() || 'N/A'}`}
+                      {o._id || 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-sm font-bold text-[#A67B45]">
                       {o.user?.name || o.shippingAddress?.fullName || 'Guest'}

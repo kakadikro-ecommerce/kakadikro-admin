@@ -4,6 +4,7 @@ import contactsReducer from './modules/contacts/contacts.slice';
 import productsReducer from './modules/products/products.slice';
 import ordersReducer from './modules/orders/orders.slice';
 import adminReducer from './modules/admin/admin.slice';
+import sidebarBadgesReducer from './modules/sidebarBadges/sidebarBadges.slice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -11,6 +12,7 @@ const rootReducer = combineReducers({
   products: productsReducer,
   orders: ordersReducer,
   admin: adminReducer,
+  sidebarBadges: sidebarBadgesReducer,
 });
 
 export type RootReducer = typeof rootReducer;

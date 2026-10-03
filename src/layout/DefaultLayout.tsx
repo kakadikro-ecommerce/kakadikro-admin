@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import Header from '../components/Header/index';
 import Sidebar from '../components/Sidebar/index';
+import { useSidebarBadgePoll } from '../hooks/useSidebarBadgePoll';
 
 const DefaultLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  useSidebarBadgePoll();
 
   return (
     <div className="bg-[#f4e9d8] min-h-screen">

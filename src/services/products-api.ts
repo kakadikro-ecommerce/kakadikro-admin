@@ -1,5 +1,14 @@
 import api from './axiosInstance';
-import { Product, ProductType, getVariantDisplayName } from '../types/product';
+import {
+  FALLBACK_PRODUCT_TYPE_CONFIGS,
+  Product,
+  ProductType,
+  ProductTypeConfig,
+  formatProductTypeLabel,
+  getVariantDisplayName,
+  isCrossLifeType,
+  resolveProductType,
+} from '../types/product';
 
 export interface PaginatedResponse {
   total: number;
@@ -41,7 +50,59 @@ const buildAdminProductsQuery = ({
 const unwrapProduct = (data: any): Product =>
   data?.product ?? data?.data ?? data;
 
+const normalizeProductTypeConfig = (item: any): ProductTypeConfig | null => {
+  const codeRaw = String(item?.code || '')
+    .trim()
+    .toUpperCase();
+  const code = resolveProductType(codeRaw);
+
+  if (!code) return null;
+
+  const toStringArray = (value: unknown): string[] =>
+    Array.isArray(value)
+      ? value.map((entry) => String(entry).trim()).filter(Boolean)
+      : [];
+
+  return {
+    code,
+    label:
+      typeof item?.label === 'string' && item.label.trim()
+        ? item.label.trim()
+        : formatProductTypeLabel(code),
+    fields: toStringArray(item?.fields),
+    requiredFields: toStringArray(item?.requiredFields),
+    optionalFields: toStringArray(item?.optionalFields),
+    notRequiredFields: toStringArray(item?.notRequiredFields),
+  };
+};
+
 export const productService = {
+  getProductTypes: async (): Promise<ProductTypeConfig[]> => {
+    try {
+      const response = await api.get('/admin/products/product-types');
+      const payload = response.data;
+      const rawItems = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.productTypes)
+            ? payload.productTypes
+            : [];
+
+      const configs = rawItems
+        .map(normalizeProductTypeConfig)
+        .filter((item: ProductTypeConfig | null): item is ProductTypeConfig => Boolean(item));
+
+      if (!configs.length) {
+        return FALLBACK_PRODUCT_TYPE_CONFIGS;
+      }
+
+      return configs;
+    } catch {
+      return FALLBACK_PRODUCT_TYPE_CONFIGS;
+    }
+  },
+
   adminGetAll: async ({
     page = 1,
     limit = 10,
@@ -139,10 +200,7 @@ export const getAllProducts = (
 
 const formatPayload = (data: any) => {
   const { _id, __v, brand, ...cleanData } = data;
-  const productType =
-    typeof cleanData.productType === 'string'
-      ? cleanData.productType.trim().toUpperCase()
-      : 'GROCERY';
+  const productType = resolveProductType(cleanData.productType) || 'CROSSLIFE';
 
   return {
     ...cleanData,
@@ -155,7 +213,7 @@ const formatPayload = (data: any) => {
               ? { ...v.attributes }
               : {};
 
-          if (productType === 'GROCERY' && !attributes.weight) {
+          if (isCrossLifeType(productType) && !attributes.weight) {
             attributes.weight = name;
           }
 

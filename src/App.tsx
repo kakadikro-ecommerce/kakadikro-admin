@@ -10,6 +10,8 @@ import Admin from './pages/Admin/Admin';
 import { clearAuthState, initializeAuth } from './store/modules/auth/auth.slice';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import ContactsTable from './pages/Contacts/ContactsTable';
+import Payments from './pages/Payments/Payments';
+import AppToaster from './utils/appToaster';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { initialized, isAuthenticated, status } = useAppSelector(
@@ -48,7 +50,9 @@ function App() {
   }, [dispatch]);
 
   return (
-    <Routes>
+    <>
+      <AppToaster />
+      <Routes>
       <Route path="/login" element={<Login />} />
       <Route
         path="/dashboard"
@@ -112,6 +116,16 @@ function App() {
         }
       />
       <Route
+        path="/payments"
+        element={
+          <ProtectedRoute>
+            <DefaultLayout>
+              <Payments />
+            </DefaultLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/"
         element={
           isAuthenticated ? (
@@ -123,6 +137,7 @@ function App() {
       />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
+    </>
   );
 }
 

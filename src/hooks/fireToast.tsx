@@ -66,7 +66,7 @@ const createToast = (title: string, msg: string, type: AlertType) => {
         </button>
       </div>
     </div>
-  ));
+  ), { position: 'top-center', duration: 4000 });
 };
 
 const getComparisonLabel = (criterion: Criterion) => {

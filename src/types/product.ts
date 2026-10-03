@@ -1,4 +1,35 @@
-export type ProductType = 'GROCERY' | 'ELECTRONICS';
+export type ProductType = 'CROSSLIFE' | 'CROSSLINE';
+
+const PRODUCT_TYPE_ALIASES: Record<string, ProductType> = {
+  CROSSLIFE: 'CROSSLIFE',
+  CROSSLINE: 'CROSSLINE',
+  GROCERY: 'CROSSLIFE',
+  ELECTRONICS: 'CROSSLINE',
+  EQUIPMENT: 'CROSSLINE',
+};
+
+export const resolveProductType = (value?: string | null): ProductType | null => {
+  const normalized = String(value || '').trim().toUpperCase();
+  return PRODUCT_TYPE_ALIASES[normalized] || null;
+};
+
+export const normalizeProductType = (value?: string | null): ProductType =>
+  resolveProductType(value) || 'CROSSLIFE';
+
+export const isCrossLifeType = (value?: string | null) =>
+  normalizeProductType(value) === 'CROSSLIFE';
+
+export const isCrossLineType = (value?: string | null) =>
+  normalizeProductType(value) === 'CROSSLINE';
+
+export interface ProductTypeConfig {
+  code: ProductType;
+  label: string;
+  fields: string[];
+  requiredFields: string[];
+  optionalFields: string[];
+  notRequiredFields: string[];
+}
 
 export interface ProductVariant {
   name?: string;
@@ -25,6 +56,7 @@ export interface Product {
   category: string;
   stock: number;
   images?: Array<string | { url: string; altText?: string }>;
+  video?: { url: string; altText?: string } | null;
   variants?: ProductVariant[];
   specifications?: Record<string, string>;
   tags?: string[];
@@ -42,7 +74,74 @@ export interface Product {
 export type CreateProductInput = Omit<Product, '_id' | 'createdAt' | 'updatedAt'>;
 export type UpdateProductInput = Partial<CreateProductInput>;
 
-export const PRODUCT_TYPES: ProductType[] = ['GROCERY', 'ELECTRONICS'];
+export const PRODUCT_TYPES: ProductType[] = ['CROSSLIFE', 'CROSSLINE'];
+
+export const FALLBACK_PRODUCT_TYPE_CONFIGS: ProductTypeConfig[] = [
+  {
+    code: 'CROSSLIFE',
+    label: 'Cross Life',
+    fields: [
+      'name',
+      'category',
+      'usage',
+      'shortDescription',
+      'description',
+      'variants',
+      'ingredients',
+      'features',
+      'benefits',
+      'tags',
+      'images',
+      'video',
+    ],
+    requiredFields: [
+      'name',
+      'category',
+      'usage',
+      'shortDescription',
+      'description',
+      'variants',
+      'ingredients',
+      'features',
+      'benefits',
+      'tags',
+    ],
+    optionalFields: ['images', 'video'],
+    notRequiredFields: ['specifications'],
+  },
+  {
+    code: 'CROSSLINE',
+    label: 'Cross Line',
+    fields: [
+      'name',
+      'category',
+      'usage',
+      'shortDescription',
+      'description',
+      'variants',
+      'specifications',
+      'features',
+      'benefits',
+      'tags',
+      'images',
+      'video',
+    ],
+    requiredFields: [
+      'name',
+      'category',
+      'usage',
+      'shortDescription',
+      'description',
+      'variants',
+      'specifications',
+      'features',
+      'benefits',
+      'tags',
+    ],
+    optionalFields: ['images', 'video'],
+    notRequiredFields: ['ingredients'],
+  },
+];
 
 export const getVariantDisplayName = (variant: ProductVariant | Record<string, any>): string => {
   if (!variant) return '';
@@ -66,9 +165,5 @@ export const getVariantDisplayName = (variant: ProductVariant | Record<string, a
   return '';
 };
 
-export const formatProductTypeLabel = (productType?: string | null): string => {
-  if (!productType) return 'Grocery';
-  const normalized = String(productType).trim().toUpperCase();
-  if (normalized === 'ELECTRONICS') return 'Electronics';
-  return 'Grocery';
-};
+export const formatProductTypeLabel = (productType?: string | null): string =>
+  isCrossLineType(productType) ? 'Cross Line' : 'Cross Life';
