@@ -156,19 +156,19 @@ const PaymentsTable: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-6 overflow-x-auto">
-          <table className="min-w-full divide-y divide-orange-50 text-left text-sm">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-orange-50">
+          <table className="w-full min-w-[1100px] table-fixed divide-y divide-orange-50 text-left text-sm">
             <thead>
-              <tr className="text-[11px] uppercase tracking-[0.16em] text-[#3E2723]">
-                <th className="px-4 py-3 font-semibold">ID</th>
-                <th className="px-4 py-3 font-semibold">Order</th>
-                <th className="px-4 py-3 font-semibold">Customer</th>
-                <th className="px-4 py-3 font-semibold">Amount</th>
-                <th className="px-4 py-3 font-semibold">Type</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Payment refs</th>
-                <th className="px-4 py-3 font-semibold">Created</th>
-                <th className="px-4 py-3 text-center font-semibold">Actions</th>
+              <tr className="bg-orange-50/40 text-[11px] uppercase tracking-[0.16em] text-[#3E2723]">
+                <th className="w-[56px] px-4 py-3 font-semibold">ID</th>
+                <th className="w-[220px] px-4 py-3 font-semibold">Order</th>
+                <th className="w-[180px] px-4 py-3 font-semibold">Customer</th>
+                <th className="w-[110px] px-4 py-3 font-semibold">Amount</th>
+                <th className="w-[110px] px-4 py-3 font-semibold">Type</th>
+                <th className="w-[120px] px-4 py-3 font-semibold">Status</th>
+                <th className="w-[260px] px-4 py-3 font-semibold">Payment refs</th>
+                <th className="w-[160px] px-4 py-3 font-semibold">Created</th>
+                <th className="w-[80px] px-4 py-3 text-center font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-orange-50">
@@ -186,26 +186,29 @@ const PaymentsTable: React.FC = () => {
 
                   return (
                   <tr key={payment._id} className="hover:bg-orange-50/40">
-                    <td className="px-4 py-4 font-semibold text-[#3E2723]">
+                    <td className="px-4 py-4 align-top font-semibold text-[#3E2723]">
                       {sequence}
                     </td>
-                    <td className="px-4 py-4">
-                      <p className="break-all font-semibold text-[#3E2723]">
+                    <td className="px-4 py-4 align-top">
+                      <p
+                        className="truncate font-semibold text-[#3E2723]"
+                        title={getPaymentOrderLabel(payment)}
+                      >
                         {getPaymentOrderLabel(payment)}
                       </p>
                     </td>
-                    <td className="px-4 py-4">
-                      <p className="font-medium text-slate-800">
+                    <td className="px-4 py-4 align-top">
+                      <p className="truncate font-medium text-slate-800" title={getPaymentUserLabel(payment)}>
                         {getPaymentUserLabel(payment)}
                       </p>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 truncate text-xs text-slate-500" title={getPaymentUserEmail(payment)}>
                         {getPaymentUserEmail(payment)}
                       </p>
                     </td>
-                    <td className="px-4 py-4 align-middle font-semibold text-slate-900">
+                    <td className="px-4 py-4 align-top whitespace-nowrap font-semibold text-slate-900">
                       {currency(payment.amount)}
                     </td>
-                    <td className="px-4 py-4 align-middle">
+                    <td className="px-4 py-4 align-top">
                       <span className="inline-flex items-center whitespace-nowrap rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-700">
                         {formatPaymentType(
                           payment.orderId && typeof payment.orderId === 'object'
@@ -214,7 +217,7 @@ const PaymentsTable: React.FC = () => {
                         )}
                       </span>
                     </td>
-                    <td className="px-4 py-4 align-middle">
+                    <td className="px-4 py-4 align-top">
                       <span
                         className={`inline-flex items-center whitespace-nowrap rounded-full border px-3 py-1 text-xs font-bold ${getPaymentStatusStyle(
                           getPaymentStatusLabel(payment),
@@ -223,7 +226,7 @@ const PaymentsTable: React.FC = () => {
                         {getPaymentStatusLabel(payment)}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-xs text-slate-600">
+                    <td className="px-4 py-4 align-top text-xs text-slate-600">
                       {String(
                         payment.orderId && typeof payment.orderId === 'object'
                           ? payment.orderId.paymentMethod
@@ -231,20 +234,28 @@ const PaymentsTable: React.FC = () => {
                       ).toLowerCase() === 'cod' && !payment.razorpayOrderId ? (
                         <p>Cash on delivery</p>
                       ) : (
-                        <>
-                          <p className="break-all">{payment.razorpayOrderId || '—'}</p>
-                          <p className="mt-1 break-all text-slate-400">
+                        <div className="space-y-1">
+                          <p
+                            className="truncate font-medium text-slate-700"
+                            title={payment.razorpayOrderId || undefined}
+                          >
+                            {payment.razorpayOrderId || '—'}
+                          </p>
+                          <p
+                            className="truncate text-slate-400"
+                            title={payment.razorpayPaymentId || undefined}
+                          >
                             {payment.razorpayPaymentId || 'No payment id yet'}
                           </p>
-                        </>
+                        </div>
                       )}
                     </td>
-                    <td className="px-4 py-4 align-middle text-slate-600">
+                    <td className="px-4 py-4 align-top whitespace-nowrap text-slate-600">
                       {payment.createdAt
                         ? new Date(payment.createdAt).toLocaleString()
                         : '—'}
                     </td>
-                    <td className="px-4 py-4 align-middle text-center">
+                    <td className="px-4 py-4 align-top text-center">
                       <button
                         type="button"
                         onClick={() => {

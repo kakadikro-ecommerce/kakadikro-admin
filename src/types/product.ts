@@ -55,8 +55,8 @@ export interface Product {
   mrp?: number;
   category: string;
   stock: number;
-  images?: Array<string | { url: string; altText?: string }>;
-  video?: { url: string; altText?: string } | null;
+  images?: Array<string | { url: string; key?: string; altText?: string }>;
+  video?: { url: string; key?: string; altText?: string } | null;
   variants?: ProductVariant[];
   specifications?: Record<string, string>;
   tags?: string[];

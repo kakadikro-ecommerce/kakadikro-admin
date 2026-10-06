@@ -37,7 +37,10 @@ import {
 import {
   getImageUrl,
   toExistingImagesPayload,
+  toExistingImagesSubmitPayload,
   toExistingVideoPayload,
+  toExistingVideoSubmitPayload,
+  type ExistingMediaItem,
 } from '../../../../utils/productMedia';
 import { productService } from '../../../../services/products-api';
 import { parseApiError } from '../../../../services/axiosError';
@@ -52,8 +55,8 @@ const ACCEPTED_VIDEO_TYPES = ['video/mp4'];
 const THUMBNAIL_PREVIEW_COUNT = 4;
 
 type Errors = Record<string, string>;
-type ExistingImageItem = { url: string; altText: string };
-type ExistingVideoItem = { url: string; altText: string };
+type ExistingImageItem = ExistingMediaItem;
+type ExistingVideoItem = ExistingMediaItem;
 type NewImageItem = { id: string; file: File; previewUrl: string; altText: string };
 type NewVideoItem = { id: string; file: File; previewUrl: string; altText: string };
 type MediaSlide = {
@@ -334,7 +337,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
 
   const mediaSlides = useMemo<MediaSlide[]>(() => {
     const slides: MediaSlide[] = existingImages.map((image, index) => ({
-      key: `existing-${image.url}-${index}`,
+      key: `existing-${image.key || image.url}-${index}`,
       kind: 'image',
       src: getImageUrl(image),
       group: 'existing',
@@ -361,7 +364,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
       });
     } else if (!videoRemoved && existingVideo) {
       slides.push({
-        key: `existing-video-${existingVideo.url}`,
+        key: `existing-video-${existingVideo.key || existingVideo.url}`,
         kind: 'video',
         src: existingVideo.url,
         group: 'video',
@@ -613,13 +616,31 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
       return null;
     });
     if (existingVideo) {
+      setExistingVideo(null);
       setVideoRemoved(true);
     }
     setFieldError('video');
   };
 
-  const removeCurrentMedia = () => {
+  const removeCurrentMedia = (
+    event?: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    event?.preventDefault();
+    event?.stopPropagation();
     const slide = mediaSlides[previewIndex];
+    if (!slide) return;
+    if (slide.group === 'existing') removeExistingImage(slide.indexInGroup);
+    else if (slide.group === 'new') removeNewImage(slide.indexInGroup);
+    else removeCurrentVideo();
+  };
+
+  const removeSlideAt = (
+    slideIndex: number,
+    event?: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    const slide = mediaSlides[slideIndex];
     if (!slide) return;
     if (slide.group === 'existing') removeExistingImage(slide.indexInGroup);
     else if (slide.group === 'new') removeNewImage(slide.indexInGroup);
@@ -888,7 +909,11 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
       data.append('variants', JSON.stringify(payload.variants));
 
       if (isEdit) {
-        data.append('existingImages', JSON.stringify(existingImages));
+        // Send storage keys (not presigned display URLs) so backend can update/delete media.
+        data.append(
+          'existingImages',
+          JSON.stringify(toExistingImagesSubmitPayload(existingImages)),
+        );
       }
 
       newImages.forEach((item) => {
@@ -908,7 +933,10 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
       } else if (videoRemoved) {
         data.append('existingVideo', '');
       } else if (isEdit && existingVideo) {
-        data.append('existingVideo', JSON.stringify(existingVideo));
+        const videoPayload = toExistingVideoSubmitPayload(existingVideo);
+        if (videoPayload) {
+          data.append('existingVideo', JSON.stringify(videoPayload));
+        }
       }
 
       if (isEdit && product?._id) {
@@ -1149,12 +1177,12 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                       </>
                     )}
 
-                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent p-3">
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex items-center justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent p-3">
                       <span className="rounded-full bg-white/15 px-2 py-1 text-xs text-white">
                         {mediaSlides[previewIndex]?.kind === 'video' ? 'Video' : 'Image'}{' '}
                         {previewIndex + 1}/{mediaSlides.length}
                       </span>
-                      <div className="flex gap-1">
+                      <div className="pointer-events-auto flex gap-1">
                         {mediaSlides[previewIndex]?.kind === 'image' && (
                           <>
                             <button
@@ -1178,7 +1206,7 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                         <button
                           type="button"
                           onClick={removeCurrentMedia}
-                          className="rounded-full bg-white/15 p-1.5 text-white"
+                          className="rounded-full bg-rose-500/90 p-1.5 text-white hover:bg-rose-600"
                           aria-label="Remove file"
                         >
                           <Trash2 size={14} />
@@ -1194,27 +1222,40 @@ const ProductFormModal = ({ product, isOpen, onClose, onRefresh }: any) => {
                     ).map((slide) => {
                       const selectedIndex = mediaSlides.findIndex((item) => item.key === slide.key);
                       return (
-                        <button
+                        <div
                           key={slide.key}
-                          type="button"
-                          onClick={() => setPreviewIndex(selectedIndex)}
                           className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border ${
                             selectedIndex === previewIndex
                               ? 'border-[#7A330F]'
                               : 'border-slate-200'
                           }`}
                         >
-                          {slide.kind === 'video' ? (
-                            <video src={slide.src} className="h-full w-full object-cover" muted />
-                          ) : (
-                            <img src={slide.src} alt="" className="h-full w-full object-cover" />
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => setPreviewIndex(selectedIndex)}
+                            className="h-full w-full"
+                            aria-label={`Select media ${selectedIndex + 1}`}
+                          >
+                            {slide.kind === 'video' ? (
+                              <video src={slide.src} className="h-full w-full object-cover" muted />
+                            ) : (
+                              <img src={slide.src} alt="" className="h-full w-full object-cover" />
+                            )}
+                          </button>
                           {slide.kind === 'video' && (
-                            <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1 text-[10px] text-white">
+                            <span className="pointer-events-none absolute bottom-1 left-1 rounded bg-black/70 px-1 text-[10px] text-white">
                               Video
                             </span>
                           )}
-                        </button>
+                          <button
+                            type="button"
+                            onClick={(event) => removeSlideAt(selectedIndex, event)}
+                            className="absolute right-0.5 top-0.5 rounded-full bg-black/70 p-1 text-white hover:bg-rose-600"
+                            aria-label={`Remove media ${selectedIndex + 1}`}
+                          >
+                            <Trash2 size={10} />
+                          </button>
+                        </div>
                       );
                     })}
                   </div>
